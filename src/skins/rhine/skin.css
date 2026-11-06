@@ -1334,7 +1334,11 @@ body.grid-on .grid-overlay {
 
 html.js-rail .rail {
   position: fixed;
-  top: 0;
+  /* Starts under the masthead rather than through it: the nav is page frame,
+     the rail measures the text behind it. `--rail-top` is published by
+     `src/lib/rail.ts` from the chrome actually on screen, so this stays right
+     while the masthead is still there and collapses when it scrolls away. */
+  top: var(--rail-top, 0px);
   right: 0;
   bottom: 0;
   z-index: 65; /* under .progress (70), over the sheet */
