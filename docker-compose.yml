@@ -1,6 +1,6 @@
 # One service, because the deliverable is static files.
 #
-#   docker compose up -d --build --force-recreate   serve on http://localhost:8080
+#   docker compose up -d --build --force-recreate   serve on http://localhost:4322
 #   docker compose down                             stop and remove
 #
 # `--force-recreate` is load-bearing, not habit. Compose decides whether to
@@ -10,16 +10,36 @@
 # closes that hole. (Measured — see docker/README.md.)
 #
 # To publish on port 80, change the host side of `ports` to "80:80".
+#
+# The image tag, container name and host port are variable:
+#
+#   BLOG_NAME=my-site BLOG_PORT=8081 docker compose up -d --build
+#
+# or set them once in a `.env` file beside this one (see `.env.example`). Both
+# default to the values below, so an untouched checkout behaves exactly as the
+# docs describe. Two checkouts of this template on one machine is the normal
+# case — the template repo and your own site — and without distinct names the
+# second `up` replaces the first container instead of running beside it.
+
+# The project name has to be set here, not just the container name.
+# `COMPOSE_PROJECT_NAME` defaults to the *parent folder*, so two checkouts in
+# `paper-dossier/` and `my-site/` would share a project only if the folders
+# matched — but a checkout under a folder that shares its name with another
+# (this one is `DSH`) collides silently: Compose treats both runs as one
+# project and *removes* the container that is absent from the new config.
+# Measured: renaming only `container_name` left `archive-blog` deleted and
+# `second-checkout` the sole survivor.
+name: ${BLOG_NAME:-archive-blog}
 
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    image: archive-blog:local
-    container_name: archive-blog
+    image: ${BLOG_NAME:-archive-blog}:local
+    container_name: ${BLOG_NAME:-archive-blog}
     ports:
-      - "8080:80"
+      - "${BLOG_PORT:-4322}:80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]

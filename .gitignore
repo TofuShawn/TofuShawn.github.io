@@ -29,3 +29,7 @@ ref/
 # the lockfile alone. Committed by mistake once while initialising this repo.
 .npmrc
 npmrc
+
+# Per-checkout deployment identity (BLOG_NAME, BLOG_PORT). `.env.example` is the
+# tracked template; the real `.env` is local, exactly like `.npmrc` above.
+.env

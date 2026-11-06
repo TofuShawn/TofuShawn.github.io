@@ -11,11 +11,12 @@
  * behaviour a visitor would actually get. It needs nothing but Node.
  *
  *   node scripts/verify-docker.mjs [base-url]
- *   node scripts/verify-docker.mjs http://localhost:8080
+ *   node scripts/verify-docker.mjs http://localhost:4322
  *
  * Exits 1 on the first hard failure; prints a table either way.
  */
-const BASE = (process.argv[2] || 'http://localhost:8080').replace(/\/$/, '');
+const PORT = process.env.BLOG_PORT || '4322';
+const BASE = (process.argv[2] || `http://localhost:${PORT}`).replace(/\/$/, '');
 
 let failures = 0;
 const rows = [];
@@ -73,8 +74,8 @@ async function main() {
 
   // --- redirects must keep host:port --------------------------------------
   // nginx defaults to absolute redirects built from its listen port. Published
-  // on 8080 that means `Location: http://host/posts/` — port dropped, visitor
-  // sent to whatever runs on :80.
+  // on a different host port that means `Location: http://host/posts/` — port
+  // dropped, visitor sent to whatever runs on :80.
   for (const p of ['/posts', '/tags', '/about']) {
     const res = await head(p);
     const loc = res.headers.get('location') || '';

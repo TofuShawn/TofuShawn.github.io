@@ -6,7 +6,7 @@ before you decide.
 ## 1. Docker (what you want in production)
 
 ```bash
-docker compose up -d --build --force-recreate   # http://localhost:8080
+docker compose up -d --build --force-recreate   # http://localhost:4322
 docker compose down                             # stop and remove
 npm run verify:docker                           # assert what the server actually returns
 npm run test:verify                             # prove the assertions can still fail
@@ -16,6 +16,23 @@ npm run test:verify                             # prove the assertions can still
 the existing container; `up --build` alone can still reuse it, because Compose
 decides by service config rather than image contents. Either way a source change
 can be invisible and every HTTP check still passes. See the last section.
+
+### Running two checkouts on one machine
+
+The image tag, container name and host port come from variables:
+
+```bash
+BLOG_NAME=my-site BLOG_PORT=8081 docker compose up -d --build --force-recreate
+```
+
+or set them once in a `.env` file beside `docker-compose.yml` (`.env.example`
+documents the two keys). Both default to `archive-blog` / `4322`, so the
+commands above work verbatim on an untouched checkout.
+
+You need this the moment you keep the template repo and your own site side by
+side — the documented workflow. Without distinct names the second `up` **builds
+into the same `archive-blog:local` tag and replaces the first container**, so
+you end up looking at the wrong site with no error to tell you.
 
 The image is a two-stage build: `node:24-alpine` runs `npm run build` (which
 includes `scripts/scope-skins.mjs`), then the `dist/` folder is copied into
@@ -38,7 +55,7 @@ What the config does, and why:
 ### The redirect trap
 
 nginx builds redirect `Location` headers from its own `listen` port. The
-container listens on 80 but is published on 8080, so `GET /posts` answered:
+container listens on 80 but is published on 4322, so `GET /posts` answered:
 
 ```
 301  Location: http://127.0.0.1/posts/     ← port silently dropped
@@ -47,7 +64,7 @@ container listens on 80 but is published on 8080, so `GET /posts` answered:
 A visitor would have been sent to whatever else runs on port 80. `absolute_redirect
 off` makes the header relative (`/posts/`), which preserves the real host:port.
 Verified: `/posts`, `/tags`, `/about`, `/tags/notes` all now redirect to
-`:8080`.
+`:4322`.
 
 ### The `add_header` inheritance trap
 

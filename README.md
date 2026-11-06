@@ -71,7 +71,7 @@ npm run verify    # checks a clean dist/ (routes, furniture, metadata)
 ### Serving it
 
 ```bash
-docker compose up --build     # http://localhost:8080  ← the intended path
+docker compose up --build     # http://localhost:4322  ← the intended path
 npm run verify:docker         # asserts what the *server* actually returns
 ```
 
