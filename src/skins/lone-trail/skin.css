@@ -1735,23 +1735,6 @@ html.lt-still .ticker-track {
   padding: 9px 12px;
 }
 
-.morse-lamp {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.5px solid var(--rule);
-  flex: none;
-  transition:
-    background 0.1s,
-    box-shadow 0.1s;
-}
-
-.morse-lamp.on {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-}
-
 .morse-text {
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -1761,22 +1744,6 @@ html.lt-still .ticker-track {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.morse-play {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--bg-sheet);
-  background: var(--fg);
-  padding: 5px 9px;
-  flex: none;
-  transition: background var(--dur-fast);
-}
-
-.morse-play:hover {
-  background: var(--accent);
 }
 
 /* ==========================================================================

@@ -28,7 +28,6 @@ const meta: SkinMeta = {
     unseal: false,
     halftone: false,
     scanline: false,
-    sound: false,
     gridOverlay: false,
     hud: false,
     printArtifacts: false,

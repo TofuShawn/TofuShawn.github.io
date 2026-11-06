@@ -8,7 +8,7 @@
  * the right trade for a template that is meant to be forked and re-skinned.
  */
 import '../styles/base.css';
-import { SKINS, DEFAULT_SKIN_ID, getSkin } from '../skins/registry';
+import { SKINS, DEFAULT_SKIN_ID, getSkin, featuresAny } from '../skins/registry';
 import { SITE, NAV } from '../lib/site';
 
 // The skin is fixed at build time for the initial paint; the inline boot script
@@ -194,6 +194,7 @@ const skinBoot = `
             </details>
           )
         }
+
       </div>
     </header>
 
@@ -233,8 +234,7 @@ const skinBoot = `
           }
           markActive(id);
           btn.closest('details')?.removeAttribute('open');
-          // Skin changes can change which features are active (sound, halftone,
-          // grid). Reload once so the feature layer re-initialises cleanly.
+          // Skin changes can change which features are active (halftone, grid). Reload once so the feature layer re-initialises cleanly.
           // The `?skin=` param outranks localStorage, so it has to go or the
           // reload would immediately undo the choice that was just made.
           const url = new URL(location.href);

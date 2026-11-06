@@ -15,7 +15,6 @@ export const SITE = {
     published: 'TofuShawn',
     printed: 'Set in a dossier that behaves like print.',
     type: 'Twelve columns on a 1180px measure, 8px baseline.',
-    sound: 'Interface tones are synthesised at runtime. No audio files are shipped.',
   },
 } as const;
 

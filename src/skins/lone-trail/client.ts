@@ -24,107 +24,6 @@ import {
 import { initRail } from '../../lib/rail';
 
 /* -------------------------------------------------------------------------- */
-/* sound — a console, not a press room                                        */
-/* -------------------------------------------------------------------------- */
-
-type Voice = {
-  type?: OscillatorType;
-  f?: number;
-  sweep?: [number, number];
-  dur: number;
-  g: number;
-  notes?: number[];
-  gap?: number;
-  noise?: boolean;
-  hp?: number;
-};
-
-const VOICES: Record<string, Voice> = {
-  ui: { type: 'square', f: 720, dur: 0.03, g: 0.04 },
-  beep: { type: 'square', f: 880, dur: 0.035, g: 0.045 },
-  lowbeep: { type: 'square', f: 440, dur: 0.05, g: 0.05 },
-  chime: { notes: [784, 1046], type: 'triangle', dur: 0.26, g: 0.08, gap: 0.07 },
-  power: { type: 'triangle', sweep: [160, 900], dur: 0.55, g: 0.1 },
-  scan: { type: 'sawtooth', sweep: [300, 1500], dur: 0.9, g: 0.1 },
-  thump: { type: 'sine', f: 110, dur: 0.14, g: 0.2 },
-  type: { type: 'square', f: 1200, dur: 0.012, g: 0.02 },
-  static: { noise: true, dur: 0.22, g: 0.1, hp: 1400 },
-};
-
-let ac: AudioContext | null = null;
-
-function audio(): AudioContext | null {
-  if (typeof AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
-    return null;
-  }
-  if (!ac) {
-    const Ctor = window.AudioContext ?? (window as any).webkitAudioContext;
-    ac = new Ctor() as AudioContext;
-  }
-  return ac;
-}
-
-/** Sound is opt-in per session: a console that beeps unprompted is hostile. */
-let soundOn = false;
-let muteUntil = 0;
-
-export function setSound(on: boolean): void {
-  soundOn = on;
-}
-
-export function sfx(kind: string = 'ui'): void {
-  if (!soundOn) return;
-  const v = VOICES[kind];
-  if (!v) return;
-  if (performance.now() < muteUntil) return;
-
-  try {
-    const ctx = audio();
-    if (!ctx) return;
-    if (ctx.state === 'suspended') void ctx.resume();
-
-    const t0 = ctx.currentTime;
-
-    if (v.noise) {
-      const len = Math.max(1, Math.floor(ctx.sampleRate * v.dur));
-      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = v.hp ?? 600;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(v.g, t0);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + v.dur);
-      src.connect(hp).connect(gain).connect(ctx.destination);
-      src.start(t0);
-      src.stop(t0 + v.dur);
-      return;
-    }
-
-    const play = (freq: number, at: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = v.type ?? 'square';
-      osc.frequency.setValueAtTime(freq, at);
-      if (v.sweep) osc.frequency.exponentialRampToValueAtTime(v.sweep[1], at + v.dur);
-      gain.gain.setValueAtTime(v.g, at);
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + v.dur);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(at);
-      osc.stop(at + v.dur + 0.02);
-    };
-
-    if (v.notes) v.notes.forEach((n, i) => play(n, t0 + i * (v.gap ?? 0)));
-    else play(v.sweep ? v.sweep[0] : (v.f ?? 600), t0);
-  } catch {
-    /* audio is a garnish; never break the page for it */
-  }
-}
-
-/* -------------------------------------------------------------------------- */
 /* scanline sphere — the plate painter for this skin                          */
 /* -------------------------------------------------------------------------- */
 
@@ -307,69 +206,11 @@ export function toMorse(text: string): string {
     .join(' ');
 }
 
-/**
- * Play a morse string as audio. Unit is 75ms; dash is 2.6 units, letter gap
- * 2.2 units. 680 Hz sine, which is the reference's transceiver pitch.
- */
-function playMorse(text: string, onDone?: () => void): void {
-  const ctx = audio();
-  if (!ctx) return onDone?.();
-  if (ctx.state === 'suspended') void ctx.resume();
-
-  const unit = 0.075;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = 680;
-  gain.gain.value = 0;
-  osc.connect(gain).connect(ctx.destination);
-
-  const t0 = ctx.currentTime + 0.05;
-  let t = t0;
-  const marks: [number, number][] = [];
-
-  for (const ch of toMorse(text)) {
-    if (ch === '.') {
-      marks.push([t, t + unit]);
-      t += unit * 2;
-    } else if (ch === '-') {
-      marks.push([t, t + unit * 2.6]);
-      t += unit * 3.6;
-    } else if (ch === ' ') {
-      t += unit * 2.2;
-    } else if (ch === '/') {
-      t += unit * 5;
-    }
-  }
-
-  for (const [a, b] of marks) {
-    gain.gain.setValueAtTime(0, a);
-    gain.gain.linearRampToValueAtTime(0.09, a + 0.004);
-    gain.gain.setValueAtTime(0.09, b);
-    gain.gain.linearRampToValueAtTime(0, b + 0.004);
-  }
-
-  osc.start(t0);
-  osc.stop(t + 0.1);
-  if (onDone) setTimeout(onDone, (t - ctx.currentTime + 0.15) * 1000);
-}
-
 function initMorse() {
   document.querySelectorAll<HTMLElement>('[data-morse]').forEach((el) => {
     const text = el.dataset.morse ?? '';
     if (!text) return;
     el.textContent = toMorse(text);
-  });
-
-  document.querySelectorAll<HTMLButtonElement>('[data-morse-play]').forEach((btn) => {
-    const lamp = btn.closest('.morse-bar')?.querySelector('.morse-lamp');
-    btn.addEventListener('click', () => {
-      const text = btn.dataset.morsePlay ?? '';
-      setSound(true);
-      lamp?.classList.add('on');
-      sfx('beep');
-      playMorse(text, () => lamp?.classList.remove('on'));
-    });
   });
 }
 
@@ -429,8 +270,6 @@ function initPunch() {
     // re-render cannot leak handlers.
     matrix.querySelectorAll<HTMLButtonElement>('.punch-dot').forEach((btn) => {
       btn.addEventListener('click', () => {
-        setSound(true);
-        sfx(btn.classList.contains('on') ? 'lowbeep' : 'beep');
         btn.classList.toggle('on');
         btn.setAttribute('aria-pressed', String(btn.classList.contains('on')));
         const on = matrix.querySelectorAll('.punch-dot.on').length;
@@ -484,7 +323,6 @@ function initCrt() {
       }
     } catch (e) {}
     paint();
-    sfx('ui');
   });
 
   // Keyboard escape hatch for the ambient layer, matching the grid's `G`.
@@ -601,7 +439,6 @@ function initGrid() {
 
   const toggle = () => {
     document.body.classList.toggle('grid-on');
-    sfx('ui');
   };
 
   document.getElementById('gridbtn')?.addEventListener('click', toggle);
@@ -642,10 +479,6 @@ function initLaunch() {
 
   const enter = () => {
     if (overlay.classList.contains('off')) return;
-    setSound(true);
-    sfx('power');
-    setTimeout(() => sfx('scan'), 180);
-
     overlay.classList.add('off');
     document.body.classList.remove('locked');
     (window as any)._unsealed = true;
@@ -810,13 +643,9 @@ function initStagger() {
 }
 
 function initHovers() {
-  const beep = throttled(() => sfx('ui'), 90);
-  document.querySelectorAll('.ix-row, .tag, .masthead a, .post-nav a').forEach((el) =>
-    el.addEventListener('pointerenter', beep),
-  );
-  document.querySelectorAll('.plate').forEach((p) =>
-    p.addEventListener('pointerenter', throttled(() => sfx('scan'), 400)),
-  );
+  // Hover behaviours that are not sound belong here. Sound itself used to tick
+  // on every row and sweep on every plate; the pointer crossing a page is not a
+  // gesture that asked for anything.
 }
 
 /* -------------------------------------------------------------------------- */

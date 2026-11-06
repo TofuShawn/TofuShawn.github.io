@@ -32,7 +32,6 @@ const loneTrail: SkinMeta = {
     unseal: true,
     halftone: false,
     scanline: true,
-    sound: true,
     gridOverlay: true,
     hud: false,
     printArtifacts: false,
