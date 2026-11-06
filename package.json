@@ -9,6 +9,7 @@
     "build": "node scripts/scope-skins.mjs && astro build",
     "preview": "astro preview",
     "check": "node scripts/check.mjs",
+    "new": "node scripts/new-post.mjs",
     "verify": "npm run build && node scripts/verify.mjs",
     "verify:docker": "node scripts/verify-docker.mjs",
     "test:verify": "node scripts/test-verify-docker.mjs"

@@ -79,9 +79,23 @@ for local viewing only.
 
 ## Writing a post
 
-Drop a Markdown file in `src/content/posts/`. Frontmatter is validated with Zod at
-build time, so a typo fails the build with the field name rather than rendering
-`undefined`:
+```bash
+npm run dev                                    # http://localhost:4321/ — edits appear live
+npm run new -- --title "On paper"              # or just `npm run new` to be prompted
+```
+
+[WRITING.md](WRITING.md) is the specification: the two post shapes, the
+frontmatter fields, the tag vocabulary, the code-prefix convention, and the
+voice. Read it once; it is shorter than the number of decisions it settles.
+
+`npm run new` writes `src/content/posts/<slug>.md` with the frontmatter and a
+skeleton body. It warns about the things the layout cares about — an unquoted
+title, a tag that is not in the vocabulary, a title long enough to wrap badly —
+and refuses a title with no Latin characters unless you pass `--slug`, because
+`論紙張` would percent-encode into an unreadable URL.
+
+Frontmatter is validated with Zod at build time, so a typo fails the build with
+the field name rather than rendering `undefined`:
 
 ```yaml
 ---

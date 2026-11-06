@@ -1,0 +1,315 @@
+# Writing
+
+How to add a post in a form the site will actually render well. This is a
+specification, not a suggestion: the layouts were built around these rules, and
+a post that ignores them will look wrong even though it builds.
+
+For the mechanical field list, see the frontmatter table below. For *how the
+prose should sound*, see [Voice](#voice).
+
+---
+
+## The two modes
+
+Every post is one of two shapes, and the shape is a decision you make before you
+start writing.
+
+### Note — under ~400 words, no headings
+
+A note is a remark with a date attached. It has no `##` sections, no argument to
+build, and no conclusion. It is allowed to be one idea.
+
+```
+four-notes-on-silence.md   179 words, 0 headings
+```
+
+Notes exist because the alternative is not writing them. A site whose smallest
+possible post is 800 words ends up with four posts a year.
+
+Use a note when the thought does not survive expansion — when padding it to
+1200 words would make it worse rather than better.
+
+### Entry — 400–900 words, 2–5 `##` sections
+
+The default. One claim, developed, then stopped. It does not need an
+introduction or a summary; the first paragraph carries the claim and the last
+paragraph lands it.
+
+```
+twelve-columns-one-accent.md      358 words, 4 headings
+halftone-from-scratch.md          570 words, 4 headings
+a-grid-is-a-promise.md            605 words, 5 headings
+on-keeping-an-archive.md          694 words, 5 headings
+```
+
+A word count is not an ambition. The longest entry here is 694 words. If a post
+is heading past 1000, it is probably two posts.
+
+---
+
+## Frontmatter
+
+Three fields are required and the build fails without them.
+
+```yaml
+---
+title: 'Twelve columns, one accent'
+description: 'One line for the index and RSS.'
+date: 2025-11-20
+---
+```
+
+| Field | Required | What it does |
+| --- | --- | --- |
+| `title` | yes | Set in the display size. Sentence case, no trailing period. |
+| `description` | yes | One sentence. Shows in listings, RSS, and `<meta>`. |
+| `date` | yes | `YYYY-MM-DD`. Drives sorting, year grouping, and the stamp. |
+| `titleCn` | no | Shown under the Latin title where the layout allows. |
+| `updated` | no | Shows in the article footer only when present. |
+| `tags` | no | Array. Drives `/tags/` and the related lists. Use the existing vocabulary. |
+| `featured` | no | Pins to the top of its own list. Does **not** override chronological order in the archive. |
+| `draft` | no | `true` builds the page but hides it from every list, RSS, and the sitemap. |
+| `code` | no | The short code in the index list. Falls back to the first 8 characters of the slug, uppercased. |
+| `lang` | no | Sets `lang` on `<article>`, for a post written in another language. |
+
+**Why the quotes matter.** `title: Halftone, from scratch` is invalid YAML — the
+comma starts a flow sequence. Quote every title and description. The build error
+names the field, so you will find out, but it is a wasted cycle.
+
+### `code` — the prefix convention
+
+The code is what the ledger calls the post: printed in the index list, in the
+running head, and in the citation block. Format is `XX-0000`.
+
+Existing prefixes, by tag:
+
+| Prefix | Tag | Example |
+| --- | --- | --- |
+| `GD` | grids | `GD-0092` |
+| `CL` | colour | `CL-0018` |
+| `HT` | print | `HT-0031` |
+| `OA` | archives | `OA-0417` |
+| `NT` | notes | `NT-0004` |
+
+Invent a new prefix only for a genuinely new subject. The number is a serial, not
+a date — it does not need to increase, and reusing a retired number is fine.
+Leaving `code` out is also fine: the slug fallback is ugly on purpose, which is
+a gentle nudge to set one.
+
+### `tags` — keep the vocabulary small
+
+Nine tags exist. Adding a tenth is a real decision, because `/tags/` is a ruled
+register: every tag takes a row, and rows have to be worth the space.
+
+```
+design (4)   writing (2)   typography (2)   print (2)   grids (2)
+archives (2) notes (1)     colour (1)       canvas (1)
+```
+
+A tag with one post is not a category, it is a label. That is allowed — but if a
+tag stays at one post after several entries, merge it into a neighbour.
+
+Tags are lowercase, one word where possible, and never pluralised
+(`archives` is the exception and predates this rule).
+
+---
+
+## Voice
+
+The site's voice is the reason the rules above exist. Six properties, all
+visible in the five posts that ship:
+
+**Start with a claim, not a context.** The first sentence is the argument:
+
+> A single accent colour fails when it is used as decoration, because
+> decoration scales with content and the accent does not.
+
+No "In this post I will…", no "Recently I have been thinking about…".
+
+**State the number.** This site is about craft, and craft has measurements:
+
+> Seventy point six six six. It never divides evenly, and it never will, and
+> this is the single most useful thing about the number.
+
+**Let the second sentence do the work the first one set up.** Short sentences
+after long ones. The rhythm is a print rhythm, not a blog rhythm.
+
+**Concede the counter-argument in the middle, not the end.** A post that only
+proves its thesis reads as advocacy. The strongest entries here argue against
+themselves for a paragraph and then come back.
+
+**End without a summary.** The last line is a fact, an aphorism, or an image —
+never "in conclusion". Compare:
+
+> The fiction is allowed one exception. The layout is not.
+
+**No listicle voice.** If three things are true, write three paragraphs about
+why they are true, not a bolded list. The one exception is a `<dl class="meta-rows">`
+(see [Structured blocks](#structured-blocks)), which is a table wearing prose
+clothes.
+
+### What to avoid
+
+- Em-dash-heavy sentence joining as a substitute for structure. One per
+  paragraph is already a lot.
+- "It's worth noting", "at the end of the day", "let's dive in".
+- Announcing the structure ("First, I'll cover…").
+- Rhetorical questions as section openers.
+- Anything that reads like it was written to fill a word count.
+
+---
+
+## Markdown support
+
+Standard Markdown plus inline HTML, which is enabled deliberately — the print
+furniture below only exists as raw HTML.
+
+### Supported
+
+| Syntax | Rendering |
+| --- | --- |
+| `## Heading` / `### Heading` | Section head, auto-numbered in the TOC. `####` and deeper are ignored by the TOC — do not use them. |
+| `**bold**` | Ink weight. Used for the lead-in of a paragraph. |
+| `*italic*` | Contrast emphasis. Reserved for single words. |
+| `` `code` `` | Inline, monospace, tinted ground. |
+| ` ```lang ` | Fenced block, syntax-highlighted. Needs a language tag. |
+| `> quote` | Indented with a rule. Used for the one line you want remembered. |
+| `- item` / `1. item` | List with printed markers. |
+| `---` | A rule. Use sparingly — sections already have rules. |
+| `[text](url)` | Underlined, colour on hover only, never colour at rest. |
+| `![alt](src)` | Image inside prose. Prefer a `<Plate>` (below). |
+| Tables | Rendered, but prefer `<dl class="meta-rows">` for label/value pairs. |
+
+### Fenced code needs a language
+
+` ```css ` not ` ``` `. Without it Shiki cannot pick tokens and the block renders
+unhighlighted. Available: `css`, `html`, `js`, `ts`, `json`, `yaml`, `bash`,
+`md`, `astro`.
+
+Note the themes: code blocks are rendered **dark on paper** in both skins, which
+is deliberate — a code block is a photographic plate, not a text block. Do not
+try to make it match the page.
+
+---
+
+## Structured blocks
+
+These are raw HTML in the Markdown. They are styled by both skins, so they work
+in either theme — that is the whole point of putting them in base structure
+rather than a skin.
+
+### `<dl class="meta-rows">` — a label/value table
+
+The workhorse. Anywhere you would write "X: Y" five times.
+
+```html
+<dl class="meta-rows">
+  <div><dt>Section numbers</dt><dd>yes — they are navigation</dd></div>
+  <div><dt>Figure tags</dt><dd>yes — they are citations</dd></div>
+  <div><dt>Links</dt><dd>underline only, colour on hover</dd></div>
+</dl>
+```
+
+Each row is a `<div>` wrapping a `<dt>`/`<dd>` pair. The `div` is required —
+without it the grid has nothing to lay out. Values are short; this is not a
+table for prose.
+
+### `<div class="sidenote">` — a margin note
+
+```html
+<div class="sidenote">
+  <p><b>Note</b></p>
+  <p>A remark that would interrupt the paragraph it belongs to.</p>
+</div>
+```
+
+Rendered in the margin on wide screens, inline on narrow ones. One or two per
+post; they lose their function if they are every other paragraph.
+
+### `<Plate>` — a figure
+
+Import it, do not hand-write the markup:
+
+```astro
+import Plate from '../../components/Plate.astro';
+
+<Plate variant="orbit" ratio="1 / 1" tag="FIG.01" caption="Orbit — specimen plate" />
+```
+
+`variant` is `orbit` | `wave` | `noise` | `figure` | `grid`. It is painted
+procedurally, in the active skin's palette, so it is correct in both themes and
+weighs nothing. Pass `src`/`alt` only for a real image.
+
+**Markdown files cannot use it** — `<Plate>` is an Astro component, and `.md`
+does not compile components. If you want a figure inside a post you have two
+options: the article template's automatic `FIG.01` (shown when the body contains
+a fenced code block), or converting the post to `.mdx`. Adding MDX is a
+dependency decision, not a writing decision — ask before doing it.
+
+### `<div class="figcap">` — a figure caption
+
+Only meaningful under a figure. Uses `<b>` for the tag and a `<span>` for the
+text.
+
+---
+
+## Workflow
+
+### The fast loop
+
+```bash
+npm run dev          # http://localhost:4321/
+```
+
+Create the file, save, and the page updates in place. A new post appears in
+`/posts/` within a few seconds. No restart, no rebuild step.
+
+### When frontmatter is wrong
+
+The dev server returns a 500 and the build stops, both naming the field:
+
+```
+Post "my-post" has invalid frontmatter:
+  - date: Invalid input
+```
+
+If you see this in `npm run dev`, the page you were looking at is now an error
+page — fix the frontmatter and it recovers without a restart.
+
+### Before publishing
+
+```bash
+npm run verify       # build + routes + furniture + metadata
+```
+
+`npm run verify` is the gate. It checks that every route serves a real document
+and that the furniture each skin advertises is present. It will not catch a
+typo in prose, but it will catch a post that builds to an empty page.
+
+---
+
+## For an AI writing a post
+
+Paste this section, or point the agent at this file. The constraints that
+actually matter, in order:
+
+1. **Pick the mode first.** Under 400 words with no headings is a note and is
+   complete. Do not pad it.
+2. **Required frontmatter is exactly three fields:** `title`, `description`,
+   `date`. Quote the first two.
+3. **Use the existing tag vocabulary** (`design`, `writing`, `typography`,
+   `print`, `grids`, `archives`, `notes`, `colour`, `canvas`) unless the subject
+   genuinely has no home. A new tag is a decision to justify, not a default.
+4. **Set `code`** with a prefix matching the primary tag from the table above.
+5. **The first sentence is the claim.** Do not write an introduction.
+6. **The last sentence is not a summary.** Do not write a conclusion.
+7. **`##` and `###` only.** Deeper headings vanish from the TOC.
+8. **No listicle structure** unless it is a `<dl class="meta-rows">` table.
+9. **Fenced code blocks need a language tag.**
+10. **Do not invent footer/frontmatter fields.** The Zod schema is strict and
+    extra keys are stripped; unknown fields fail silently rather than loudly.
+
+What an agent should *not* do: rewrite the existing five posts for consistency,
+add a "related posts" section, or introduce a new prose style. The voice
+section describes a target the shipped posts already hit; match it rather than
+re-deriving it.
