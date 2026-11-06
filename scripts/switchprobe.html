@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>switch</title>
+<style>body{font:12px monospace;margin:0}iframe{width:1440px;height:900px;border:0}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * Proves the skin switch is a real repaint, not a reload.
+ *
+ * Loads the cover wearing the default skin, snapshots computed values, flips
+ * `data-skin` the way the switcher does, and snapshots again. If any value is
+ * unchanged the second time, the skin is not actually driving the page.
+ */
+const frame = document.createElement('iframe');
+frame.src = '/?skip=1';
+frame.onload = () => setTimeout(() => {
+  const w = frame.contentWindow, d = w.document;
+  const snap = () => {
+    const cs = (sel, prop) => {
+      const el = d.querySelector(sel);
+      return el ? w.getComputedStyle(el)[prop] : 'ABSENT';
+    };
+    const vis = (sel) => {
+      const el = d.querySelector(sel);
+      if (!el) return 'ABSENT';
+      const s = w.getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return s.display === 'none' || r.width === 0 ? 'hidden' : 'shown';
+    };
+    return {
+      skin: d.documentElement.dataset.skin,
+      bodyBg: cs('body', 'backgroundColor'),
+      sheetBg: cs('.sheet', 'backgroundColor'),
+      h1Font: cs('h1', 'fontFamily').slice(0, 26),
+      h1Size: cs('h1', 'fontSize'),
+      h1Transform: cs('h1', 'textTransform'),
+      gridGap: cs('.g', 'gap'),
+      mastheadBorder: cs('.masthead', 'borderBottomWidth'),
+      // furniture
+      punch: vis('#punch'),
+      ticker: vis('.ticker'),
+      scanlines: vis('.crt-scanlines'),
+      cropmarks: vis('.cropmarks'),
+      fold: vis('.fold'),
+      barcode: vis('.barcode'),
+      launch: vis('.launch'),
+      // dynamic content the skin's JS builds
+      punchDots: d.querySelectorAll('.punch-dot').length,
+      punchCols: d.querySelectorAll('.punch-col').length,
+      morseText: (d.querySelector('[data-morse]') || {}).textContent || '',
+      tickerItems: d.querySelectorAll('.ticker-item').length,
+      gridCols: d.querySelectorAll('#gridcols i').length,
+      canvases: [...d.querySelectorAll('canvas')].map((c) => c.width + 'x' + c.height + ':' + (c.dataset.drawn || '-')),
+    };
+  };
+
+  const before = snap();
+  d.documentElement.setAttribute('data-skin', 'lone-trail');
+  // The switch is a pure CSS repaint; give layout one frame, then snapshot.
+  setTimeout(() => {
+    const after = snap();
+    const diffs = {};
+    for (const k of Object.keys(before)) {
+      if (JSON.stringify(before[k]) !== JSON.stringify(after[k])) {
+        diffs[k] = { before: before[k], after: after[k] };
+      }
+    }
+    document.getElementById('out').textContent =
+      'RESULT:' + JSON.stringify({ before, after, diffs }, null, 1);
+  }, 600);
+}, 3500);
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

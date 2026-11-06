@@ -1,0 +1,30 @@
+# Build context for the image.
+#
+# The image installs its own dependencies with `npm ci` from the lockfile, so
+# the host's node_modules is dead weight (~200MB) and may contain binaries
+# built for the host platform. `npm ci` is deterministic; nothing here needs
+# preserving.
+node_modules
+dist
+.astro
+.npm-cache
+
+# Host artifacts that must never reach a public image.
+shots
+shots*
+ref
+*.log
+.DS_Store
+
+# Dev-only probe harnesses. They are served from `dist/` during verification,
+# never from the container — and `dist` is built inside the image anyway, so
+# none of them could ship even by accident. Excluded wholesale rather than by
+# name: the probes are written per-investigation and the list goes stale
+# (sheetbox.html slipped through the old name-pattern list).
+scripts/*.html
+
+# VCS and editor noise.
+.git
+.gitignore
+.vscode
+.idea

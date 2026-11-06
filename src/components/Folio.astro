@@ -1,0 +1,10 @@
+---
+/** A folio line: "P.04 · OA-0417" style page mark. Decorative, hidden from a11y. */
+export interface Props {
+  page: string;
+  note?: string;
+}
+const { page, note } = Astro.props;
+---
+
+<span class="folio" aria-hidden="true">{page}{note ? ` · ${note}` : ''}</span>

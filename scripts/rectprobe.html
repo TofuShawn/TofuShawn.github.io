@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>rect probe</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #fff;
+        font: 12px monospace;
+      }
+      iframe {
+        width: 1440px;
+        height: 1200px;
+        border: 0;
+      }
+      pre {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <pre id="out">waiting</pre>
+    <iframe id="f"></iframe>
+    <script>
+      const out = document.getElementById('out');
+      const f = document.getElementById('f');
+      const w = Number(new URLSearchParams(location.search).get('w') || 1440);
+      f.style.width = w + 'px';
+      f.src = '/?skin=lone-trail&skip=1';
+      const lines = [];
+      const r = (el) => {
+        const b = el.getBoundingClientRect();
+        return { t: +b.top.toFixed(1), b: +b.bottom.toFixed(1), l: +b.left.toFixed(1), r: +b.right.toFixed(1) };
+      };
+      const settle = () => {
+        const d = f.contentDocument;
+        if (!d) return setTimeout(settle, 200);
+        const p = d.querySelector('.cv-left > p.t-micro');
+        const h = d.querySelector('#cover-title');
+        if (!p || !h) return setTimeout(settle, 200);
+        const ps = getComputedStyle(p);
+        const hs = getComputedStyle(h);
+        lines.push('w=' + w);
+        lines.push('p  rect ' + JSON.stringify(r(p)));
+        lines.push('p  cls="' + p.className + '" font=' + ps.fontSize + ' lh=' + ps.lineHeight + ' mt=' + ps.marginTop + ' mb=' + ps.marginBottom + ' tf=' + ps.transform);
+        lines.push('h  rect ' + JSON.stringify(r(h)));
+        lines.push('h  cls="' + h.className + '" font=' + hs.fontSize + ' lh=' + hs.lineHeight + ' mt=' + hs.marginTop + ' mb=' + hs.marginBottom + ' tf=' + hs.transform + ' filter=' + hs.filter);
+        const a = p.getBoundingClientRect();
+        const b = h.getBoundingClientRect();
+        lines.push('intersects=' + !(a.bottom <= b.top || b.bottom <= a.top || a.right <= b.left || b.right <= a.left));
+        lines.push('gap p.bottom -> h.top = ' + (b.top - a.bottom).toFixed(2));
+        // first line box of the h1 via range
+        const range = d.createRange();
+        range.selectNodeContents(h);
+        const rr = range.getBoundingClientRect();
+        lines.push('h  text range ' + JSON.stringify({ t: +rr.top.toFixed(1), b: +rr.bottom.toFixed(1) }));
+        out.textContent = lines.join('\n');
+      };
+      setTimeout(() => {
+        try {
+          settle();
+        } catch (e) {
+          out.textContent = 'ERR ' + e.message;
+        }
+      }, 2500);
+    </script>
+  </body>
+</html>

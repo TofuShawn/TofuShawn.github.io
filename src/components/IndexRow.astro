@@ -1,0 +1,25 @@
+---
+/** An index row: code, title, gloss, dot leader, page mark. */
+import { postUrl, type Post } from '../lib/posts';
+
+export interface Props {
+  post: Post;
+  /** Page mark on the right. Defaults to the reading time. */
+  mark?: string;
+  /** Show the Latin gloss line under the title. */
+  showEn?: boolean;
+}
+
+const { post, mark, showEn = false } = Astro.props;
+const right = mark ?? `${post.readingTime} MIN`;
+---
+
+<a class="ix-row" href={postUrl(post)}>
+  <span class="code">{post.displayCode}</span>
+  <span>
+    <span class="nm">{post.title}</span>
+    {showEn && post.titleCn && <span class="en">{post.titleCn}</span>}
+  </span>
+  <span class="lead" aria-hidden="true"></span>
+  <span class="pg">{right}</span>
+</a>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>dead space probe</title>
+<style>body{font:11px/1.3 monospace;margin:0;padding:8px}pre{margin:0}</style>
+</head>
+<body>
+<pre id="out">loading…</pre>
+<script>
+const SKIN = new URLSearchParams(location.search).get('skin') || 'lone-trail';
+const PAGES = ['/', '/posts/', '/tags/', '/about/', '/posts/on-keeping-an-archive/'];
+
+const out = [];
+let i = 0;
+
+function next() {
+  if (i >= PAGES.length) {
+    document.getElementById('out').textContent = out.join('\n');
+    return;
+  }
+  const p = PAGES[i++];
+  const f = document.createElement('iframe');
+  f.style.cssText = 'width:1440px;height:3000px;border:0;position:absolute;left:-9999px';
+  f.src = p + (p.includes('?') ? '&' : '?') + 'skin=' + SKIN + '&skip=1';
+  f.onload = () => setTimeout(() => {
+    const d = f.contentDocument;
+    const docH = d.documentElement.scrollHeight;
+    out.push(`\n### ${p}  docH=${docH}`);
+
+    // sample ink occupancy: for each 50px band, does any element with a
+    // background or border or text cross it?
+    const bands = new Array(Math.ceil(docH / 50)).fill(0);
+    const els = d.querySelectorAll('body *');
+    let counted = 0;
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      if (r.height < 3 || r.width < 3) continue;
+      const s = getComputedStyle(el);
+      if (s.visibility === 'hidden' || s.display === 'none' || s.opacity === '0') continue;
+      const hasInk = s.backgroundColor !== 'rgba(0, 0, 0, 0)' ||
+                     parseFloat(s.borderTopWidth) > 0 ||
+                     parseFloat(s.borderBottomWidth) > 0 ||
+                     (el.childNodes.length && [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()));
+      if (!hasInk) continue;
+      counted++;
+      const a = Math.max(0, Math.floor(r.top / 50));
+      const b = Math.min(bands.length - 1, Math.floor((r.bottom - 1) / 50));
+      for (let k = a; k <= b; k++) bands[k]++;
+    }
+    out.push(`  ink-bearing elements: ${counted}`);
+
+    // find runs of empty bands
+    let run = null;
+    const gaps = [];
+    bands.forEach((v, k) => {
+      if (v === 0) {
+        if (!run) run = { start: k, end: k };
+        else run.end = k;
+      } else if (run) { gaps.push(run); run = null; }
+    });
+    if (run) gaps.push(run);
+    const big = gaps.filter(g => (g.end - g.start + 1) * 50 >= 150);
+    if (big.length) {
+      out.push('  empty runs >=150px:');
+      for (const g of big) out.push(`    y=${g.start * 50}..${(g.end + 1) * 50}  (${(g.end - g.start + 1) * 50}px)`);
+    } else {
+      out.push('  no empty run >= 150px');
+    }
+
+    // sparkline of density
+    const mx = Math.max(...bands, 1);
+    out.push('  density: ' + bands.map(v => ' .:-=+*#%@'[Math.min(9, Math.round(v / mx * 9))]).join(''));
+
+    f.remove();
+    next();
+  }, 1500);
+  document.body.appendChild(f);
+}
+next();
+</script>
+</body>
+</html>

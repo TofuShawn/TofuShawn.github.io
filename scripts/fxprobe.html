@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>fxprobe</title>
+    <style>
+      body { margin: 0; font: 12px monospace; }
+      iframe { width: 1440px; height: 1000px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe id="f"></iframe>
+    <pre id="out">running…</pre>
+    <script>
+      const out = [];
+      const log = (k, v) => out.push(k + ': ' + JSON.stringify(v));
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      function probe(doc, win, label) {
+        const html = doc.documentElement;
+        const q = (s) => doc.querySelector(s);
+        const layer = q('.crt-scanlines');
+        const beam = q('.crt-beam');
+        const btn = q('#fxtoggle');
+        const rec = { label };
+
+        rec.skin = html.dataset.skin;
+        rec.hasLayer = !!layer;
+        rec.hasBeam = !!beam;
+        rec.hasBtn = !!btn;
+
+        if (layer) {
+          const cs = win.getComputedStyle(layer);
+          rec.layerDisplay = cs.display;
+          rec.layerOpacity = cs.opacity;
+          rec.layerBg = cs.backgroundImage.slice(0, 120);
+          rec.layerZ = cs.zIndex;
+          rec.layerPointer = cs.pointerEvents;
+        }
+        if (beam) {
+          const cs = win.getComputedStyle(beam);
+          rec.beamHeight = cs.height;
+          rec.beamAnim = cs.animationName + ' ' + cs.animationDuration;
+          rec.beamDisplay = cs.display;
+        }
+        if (btn) {
+          const r = btn.getBoundingClientRect();
+          const cs = win.getComputedStyle(btn);
+          rec.btn = {
+            pressed: btn.getAttribute('aria-pressed'),
+            box: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
+            opacity: cs.opacity,
+            inViewport: r.left >= 0 && r.bottom <= win.innerHeight,
+          };
+          // does it sit on top of anything textual?
+          const mid = doc.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          rec.btnTopmost = mid === btn || btn.contains(mid);
+        }
+        rec.htmlClass = html.className;
+        rec.fxStorage = (() => {
+          try {
+            return win.localStorage.getItem('fx');
+          } catch (e) {
+            return 'ERR';
+          }
+        })();
+        return rec;
+      }
+
+      async function run() {
+        const frame = document.getElementById('f');
+        const base = location.origin;
+
+        // 1. default lone-trail cover
+        await new Promise((res) => {
+          frame.onload = res;
+          frame.src = base + '/?skin=lone-trail&skip=1';
+        });
+        await sleep(1200);
+        const d1 = frame.contentDocument;
+        const w1 = frame.contentWindow;
+        log('default', probe(d1, w1, 'default'));
+
+        // 2. click the toggle, confirm the layer goes away and it persists
+        const btn = d1.getElementById('fxtoggle');
+        btn.click();
+        await sleep(150);
+        log('afterClick', probe(d1, w1, 'afterClick'));
+
+        // 3. reload — the preference must survive and be applied pre-paint
+        await new Promise((res) => {
+          frame.onload = res;
+          frame.src = base + '/?skin=lone-trail&skip=1&r=2';
+        });
+        await sleep(1200);
+        const d2 = frame.contentDocument;
+        const w2 = frame.contentWindow;
+        log('afterReload', probe(d2, w2, 'afterReload'));
+
+        // 4. clear it, confirm it comes back
+        d2.getElementById('fxtoggle').click();
+        await sleep(150);
+        log('afterToggleBack', probe(d2, w2, 'afterToggleBack'));
+
+        // 5. rhine must have none of this
+        await new Promise((res) => {
+          frame.onload = res;
+          frame.src = base + '/?skip=1&r=3';
+        });
+        await sleep(1000);
+        log('rhine', probe(frame.contentDocument, frame.contentWindow, 'rhine'));
+
+        document.getElementById('out').textContent = JSON.stringify(out, null, 1);
+        const marker = document.createElement('div');
+        marker.id = 'done';
+        marker.textContent = 'DONE';
+        document.body.appendChild(marker);
+      }
+
+      run();
+    </script>
+  </body>
+</html>

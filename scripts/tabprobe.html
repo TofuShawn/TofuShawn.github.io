@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tabprobe</title>
+    <style>
+      body { margin: 0; font: 12px monospace; }
+      iframe { border: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe id="f"></iframe>
+    <pre id="out">running…</pre>
+    <script>
+      const out = [];
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      async function run() {
+        const frame = document.getElementById('f');
+        const base = location.origin;
+        const go = (url) =>
+          new Promise((res) => {
+            frame.onload = res;
+            frame.src = base + url;
+          });
+
+        for (const [w, h] of [
+          [1440, 1000],
+          [390, 844],
+        ]) {
+          frame.style.width = w + 'px';
+          frame.style.height = h + 'px';
+          await go('/?skin=lone-trail&skip=1&r=' + w);
+          await sleep(1100);
+          const d = frame.contentDocument;
+          const win = frame.contentWindow;
+          const tab = d.getElementById('fxtoggle');
+          const r = tab.getBoundingClientRect();
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+
+          // What actually paints at the tab's centre? If it is the tab, fine.
+          const top = d.elementFromPoint(cx, cy);
+
+          // Does the tab box overlap any text-bearing element?
+          const overlaps = [];
+          const walker = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT);
+          let n;
+          while ((n = walker.nextNode())) {
+            if (!n.nodeValue.trim()) continue;
+            const range = d.createRange();
+            range.selectNodeContents(n);
+            for (const rect of range.getClientRects()) {
+              if (
+                rect.width > 0 &&
+                rect.right > r.left &&
+                rect.left < r.right &&
+                rect.bottom > r.top &&
+                rect.top < r.bottom
+              ) {
+                const p = n.parentElement;
+                overlaps.push(p.tagName + '.' + (p.className || '').toString().slice(0, 30));
+                break;
+              }
+            }
+            if (overlaps.length > 3) break;
+          }
+
+          // keyboard: S in the punch input must not toggle, S on body must.
+          // Compare before/after — the previous viewport's state persists in
+          // localStorage, so an absolute reading is meaningless.
+          const wasOff = () => d.documentElement.classList.contains('fx-off');
+          const inp = d.getElementById('punch-input');
+          let inputToggled = null;
+          if (inp) {
+            const before = wasOff();
+            inp.focus();
+            inp.dispatchEvent(new win.KeyboardEvent('keydown', { key: 's', bubbles: true }));
+            await sleep(60);
+            inputToggled = wasOff() !== before;
+          }
+          const beforeBody = wasOff();
+          d.body.focus();
+          d.body.dispatchEvent(new win.KeyboardEvent('keydown', { key: 's', bubbles: true }));
+          await sleep(80);
+          const bodyToggled = wasOff() !== beforeBody;
+
+          const cs = win.getComputedStyle(tab);
+          out.push({
+            viewport: w,
+            tabBox: [Math.round(r.left), Math.round(r.top), r.width, r.height],
+            flushCorner: Math.round(r.left) === 0 && Math.round(r.top + r.height) === h,
+            topmost: top === tab || tab.contains(top),
+            topEl: top ? top.tagName + '.' + (top.className || '').toString().slice(0, 24) : null,
+            overlapsText: overlaps,
+            color: cs.color,
+            bg: cs.backgroundColor,
+            border: cs.borderTopWidth + ' ' + cs.borderTopColor,
+            sInInputToggled: inputToggled,
+            sOnBodyToggled: bodyToggled,
+          });
+        }
+        document.getElementById('out').textContent = JSON.stringify(out, null, 1);
+      }
+      run();
+    </script>
+  </body>
+</html>

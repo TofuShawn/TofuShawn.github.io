@@ -1,0 +1,79 @@
+---
+/** The colophon: how the thing is made, and what it is made of. */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RunningHead from '../components/RunningHead.astro';
+import Folio from '../components/Folio.astro';
+import CropMarks from '../components/CropMarks.astro';
+import { SITE } from '../lib/site';
+import { SKINS } from '../skins/registry';
+import { POSTS } from '../lib/posts';
+
+const skin = SKINS[0];
+const words = POSTS.reduce((n, p) => n + p.words, 0);
+---
+
+<BaseLayout title="Colophon" path="/about/">
+  <div class="sheet">
+    <section class="spread">
+      <CropMarks />
+      <RunningHead no="06" title="Colophon" en="How this is made" />
+
+      <h1 class="t-display" data-rev>Colophon</h1>
+      <p class="t-lead" style="margin-top:16px;max-width:64ch" data-rev>
+        {SITE.description}
+      </p>
+
+      <div class="colo" style="margin-top:36px">
+        <div>
+          <p class="t-micro">Published</p>
+          <p>{SITE.colophon.published}<br />{SITE.author}</p>
+        </div>
+        <div>
+          <p class="t-micro">Printed</p>
+          <p>{SITE.colophon.printed}</p>
+        </div>
+        <div>
+          <p class="t-micro">Measure</p>
+          <p>{SITE.colophon.type}</p>
+        </div>
+        <div>
+          <p class="t-micro">Sound</p>
+          <p>{SITE.colophon.sound}</p>
+        </div>
+      </div>
+
+      <div class="colo">
+        <div style="grid-column:1/3">
+          <p class="t-micro">Built with</p>
+          <p>
+            Astro, static output, no client framework. Content is Markdown validated
+            against a schema at build time. The skin layer is a token contract: every
+            colour, size and duration on this page comes from a custom property that a
+            skin defines, so replacing one file restyles the whole site.
+          </p>
+          <p style="margin-top:10px">
+            Current skin: <strong>{skin.name}</strong> — {skin.tagline}.
+          </p>
+        </div>
+        <div style="grid-column:3/5">
+          <p class="t-micro">Registry</p>
+          <p>
+            {POSTS.length} entries · {words.toLocaleString('en-US')} words ·
+            {SKINS.length} skin{SKINS.length === 1 ? '' : 's'} installed
+          </p>
+          <p style="margin-top:10px">
+            <span class="stamp ink">Rev. 01</span>
+          </p>
+        </div>
+      </div>
+
+      <p class="disc">
+        This is a template. The typography, grid and motion are adapted from the Rhine
+        Lab dossier system (MIT). Nothing here is affiliated with any real institution;
+        the archive fiction is a frame for the layout.
+      </p>
+
+      <Folio page="P.42" note="COLOPHON" />
+    </section>
+  </div>
+</BaseLayout>

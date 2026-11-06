@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>seal probe</title></head><body>
+<pre id="out">pending</pre>
+<script>
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText='width:1280px;height:900px;border:0';
+frame.src=target;
+frame.onload=function(){
+  setTimeout(function(){
+    var out=[];
+    try{
+      var w=frame.contentWindow,d=w.document;
+      var un=d.getElementById('unseal');
+      out.push('skip='+target.indexOf('skip=1')>=0);
+      out.push('locked='+d.body.classList.contains('locked'));
+      out.push('unsealed='+w._unsealed);
+      if(un){
+        var s=w.getComputedStyle(un);
+        out.push('unseal.opacity='+s.opacity);
+        out.push('unseal.visibility='+s.visibility);
+        out.push('unseal.class='+un.className);
+      } else out.push('no-unseal-el');
+      var seal=d.querySelector('.seal');
+      if(seal){var ss=w.getComputedStyle(seal);out.push('seal.opacity='+ss.opacity+' vis='+ss.visibility);}
+    }catch(e){out.push('ERR '+e.message);}
+    document.getElementById('out').textContent='RESULT::'+out.join(' | ');
+  },3500);
+};
+document.body.appendChild(frame);
+</script></body></html>

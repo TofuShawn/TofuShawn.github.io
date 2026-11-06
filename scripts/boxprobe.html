@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>box probe</title>
+<style>body{font:11px/1.35 monospace;margin:0;padding:8px}pre{margin:0}</style></head>
+<body><pre id="out">loading…</pre>
+<script>
+const JOBS = [
+  { url: '/tags/?skip=1', w: 1440, label: 'rhine /tags/' },
+  { url: '/tags/?skin=lone-trail&skip=1', w: 1440, label: 'LT /tags/' },
+  { url: '/?skin=lone-trail&skip=1', w: 390, label: 'LT / 390' },
+  { url: '/?skin=lone-trail&skip=1', w: 1440, label: 'LT / 1440' },
+  { url: '/?skin=lone-trail&skip=1', w: 760, label: 'LT / 760' },
+];
+const out = [];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+(async () => {
+  for (const j of JOBS) {
+    const f = document.createElement('iframe');
+    f.style.cssText = `width:${j.w}px;height:2200px;border:0;position:absolute;left:-99999px;top:0`;
+    f.src = j.url;
+    await new Promise((res) => { f.onload = res; document.body.appendChild(f); });
+    await sleep(900);
+    const d = f.contentDocument, w = f.contentWindow;
+    out.push(`=== ${j.label} @${j.w}`);
+    const bb = (sel) => {
+      const el = d.querySelector(sel);
+      if (!el) return `${sel} MISSING`;
+      const r = el.getBoundingClientRect();
+      return `${sel} x=${Math.round(r.left)} y=${Math.round(r.top)} w=${Math.round(r.width)} h=${Math.round(r.height)}`;
+    };
+    if (j.label.includes('tags')) {
+      out.push(bb('.tag-cloud'), bb('.tag'));
+      const ts = [...d.querySelectorAll('.tag')];
+      out.push(`n=${ts.length} fs=${ts.map((t) => w.getComputedStyle(t).fontSize).join(',')}`);
+      out.push(`tag widths=${ts.map((t) => Math.round(t.getBoundingClientRect().width)).join(',')}`);
+      out.push(`spread h=${Math.round(d.querySelector('.spread').getBoundingClientRect().height)}`);
+    } else {
+      out.push(bb('.punch'), bb('.punch-entry'), bb('.punch-matrix'), bb('.punch-col'), bb('.punch-dot'), bb('.morse-bar'), bb('.cv-left'), bb('.cv-right'), bb('.cover-body'));
+      const cols = d.querySelectorAll('.punch-col');
+      out.push(`cols=${cols.length} colW=${cols.length ? Math.round(cols[0].getBoundingClientRect().width) : 0} dotW=${d.querySelector('.punch-dot') ? Math.round(d.querySelector('.punch-dot').getBoundingClientRect().width) : 0}`);
+      const m = d.querySelector('.punch-matrix');
+      out.push(`matrix scrollW=${m.scrollWidth} clientW=${m.clientWidth}`);
+      const dots = d.querySelectorAll('.punch-dot.on');
+      out.push(`dotsOn=${dots.length} dotsTotal=${d.querySelectorAll('.punch-dot').length}`);
+      out.push(`docScrollW=${d.documentElement.scrollWidth} bodyScrollW=${d.body.scrollWidth}`);
+    }
+    f.remove();
+  }
+  document.getElementById('out').textContent = out.join('\n');
+})();
+</script>
+</body></html>

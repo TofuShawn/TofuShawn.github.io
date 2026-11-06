@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>skip</title>
+<style>body{font:12px monospace;margin:0}iframe{width:1200px;height:800px;border:0}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * `?skip=1` must never paint a ceremony. rhine hides `.unseal` via base.css;
+ * this checks whether the second skin's overlay obeys the same escape hatch.
+ */
+const cases = ['/?skip=1', '/?skin=lone-trail&skip=1', '/?skin=lone-trail'];
+const results = [];
+
+function run(url) {
+  return new Promise((resolve) => {
+    const frame = document.createElement('iframe');
+    frame.src = url;
+    frame.onload = () => setTimeout(() => {
+      const w = frame.contentWindow, d = w.document;
+      const pick = (sel) => {
+        const el = d.querySelector(sel);
+        if (!el) return 'ABSENT';
+        const cs = w.getComputedStyle(el);
+        return cs.display === 'none' ? 'display:none' : `display:${cs.display} opacity:${cs.opacity} vis:${cs.visibility}`;
+      };
+      results.push({
+        url,
+        reduced: w.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        noSeal: d.documentElement.classList.contains('no-seal'),
+        locked: d.body.classList.contains('locked'),
+        rhineOverlay: pick('.unseal'),
+        ltOverlay: pick('.launch'),
+        // Is the top of the page actually the page, or an overlay?
+        topHit: (() => {
+          const el = d.elementFromPoint(w.innerWidth / 2, 120);
+          return el ? el.tagName.toLowerCase() + '.' + (el.className || '').toString().slice(0, 26) : null;
+        })(),
+      });
+      frame.remove();
+      resolve();
+    }, 3500);
+    document.body.appendChild(frame);
+  });
+}
+
+(async () => {
+  for (const c of cases) await run(c);
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(results, null, 1);
+})();
+</script>
+</body>
+</html>

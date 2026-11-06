@@ -1,0 +1,141 @@
+---
+/** A single entry: running head, title block, body with a sticky TOC, figures. */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RunningHead from '../../components/RunningHead.astro';
+import Folio from '../../components/Folio.astro';
+import CropMarks from '../../components/CropMarks.astro';
+import Plate from '../../components/Plate.astro';
+import { ALL_POSTS, getAdjacent, getPost, postUrl, tagSlug } from '../../lib/posts';
+import { longDate, isoDate, stampDate } from '../../lib/format';
+import { featuresAny } from '../../skins/registry';
+
+export function getStaticPaths() {
+  return ALL_POSTS.map((post) => ({ params: { slug: post.slug }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { prev, next } = getAdjacent(post.slug);
+const f = featuresAny();
+const toc = post.headings;
+
+// The plate sits after the second h2 if there is one, otherwise it leads the
+// body. Keeping it out of the markdown means posts stay portable.
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.description}
+  path={postUrl(post)}
+  progress={true}
+>
+  <div class="sheet">
+    <article class="spread" lang={post.lang}>
+      {f.printArtifacts && <CropMarks corners={2} />}
+      <RunningHead no="03" title={post.displayCode} en={`${post.readingTime} min`} />
+
+      <header class="article-head">
+        <div class="kicker">
+          <span class="t-micro">{stampDate(post.dateObj)}</span>
+          {post.updatedObj && <span class="t-micro">Rev. {stampDate(post.updatedObj)}</span>}
+          {post.tags.map((t) => (
+            <a
+              class="t-micro"
+              href={`/tags/${tagSlug(t)}/`}
+              style="color:var(--accent-text);text-decoration:none"
+            >
+              {t}
+            </a>
+          ))}
+        </div>
+
+        <h1 class="t-display" data-rev>{post.title}</h1>
+        {post.titleCn && (
+          <p class="t-h2" style="margin-top:10px;color:var(--fg-mute);--d:60ms" data-rev>
+            {post.titleCn}
+          </p>
+        )}
+
+        <p class="t-lead" style="margin-top:18px;max-width:62ch" data-rev>
+          {post.description}
+        </p>
+
+        <div class="article-meta">
+          <span>
+            <time datetime={isoDate(post.dateObj)}>{longDate(post.dateObj)}</time>
+          </span>
+          <span>{post.words.toLocaleString('en-US')} words</span>
+          <span>{post.readingTime} min read</span>
+          <span>{post.displayCode}</span>
+        </div>
+      </header>
+
+      <div class="g">
+        <div class="c1-7">
+          <div class="prose">
+            <post.Content />
+          </div>
+        </div>
+
+        <aside class="c9-12">
+          {toc.length > 1 && (
+            <nav class="toc" aria-label="Contents">
+              <p class="t-micro">Contents</p>
+              <ol>
+                {toc.map((h) => (
+                  <li class={h.depth === 3 ? 'lvl3' : ''}>
+                    <a href={`#${h.slug}`}>{h.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+
+          {f.halftone && (
+            <div style="margin-top:26px">
+              <Plate
+                variant="orbit"
+                cell={4}
+                ratio="1 / 1"
+                tag="FIG.01"
+                caption="Orbit — specimen plate"
+                alt="An orbit halftone plate"
+              />
+              <p class="figcap">
+                <b>FIG.01</b>
+                <span>Procedural plate, 45° screen.</span>
+              </p>
+            </div>
+          )}
+
+          <div class="sidenote" style="margin-top:26px">
+            <p><b>Cite</b></p>
+            <p style="margin-top:6px">
+              {post.displayCode}, {stampDate(post.dateObj)}.
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      <nav class="post-nav" aria-label="Adjacent entries">
+        <div>
+          {prev && (
+            <a href={postUrl(prev)}>
+              <p class="dir">← Older</p>
+              <p class="ttl">{prev.title}</p>
+            </a>
+          )}
+        </div>
+        <div class="next">
+          {next && (
+            <a href={postUrl(next)}>
+              <p class="dir">Newer →</p>
+              <p class="ttl">{next.title}</p>
+            </a>
+          )}
+        </div>
+      </nav>
+
+      <Folio page="P.04" note={post.displayCode} />
+    </article>
+  </div>
+</BaseLayout>

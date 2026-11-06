@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>probe</title>
+<style>
+  body { font: 12px monospace; margin: 0; }
+  iframe { width: 100%; height: 900px; border: 0; }
+  #out { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * Measurement harness.
+ *
+ * Loads each page in an iframe, measures the things that can be measured
+ * objectively — overflow, contrast, computed tokens, canvas state — and writes
+ * one JSON blob into the DOM. `chromium --dump-dom` then reads it back.
+ *
+ * This exists because the author of this template cannot view screenshots;
+ * every visual claim has to be backed by a number.
+ */
+const PAGES = JSON.parse(decodeURIComponent(location.hash.slice(1) || '[]'));
+const WIDTHS = [1440, 390];
+
+function parseColor(s) {
+  if (!s) return null;
+  const hex = s.trim().match(/^#([0-9a-f]{3,8})$/i);
+  if (hex) {
+    let h = hex[1];
+    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+      a: h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1,
+    };
+  }
+  const m = s.match(/rgba?\(([^)]+)\)/);
+  if (!m) return null;
+  const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+  return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
+}
+
+function lum({ r, g, b }) {
+  const f = (c) => {
+    c /= 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+function contrast(fg, bg) {
+  const a = lum(fg) + 0.05;
+  const b = lum(bg) + 0.05;
+  return a > b ? a / b : b / a;
+}
+
+/** Flatten a possibly-transparent colour onto an opaque backdrop. */
+function over(fg, bg) {
+  const a = fg.a;
+  return {
+    r: fg.r * a + bg.r * (1 - a),
+    g: fg.g * a + bg.g * (1 - a),
+    b: fg.b * a + bg.b * (1 - a),
+    a: 1,
+  };
+}
+
+function measurePage(url, width) {
+  return new Promise((resolve) => {
+    const frame = document.createElement('iframe');
+    frame.style.width = width + 'px';
+    frame.style.height = '900px';
+    frame.src = url;
+
+    const errors = [];
+    const done = (result) => {
+      frame.remove();
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => done({ url, width, timeout: true, errors }), 9000);
+
+    frame.onload = () => {
+      // Walk the page so IntersectionObserver reveals and lazy canvas painting
+      // actually run. Measuring a page nobody has scrolled measures nothing.
+      setTimeout(() => {
+        try {
+          const w = frame.contentWindow;
+
+          // Scroll through the document so reveal observers fire, then return
+          // to the top. Synchronous scroll on a same-origin frame.
+          try {
+            const total = w.document.documentElement.scrollHeight;
+            for (let y = 0; y < total; y += 400) w.scrollTo(0, y);
+            w.scrollTo(0, 0);
+          } catch (e) {}
+          const d = w.document;
+          const cs = w.getComputedStyle(d.documentElement);
+
+          w.onerror = (m) => errors.push(String(m));
+          w.addEventListener('error', (e) => errors.push(String(e.message)));
+
+          // --- horizontal overflow ---
+          const vw = w.innerWidth;
+          const docW = d.documentElement.scrollWidth;
+          // An element sticking out is only a problem if nothing clips it.
+          // Decorative furniture (the rotated seal band) is deliberately wider
+          // than the viewport and relies on an `overflow:hidden` ancestor.
+          const clipped = (el) => {
+            let p = el.parentElement;
+            while (p && p !== d.body) {
+              const s = w.getComputedStyle(p);
+              if (s.overflowX === 'hidden' || s.overflowX === 'clip') return true;
+              if (s.position === 'fixed') return true;
+              p = p.parentElement;
+            }
+            return false;
+          };
+
+          const overflowing = [];
+          d.querySelectorAll('body *').forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0) return;
+            if (r.right > vw + 1.5 || r.left < -1.5) {
+              const tag = el.tagName.toLowerCase();
+              if (tag === 'script' || tag === 'style' || tag === 'link') return;
+              overflowing.push({
+                tag,
+                cls: (el.className || '').toString().slice(0, 44),
+                right: Math.round(r.right),
+                left: Math.round(r.left),
+                clipped: clipped(el),
+              });
+            }
+          });
+          const realOverflow = overflowing.filter((o) => !o.clipped);
+
+          // --- tokens ---
+          const tokenNames = [
+            '--bg', '--bg-sheet', '--fg', '--fg-soft', '--fg-mute',
+            '--accent', '--on-accent', '--measure', '--gutter', '--baseline',
+            '--fs-body', '--fs-h1', '--lh-body', '--radius',
+          ];
+          const tokens = {};
+          tokenNames.forEach((t) => (tokens[t] = cs.getPropertyValue(t).trim()));
+
+          // --- contrast ---
+          const sheetBg = parseColor(cs.getPropertyValue('--bg-sheet')) ||
+            parseColor(w.getComputedStyle(d.body).backgroundColor);
+          const bodyEl =
+            d.querySelector('.prose p') ||
+            d.querySelector('.article-head .t-lead') ||
+            d.querySelector('.cover .t-lead') ||
+            d.querySelector('p.t-body') ||
+            d.querySelector('p');
+          const bodyFg = bodyEl ? parseColor(w.getComputedStyle(bodyEl).color) : null;
+          const accent = parseColor(cs.getPropertyValue('--accent'));
+          const fg = parseColor(cs.getPropertyValue('--fg'));
+
+          const contrastReport = {};
+          if (bodyFg && sheetBg) contrastReport.bodyOnSheet = +contrast(over(bodyFg, sheetBg), sheetBg).toFixed(2);
+          if (fg && sheetBg) contrastReport.inkOnSheet = +contrast(fg, sheetBg).toFixed(2);
+          if (accent && sheetBg) contrastReport.accentOnSheet = +contrast(accent, sheetBg).toFixed(2);
+
+          // --- reveal state ---
+          const revs = [...d.querySelectorAll('[data-rev]')];
+          const hiddenRevs = revs.filter((el) => {
+            const s = w.getComputedStyle(el);
+            return parseFloat(s.opacity) < 0.9;
+          }).length;
+          const notIn = revs.filter((el) => !el.classList.contains('in')).length;
+          const sealed = d.body.classList.contains('locked');
+
+          // --- canvases ---
+          const canvases = [...d.querySelectorAll('canvas')].map((c) => {
+            let ink = null;
+            try {
+              const ctx = c.getContext('2d');
+              const img = ctx.getImageData(0, 0, c.width, c.height).data;
+              let dark = 0;
+              const step = Math.max(4, Math.floor(img.length / 4 / 4000)) * 4;
+              let n = 0;
+              for (let i = 0; i < img.length; i += step) {
+                n++;
+                if (img[i] < 120 && img[i + 1] < 120) dark++;
+              }
+              ink = +(dark / Math.max(1, n)).toFixed(3);
+            } catch (e) {
+              ink = 'tainted';
+            }
+            return { w: c.width, h: c.height, drawn: c.dataset.drawn || null, ink };
+          });
+
+          // --- structure ---
+          const h1s = d.querySelectorAll('h1').length;
+          const imgsNoAlt = [...d.querySelectorAll('img')].filter((i) => !i.hasAttribute('alt')).length;
+          const linksNoText = [...d.querySelectorAll('a')].filter(
+            (a) => !a.textContent.trim() && !a.getAttribute('aria-label'),
+          ).length;
+
+          // --- accent area share, as a proxy for "is the accent restrained" ---
+          let accentArea = 0;
+          let totalArea = 0;
+          if (accent) {
+            const target = `rgb(${Math.round(accent.r)}, ${Math.round(accent.g)}, ${Math.round(accent.b)})`;
+            d.querySelectorAll('body *').forEach((el) => {
+              const r = el.getBoundingClientRect();
+              if (!r.width || !r.height) return;
+              const s = w.getComputedStyle(el);
+              totalArea += r.width * r.height;
+              if (s.color === target || s.backgroundColor === target) {
+                accentArea += r.width * r.height;
+              }
+            });
+          }
+
+          // --- typography sanity ---
+          const bodySize = bodyEl ? w.getComputedStyle(bodyEl).fontSize : null;
+          const docFont = w.getComputedStyle(d.body).fontFamily.slice(0, 40);
+
+          clearTimeout(timer);
+          done({
+            url,
+            width,
+            docWidth: docW,
+            viewport: vw,
+            overflowCount: realOverflow.length,
+            clippedCount: overflowing.length - realOverflow.length,
+            docOverflow: docW > vw + 1,
+            overflowing: realOverflow.slice(0, 6),
+            tokens,
+            contrast: contrastReport,
+            revs: revs.length,
+            hiddenRevs,
+            notIn,
+            sealed,
+            canvases,
+            h1s,
+            imgsNoAlt,
+            linksNoText,
+            accentShare: totalArea ? +(accentArea / totalArea).toFixed(4) : null,
+            bodySize,
+            font: docFont,
+            scrollHeight: d.documentElement.scrollHeight,
+            errors,
+          });
+        } catch (e) {
+          clearTimeout(timer);
+          done({ url, width, fatal: String(e && e.message), errors });
+        }
+      }, 3200);
+    };
+
+    document.body.appendChild(frame);
+  });
+}
+
+(async () => {
+  const results = [];
+  for (const page of PAGES) {
+    for (const width of WIDTHS) {
+      results.push(await measurePage(page, width));
+    }
+  }
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(results);
+})();
+</script>
+</body>
+</html>

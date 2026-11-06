@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>launch</title>
+<style>body{font:12px monospace;margin:0}iframe{width:1440px;height:900px;border:0}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * The launch ceremony is the riskiest piece in this skin: it locks scroll, so a
+ * failure traps the page. This loads the cover *sealed*, checks the lock, clicks
+ * Enter, and confirms the page is usable afterwards.
+ */
+const frame = document.createElement('iframe');
+frame.src = '/?skin=lone-trail';
+frame.onload = () => setTimeout(() => {
+  const w = frame.contentWindow, d = w.document;
+  const overlay = d.getElementById('lt-launch');
+  const steps = [];
+
+  steps.push({
+    at: 'sealed',
+    overlay: overlay ? overlay.className : 'ABSENT',
+    locked: d.body.classList.contains('locked'),
+    scrollY: w.scrollY,
+    scrollH: d.documentElement.scrollHeight,
+    count: (d.getElementById('lt-count') || {}).textContent,
+    focusable: d.querySelectorAll('button, a[href], input').length,
+  });
+
+  // Scroll should be impossible while locked.
+  w.scrollTo({ top: 600, behavior: 'instant' });
+  steps.push({ at: 'scroll-while-locked', scrollY: w.scrollY });
+
+  const btn = overlay && overlay.querySelector('.launch-btn');
+  if (btn) btn.click();
+
+  setTimeout(() => {
+    steps.push({
+      at: 'after-enter',
+      overlay: overlay ? overlay.className : 'ABSENT',
+      locked: d.body.classList.contains('locked'),
+      overlayHidden:
+        overlay ? w.getComputedStyle(overlay).visibility === 'hidden' : null,
+    });
+    w.scrollTo({ top: 600, behavior: 'instant' });
+    steps.push({ at: 'scroll-after-unseal', scrollY: w.scrollY });
+    document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(steps, null, 1);
+  }, 900);
+}, 4000);
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

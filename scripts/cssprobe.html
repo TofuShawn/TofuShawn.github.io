@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>css probe</title></head>
+<body>
+<pre id="out">pending</pre>
+<script>
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText = 'width:1280px;height:900px;border:0';
+frame.src = target;
+
+frame.onload = function () {
+  setTimeout(function () {
+    var out = [];
+    try {
+      var w = frame.contentWindow;
+      var d = w.document;
+      var el = d.querySelector('[data-rev]');
+      var s = w.getComputedStyle(el);
+      out.push('classList=' + el.className);
+      out.push('opacity=' + s.opacity);
+      out.push('transition=' + s.transition.slice(0, 120));
+      out.push('delay=' + s.transitionDelay);
+      out.push('duration=' + s.transitionDuration);
+      out.push('filter=' + s.filter);
+      out.push('transform=' + s.transform);
+      out.push('--dur-base=' + s.getPropertyValue('--dur-base'));
+      out.push('--ease-out=' + s.getPropertyValue('--ease-out'));
+      out.push('--d=' + s.getPropertyValue('--d'));
+
+      // Which rules apply?
+      var matches = [];
+      [].forEach.call(d.styleSheets, function (sheet) {
+        var rules;
+        try { rules = sheet.cssRules; } catch (e) { return; }
+        [].forEach.call(rules, function (rule) {
+          if (!rule.selectorText) return;
+          try {
+            if (el.matches(rule.selectorText)) {
+              var op = rule.style && rule.style.opacity;
+              matches.push(rule.selectorText + (op ? '  ->opacity:' + op : ''));
+            }
+          } catch (e) {}
+        });
+      });
+      out.push('MATCHED(' + matches.length + '): ' + matches.join(' ;; '));
+    } catch (e) {
+      out.push('ERR ' + e.message);
+    }
+    document.getElementById('out').textContent = 'RESULT::' + out.join(' | ');
+  }, 4000);
+};
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

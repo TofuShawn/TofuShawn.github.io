@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>canvas probe</title></head>
+<body>
+<pre id="out">pending</pre>
+<script>
+var target = decodeURIComponent(location.hash.slice(1));
+var out = [];
+
+function flush() {
+  document.getElementById('out').textContent = 'RESULT::' + out.join(' | ');
+}
+
+var frame = document.createElement('iframe');
+frame.style.cssText = 'width:1200px;height:900px;border:0';
+frame.src = target;
+
+frame.onload = function () {
+  setTimeout(function () {
+    try {
+      var w = frame.contentWindow;
+      var d = w.document;
+      out.push('locked=' + d.body.classList.contains('locked'));
+      out.push('jsmotion=' + d.documentElement.classList.contains('js-motion'));
+
+      var cv = d.querySelector('canvas[data-halftone]');
+      if (!cv) {
+        out.push('no-canvas');
+        flush();
+        return;
+      }
+
+      var r = cv.getBoundingClientRect();
+      out.push('rect=' + Math.round(r.width) + 'x' + Math.round(r.height));
+      out.push('attr=' + cv.width + 'x' + cv.height);
+      out.push('cell=' + cv.dataset.cell);
+      out.push('variant=' + cv.dataset.halftone);
+      out.push('drawn=' + cv.dataset.drawn);
+
+      var ctx = cv.getContext('2d');
+      var img = ctx.getImageData(0, 0, cv.width, cv.height).data;
+      var hist = {};
+      for (var i = 0; i < img.length; i += 4) {
+        var k = img[i] + ',' + img[i + 1] + ',' + img[i + 2] + ',' + img[i + 3];
+        hist[k] = (hist[k] || 0) + 1;
+      }
+      var total = img.length / 4;
+      var keys = Object.keys(hist);
+      out.push('distinct=' + keys.length);
+      keys
+        .map(function (k) { return [k, hist[k]]; })
+        .sort(function (a, b) { return b[1] - a[1]; })
+        .slice(0, 5)
+        .forEach(function (p) {
+          out.push(p[0] + '@' + ((100 * p[1]) / total).toFixed(1) + '%');
+        });
+      flush();
+    } catch (e) {
+      out.push('ERR:' + e.message);
+      flush();
+    }
+  }, 3000);
+};
+
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

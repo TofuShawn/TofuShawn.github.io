@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>clock probe</title></head>
+<body>
+<pre id="out">pending</pre>
+<script>
+/* Is the reveal rule applying, or is the animation clock simply frozen? */
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText = 'width:1280px;height:900px;border:0';
+frame.src = target;
+
+frame.onload = function () {
+  setTimeout(function () {
+    var out = [];
+    try {
+      var w = frame.contentWindow;
+      var d = w.document;
+      var el = d.querySelector('[data-rev]');
+
+      out.push('reduceMotion=' + w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      out.push('classList=' + el.className);
+      out.push('inline=' + JSON.stringify(el.getAttribute('style')));
+
+      var s = w.getComputedStyle(el);
+      out.push('opacityBefore=' + s.opacity);
+
+      // Animations currently running on this element.
+      var anims = (d.getAnimations ? d.getAnimations() : []);
+      out.push('animCount=' + anims.length);
+      anims.slice(0, 4).forEach(function (a, i) {
+        out.push(
+          'a' + i + ':' + (a.animationName || a.transitionProperty || '?') +
+          ' state=' + a.playState +
+          ' t=' + (a.currentTime === null ? 'null' : Math.round(a.currentTime))
+        );
+      });
+
+      // Force the end state: if the rule is correct this reads 1.
+      el.style.transition = 'none';
+      var after = w.getComputedStyle(el).opacity;
+      out.push('opacityForced=' + after);
+
+      // And confirm the filter/transform also resolve.
+      out.push('filterForced=' + w.getComputedStyle(el).filter);
+      out.push('transformForced=' + w.getComputedStyle(el).transform);
+    } catch (e) {
+      out.push('ERR ' + e.message);
+    }
+    document.getElementById('out').textContent = 'RESULT::' + out.join(' | ');
+  }, 4000);
+};
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

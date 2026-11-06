@@ -1,0 +1,88 @@
+/**
+ * Skin tokens.
+ *
+ * `npm run check` fails the build unless every token in `src/skins/contract.ts`
+ * is defined in this block. That is the whole contract: get the tokens right and
+ * the shared layout will look coherent, because `src/styles/base.css` contains
+ * structure only and never a colour or a font.
+ *
+ * Values below are a neutral starting point — replace them, do not extend them.
+ * If you find yourself needing a token that is not in the contract, that is a
+ * signal the contract is missing something, not that this file should hardcode a
+ * colour. Add it to `REQUIRED_TOKENS` and to every skin.
+ */
+
+:root[data-skin='template'] {
+  /* --- surface ----------------------------------------------------------- */
+  --bg: #e4e0d5;
+  --bg-sheet: #f6f3eb;
+  --bg-elev: #efece2;
+  --fg: #151513;
+  --fg-soft: #3c3c36;
+  --fg-mute: #6a675f;
+  --rule: rgba(21, 21, 19, 0.2);
+  --rule-soft: rgba(21, 21, 19, 0.1);
+  --shadow-sheet: 0 22px 48px -18px rgba(38, 32, 20, 0.24);
+
+  /* --- accent ------------------------------------------------------------ */
+  /* --accent is the brand colour. --accent-text is the SAME hue darkened until
+     it passes 4.5:1 against --bg-sheet, for accent-coloured text at 8–13px.
+     Using --accent for small text is the single most common failure here. */
+  --accent: #e9521c;
+  --accent-text: #bf3d0d;
+  --accent-soft: rgba(233, 82, 28, 0.14);
+  --on-accent: #f6f3eb;
+
+  /* --- type -------------------------------------------------------------- */
+  --font-display: 'Helvetica Neue', Helvetica, 'Nimbus Sans', Arial, sans-serif;
+  --font-body: 'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+
+  --fs-cover: clamp(58px, 10.4vw, 148px);
+  --fs-display: clamp(38px, 5.2vw, 62px);
+  --fs-h1: 27px;
+  --fs-h2: 17px;
+  --fs-lead: 14.5px;
+  --fs-body: 13px;
+  --fs-cap: 10px;
+  --fs-micro: 8.5px;
+
+  --lh-body: 1.98;
+  --lh-display: 0.9;
+  --tracking-display: -0.035em;
+  --tracking-caps: 0.24em;
+
+  /* --- layout ------------------------------------------------------------ */
+  --measure: 1180px;
+  --margin: 56px;
+  --gutter: 20px;
+  --baseline: 8px;
+  --radius: 0;
+
+  /* --- motion ------------------------------------------------------------ */
+  --dur-fast: 180ms;
+  --dur-base: 720ms;
+  --dur-slow: 1500ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/*
+ * A skin may also style any structural class from `src/styles/base.css` —
+ * `.spread`, `.rh`, `.folio`, `.g`, `.ix-row`, `.prose`, `.plate` and so on.
+ *
+ * Write those rules UNSCOPED:
+ *
+ *   .spread { ... }
+ *
+ * `npm run build` runs `scripts/scope-skins.mjs` first, which rewrites every
+ * rule in this file to `:root[data-skin='template'] .spread { ... }` and
+ * concatenates all skins into one bundle. Scoping is automated precisely
+ * because forgetting it is a silent cross-skin leak: an unscoped `.masthead`
+ * rule here would repaint the masthead of every other skin on the site.
+ *
+ * The token block above is the one exception — it is already scoped, and the
+ * scoper leaves `:root[data-skin=…]` selectors untouched.
+ *
+ * Prefer tokens over literal values even here. If a value repeats three times it
+ * belongs in the block above, not in three rules below.
+ */

@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>lock</title>
+<style>body{font:12px monospace;margin:0}iframe{width:1200px;height:800px;border:0}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * Does `body.locked { overflow: hidden }` actually stop the viewport?
+ *
+ * `overflow` on <body> propagates to the viewport only when <html> is
+ * `visible`. If it does not propagate, a locked page is still scrollable and
+ * the overlay is the only thing hiding that — a real bug, not a cosmetic one.
+ */
+const frame = document.createElement('iframe');
+frame.src = '/?skin=lone-trail';
+frame.onload = () => setTimeout(() => {
+  const w = frame.contentWindow, d = w.document;
+  const tries = {};
+
+  const attempt = (label) => {
+    w.scrollTo({ top: 0, behavior: 'instant' });
+    w.scrollTo({ top: 500, behavior: 'instant' });
+    tries[label] = w.scrollY;
+  };
+
+  const rootCS = w.getComputedStyle(d.documentElement);
+  const bodyCS = w.getComputedStyle(d.body);
+
+  attempt('body.locked (as shipped)');
+
+  // Force the root to be the scroll container, then hide it.
+  d.documentElement.style.overflow = 'hidden';
+  attempt('html overflow hidden');
+
+  d.documentElement.style.overflow = '';
+  d.body.style.overflow = 'auto';
+  attempt('body overflow auto');
+
+  d.body.style.overflow = '';
+  d.body.style.position = 'fixed';
+  d.body.style.width = '100%';
+  attempt('body position fixed');
+
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify({
+    rootOverflow: rootCS.overflow,
+    rootOverflowY: rootCS.overflowY,
+    bodyOverflow: bodyCS.overflow,
+    bodyOverflowY: bodyCS.overflowY,
+    bodyClass: d.body.className,
+    tries,
+  }, null, 1);
+}, 4000);
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

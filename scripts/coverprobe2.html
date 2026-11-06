@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cover probe 2</title>
+<style>body{font:11px/1.35 monospace;margin:0;padding:8px}pre{margin:0}</style>
+</head>
+<body>
+<pre id="out">loading…</pre>
+<script>
+const SKIN = new URLSearchParams(location.search).get('skin') || 'lone-trail';
+const url = '/?skin=' + SKIN + '&skip=1';
+
+const frame = document.createElement('iframe');
+frame.style.cssText = 'width:1440px;height:1000px;border:0;position:absolute;left:-9999px';
+frame.src = url;
+document.body.appendChild(frame);
+
+frame.onload = () => setTimeout(() => {
+  const d = frame.contentDocument;
+  const L = [];
+  const b = (el) => { const r = el.getBoundingClientRect(); return `y=${Math.round(r.top)}..${Math.round(r.bottom)} h=${Math.round(r.height)} x=${Math.round(r.left)}..${Math.round(r.right)}`; };
+  const name = (el) => el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : '');
+
+  L.push(`skin=${SKIN}  docH=${d.documentElement.scrollHeight}`);
+
+  const cover = d.querySelector('.spread.cover');
+  L.push(`cover ${b(cover)}`);
+
+  // every descendant of the cover with a real box
+  L.push('');
+  L.push('--- cover descendants (h>0), sorted by top ---');
+  const rows = [];
+  for (const el of cover.querySelectorAll('*')) {
+    const r = el.getBoundingClientRect();
+    if (r.height < 4 || r.width < 4) continue;
+    const s = getComputedStyle(el);
+    if (s.visibility === 'hidden' || s.display === 'none') continue;
+    rows.push({ el, r, s });
+  }
+  rows.sort((a, b2) => a.r.top - b2.r.top || a.r.left - b2.r.left);
+  for (const { el, r, s } of rows) {
+    const ink = s.backgroundColor !== 'rgba(0, 0, 0, 0)' ? 'BG' : (s.borderTopWidth !== '0px' ? 'BR' : '  ');
+    L.push(`  ${ink} ${name(el).slice(0, 46).padEnd(46)} y=${String(Math.round(r.top)).padStart(5)} h=${String(Math.round(r.height)).padStart(5)} x=${String(Math.round(r.left)).padStart(5)}..${String(Math.round(r.right)).padStart(5)}`);
+  }
+
+  // vertical occupancy per column band
+  L.push('');
+  L.push('--- ink rows by 100px band (element coverage) ---');
+  const bands = new Map();
+  for (const { r } of rows) {
+    const a = Math.floor(r.top / 100) * 100;
+    const bnd = Math.ceil(r.bottom / 100) * 100;
+    for (let y = a; y < bnd; y += 100) {
+      const k = y;
+      if (!bands.has(k)) bands.set(k, 0);
+      bands.set(k, bands.get(k) + (r.width * Math.min(100, r.bottom - y, y + 100 - r.top)));
+    }
+  }
+  const keys = [...bands.keys()].sort((a, b2) => a - b2);
+  for (const k of keys) {
+    const pct = (bands.get(k) / (1280 * 100) * 100).toFixed(1);
+    L.push(`  y=${String(k).padStart(4)}  coverage=${pct.padStart(5)}%`);
+  }
+
+  // the fold
+  L.push('');
+  L.push(`viewport 900px fold: cover spans ${Math.round(cover.getBoundingClientRect().top)}..${Math.round(cover.getBoundingClientRect().bottom)}`);
+
+  document.getElementById('out').textContent = L.join('\n');
+}, 1800);
+</script>
+</body>
+</html>

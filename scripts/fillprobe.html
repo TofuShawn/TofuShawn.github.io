@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>sheet fill probe</title>
+<style>body{font:11px/1.3 monospace;margin:0;padding:8px}pre{margin:0}</style>
+</head>
+<body>
+<pre id="out">loading…</pre>
+<script>
+const SKIN = new URLSearchParams(location.search).get('skin') || 'lone-trail';
+const PAGES = ['/', '/posts/', '/tags/', '/about/'];
+const out = [];
+let i = 0;
+
+function next() {
+  if (i >= PAGES.length) { document.getElementById('out').textContent = out.join('\n'); return; }
+  const p = PAGES[i++];
+  const f = document.createElement('iframe');
+  f.style.cssText = 'width:1440px;height:1600px;border:0;position:absolute;left:-9999px';
+  f.src = p + (p.includes('?') ? '&' : '?') + 'skin=' + SKIN + '&skip=1';
+  f.onload = () => setTimeout(() => {
+    const d = f.contentDocument;
+    const spread = d.querySelector('.spread');
+    const sr = spread.getBoundingClientRect();
+    // last ink element inside the spread
+    let bottom = 0, who = '';
+    for (const el of spread.querySelectorAll('*')) {
+      const r = el.getBoundingClientRect();
+      if (r.height < 2 || r.width < 2) continue;
+      const s = f.contentWindow.getComputedStyle(el);
+      if (s.display === 'none' || s.visibility === 'hidden') continue;
+      if (r.bottom > bottom) { bottom = r.bottom; who = el.tagName.toLowerCase() + '.' + (el.className || '').toString().split(' ').filter(Boolean).join('.'); }
+    }
+    out.push(`### ${p}`);
+    out.push(`  spread: top=${Math.round(sr.top)} height=${Math.round(sr.height)} bottom=${Math.round(sr.bottom)}`);
+    out.push(`  last ink: ${who} bottom=${Math.round(bottom)}`);
+    out.push(`  void inside sheet: ${Math.round(sr.bottom - bottom)}px`);
+    out.push(`  body scrollHeight: ${d.documentElement.scrollHeight}`);
+    f.remove(); next();
+  }, 1400);
+  document.body.appendChild(f);
+}
+next();
+</script>
+</body>
+</html>

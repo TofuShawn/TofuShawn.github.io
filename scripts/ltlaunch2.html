@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>launch2</title>
+<style>body{font:12px monospace;margin:0}iframe{width:1200px;height:800px;border:0}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * Follows the overlay across the unseal transition: class, computed opacity and
+ * visibility, and whether it still intercepts pointer events. A hidden overlay
+ * that still eats clicks is the same bug as one that never hides.
+ */
+const frame = document.createElement('iframe');
+frame.src = '/?skin=lone-trail';
+frame.onload = () => setTimeout(() => {
+  const w = frame.contentWindow, d = w.document;
+  const o = d.getElementById('lt-launch');
+  const log = [];
+  const sample = (t) => {
+    const cs = w.getComputedStyle(o);
+    log.push({
+      t,
+      cls: o.className,
+      opacity: cs.opacity,
+      visibility: cs.visibility,
+      pointer: cs.pointerEvents,
+      display: cs.display,
+      zIndex: cs.zIndex,
+      // What is actually under the centre of the viewport?
+      hit: (() => {
+        const el = d.elementFromPoint(w.innerWidth / 2, w.innerHeight / 2);
+        return el ? el.tagName.toLowerCase() + '.' + (el.className || '').toString().slice(0, 30) : null;
+      })(),
+    });
+  };
+
+  sample('t0-sealed');
+  o.querySelector('.launch-btn').click();
+  setTimeout(() => sample('t+100ms'), 100);
+  setTimeout(() => sample('t+700ms'), 700);
+  setTimeout(() => sample('t+1600ms'), 1600);
+  setTimeout(() => {
+    document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(log, null, 1);
+  }, 2000);
+}, 4000);
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

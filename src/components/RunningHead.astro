@@ -1,0 +1,15 @@
+---
+/** Running head: a section number, a title, and a Latin gloss, ruled off. */
+export interface Props {
+  no: string;
+  title: string;
+  en?: string;
+}
+const { no, title, en } = Astro.props;
+---
+
+<div class="rh">
+  <span class="no">{no}</span>
+  <span class="ti">{title}</span>
+  {en && <span class="en">{en}</span>}
+</div>

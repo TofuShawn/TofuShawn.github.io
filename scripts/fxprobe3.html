@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>fxprobe3</title>
+    <style>
+      body { margin: 0; font: 12px monospace; }
+      iframe { width: 1440px; height: 1000px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe id="f"></iframe>
+    <pre id="out">running…</pre>
+    <script>
+      const out = [];
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      async function run() {
+        const frame = document.getElementById('f');
+        const base = location.origin;
+        const go = (url) =>
+          new Promise((res) => {
+            frame.onload = res;
+            frame.src = base + url;
+          });
+
+        // pinned ?fx=off must survive a navigation and beat storage
+        await go('/?skin=lone-trail&skip=1&fx=off&r=20');
+        await sleep(1200);
+        let d = frame.contentDocument;
+        let w = frame.contentWindow;
+        out.push({
+          test: 'pinnedOff',
+          cls: d.documentElement.className,
+          layer: w.getComputedStyle(d.querySelector('.crt-scanlines')).display,
+          pressed: d.getElementById('fxtoggle').getAttribute('aria-pressed'),
+        });
+
+        // clicking must clear the pin
+        d.getElementById('fxtoggle').click();
+        await sleep(150);
+        out.push({
+          test: 'clickClearsPin',
+          cls: d.documentElement.className,
+          search: frame.contentWindow.location.search,
+          layer: w.getComputedStyle(d.querySelector('.crt-scanlines')).display,
+        });
+
+        // ?fx=on must override storage=off
+        await go('/?skin=lone-trail&skip=1&fx=on&r=21');
+        await sleep(1000);
+        d = frame.contentDocument;
+        w = frame.contentWindow;
+        out.push({
+          test: 'pinnedOn',
+          cls: d.documentElement.className,
+          layer: w.getComputedStyle(d.querySelector('.crt-scanlines')).display,
+        });
+
+        // rhine: no toggle, no layer at all
+        await go('/?skip=1&r=22');
+        await sleep(1000);
+        d = frame.contentDocument;
+        w = frame.contentWindow;
+        const fx = d.getElementById('fxtoggle');
+        out.push({
+          test: 'rhineClean',
+          hasToggle: !!fx,
+          toggleBox: fx ? [...Object.values(fx.getBoundingClientRect().toJSON())].slice(0, 4) : null,
+          layerExists: !!d.querySelector('.crt-scanlines'),
+          layerBox: (() => {
+            const l = d.querySelector('.crt-scanlines');
+            if (!l) return null;
+            const r = l.getBoundingClientRect();
+            return [Math.round(r.width), Math.round(r.height)];
+          })(),
+        });
+
+        document.getElementById('out').textContent = JSON.stringify(out, null, 1);
+      }
+      run();
+    </script>
+  </body>
+</html>

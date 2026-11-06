@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { POSTS } from '../lib/posts';
+import { SITE } from '../lib/site';
+import { getTags } from '../lib/posts';
+
+const tags = getTags();
+const recent = POSTS.slice(0, 5);
+---
+
+<BaseLayout title="Not found" path="/404">
+  <div class="sheet">
+    <section class="spread notfound">
+      <p class="t-micro">Error 404</p>
+      <p class="code" aria-hidden="true">404</p>
+      <h1 class="t-h1" style="margin-top:18px">This page is not in the archive</h1>
+      <p class="t-lead" style="margin-top:12px;max-width:52ch;margin-inline:auto">
+        你找的条目不存在，或者已经被移走。下面是一些仍然在架上的东西。
+      </p>
+
+      <div style="max-width:520px;margin:34px auto 0;text-align:left">
+        {recent.map((p) => (
+          <a class="ix-row" href={`/posts/${p.slug}/`}>
+            <span class="code">{p.displayCode}</span>
+            <span class="nm" style="font-size:15px">{p.title}</span>
+            <span class="lead" aria-hidden="true"></span>
+          </a>
+        ))}
+      </div>
+
+      <p style="margin-top:28px">
+        <a class="t-cap" href="/" style="color:var(--accent-text);text-decoration:none">
+          ← Back to the cover
+        </a>
+      </p>
+    </section>
+  </div>
+</BaseLayout>

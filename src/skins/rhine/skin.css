@@ -1,0 +1,1313 @@
+/* ==========================================================================
+   rhine — "Archive dossier on paper"
+
+   Everything visual about this skin lives here: token values, the paper
+   texture, the print-shop artifacts, the plate figures, the seal, the HUD.
+   `src/styles/base.css` carries only structure, so swapping this file for
+   another skin's file restyles the whole site.
+
+   Palette, type ramp and motion values are taken from the Rhine Lab motion
+   dossier (MIT). Two rules from that source are load-bearing:
+     1. Never mix token families — this skin is #e9521c vermilion on #f6f3eb
+        paper, not the older #ff7b00 on #e7e5e1.
+     2. Every vertical gap is a multiple of 8px (--baseline).
+   ========================================================================== */
+
+:root[data-skin='rhine'] {
+  color-scheme: light;
+
+  /* --- surface ----------------------------------------------------------- */
+  --bg: #e4e0d5;
+  --bg-sheet: #f6f3eb;
+  --bg-elev: #efece2;
+  --fg: #151513;
+  --fg-soft: #3c3c36;
+  /* #7d7a72 is the dossier's mute, but it lands at 3.87:1 — too light for the
+     8.5–10px micro labels that use it. Taken down to 5.09:1, same hue. */
+  --fg-mute: #6a675f;
+  --rule: rgba(21, 21, 19, 0.2);
+  --rule-soft: rgba(21, 21, 19, 0.1);
+
+  /* --- accent ------------------------------------------------------------
+     #e9521c is 3.33:1 on paper — fine for rules, dots and 27px+ display type,
+     not for small text. `--accent-text` is the same hue taken down to 4.87:1
+     so links and micro labels stay legible without changing the palette. */
+  --accent: #e9521c;
+  --accent-text: #bf3d0d;
+  --accent-soft: rgba(233, 82, 28, 0.14);
+  --on-accent: #f6f3eb;
+
+  /* --- type -------------------------------------------------------------- */
+  --font-display: 'Helvetica Neue', Helvetica, 'Nimbus Sans', Arial, sans-serif;
+  --font-body: 'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei',
+    'Hiragino Sans GB', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', Consolas, 'Courier New',
+    monospace;
+
+  --fs-cover: clamp(58px, 10.4vw, 148px);
+  --fs-display: clamp(38px, 5.2vw, 62px);
+  --fs-h1: 27px;
+  --fs-h2: 17px;
+  --fs-lead: 14.5px;
+  --fs-body: 13px;
+  --fs-cap: 10px;
+  --fs-micro: 8.5px;
+
+  --lh-body: 1.98;
+  --lh-display: 0.9;
+  --tracking-display: -0.035em;
+  --tracking-caps: 0.24em;
+
+  /* --- layout ------------------------------------------------------------ */
+  --measure: 1180px;
+  --margin: 56px;
+  --gutter: 20px;
+  --baseline: 8px;
+  --radius: 0;
+  --shadow-sheet:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 22px 48px -18px rgba(38, 32, 20, 0.24),
+    0 2px 0 rgba(0, 0, 0, 0.03);
+
+  /* --- motion ------------------------------------------------------------ */
+  --dur-fast: 180ms;
+  --dur-base: 720ms;
+  --dur-slow: 1500ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+
+  /* --- rhine-only extras (not part of the contract) ---------------------- */
+  --ink-plate: #121211;
+  --lime: #b9e432;
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+/* --- the desk ------------------------------------------------------------- */
+
+/* A faint vignette so the sheet reads as paper lying on a surface, not a
+   floating div. Fixed, so it does not scroll with content. */
+:root[data-skin='rhine'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.5), transparent 60%),
+    var(--paper-grain);
+  opacity: 0.45;
+  mix-blend-mode: multiply;
+}
+
+/* Paper grain on each spread. Very low opacity: this is a texture, not a filter. */
+:root[data-skin='rhine'] .spread::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--paper-grain);
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+}
+
+:root[data-skin='rhine'] .spread--invert::after {
+  mix-blend-mode: screen;
+  opacity: 0.12;
+}
+
+/* --- crop marks ----------------------------------------------------------- */
+
+.cropmarks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cropmarks span {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  opacity: 0.55;
+}
+
+.cropmarks span::before,
+.cropmarks span::after {
+  content: '';
+  position: absolute;
+  background: var(--fg);
+}
+
+.cropmarks span::before {
+  width: 16px;
+  height: 1px;
+}
+
+.cropmarks span::after {
+  width: 1px;
+  height: 16px;
+}
+
+.cropmarks .tl { top: 14px; left: 14px; }
+.cropmarks .tr { top: 14px; right: 14px; }
+.cropmarks .bl { bottom: 14px; left: 14px; }
+.cropmarks .br { bottom: 14px; right: 14px; }
+
+.cropmarks .tr::before { right: 0; }
+.cropmarks .tr::after { right: 0; }
+.cropmarks .bl::before { bottom: 0; }
+.cropmarks .bl::after { bottom: 0; }
+.cropmarks .br::before { right: 0; bottom: 0; }
+.cropmarks .br::after { right: 0; bottom: 0; }
+
+.spread--invert .cropmarks span {
+  opacity: 0.6;
+}
+
+.spread--invert .cropmarks span::before,
+.spread--invert .cropmarks span::after {
+  background: var(--bg-sheet);
+}
+
+/* --- registration target -------------------------------------------------- */
+
+.reg {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  opacity: 0.5;
+  flex: none;
+}
+
+.reg::before,
+.reg::after {
+  content: '';
+  position: absolute;
+  border: 1px solid var(--fg);
+  border-radius: 50%;
+}
+
+.reg::before { inset: 0; }
+.reg::after { inset: 9px; }
+
+.reg i,
+.reg b {
+  position: absolute;
+  background: var(--fg);
+  transform: translate(-0.5px);
+}
+
+.reg i { top: -6px; left: 50%; width: 1px; height: 46px; }
+.reg b { top: 50%; left: -6px; height: 1px; width: 46px; }
+
+/* --- colour bar ----------------------------------------------------------- */
+
+.colorbar {
+  display: flex;
+  border: 1px solid var(--rule);
+  flex: none;
+}
+
+.colorbar i {
+  width: 26px;
+  height: 14px;
+}
+
+.colorbar i:nth-child(1) { background: #00a0b0; }
+.colorbar i:nth-child(2) { background: #d8006f; }
+.colorbar i:nth-child(3) { background: #f2c500; }
+.colorbar i:nth-child(4) { background: #121211; }
+.colorbar i:nth-child(5) { background: var(--accent); }
+
+/* --- fold line ------------------------------------------------------------ */
+
+.fold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed var(--rule);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.fold em {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  white-space: nowrap;
+  transform: rotate(90deg);
+  transform-origin: left center;
+}
+
+/* --- binding holes -------------------------------------------------------- */
+
+.binding {
+  position: fixed;
+  left: max(10px, calc(50% - 660px));
+  top: 0;
+  bottom: 0;
+  width: 26px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.binding i {
+  position: absolute;
+  left: 6px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #d8d3c6, #a9a496);
+  box-shadow:
+    inset 0 0 0 1px rgba(21, 21, 19, 0.28),
+    inset 0 2px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* --- sticker -------------------------------------------------------------- */
+
+.sticker {
+  position: absolute;
+  background: #fbf8f0;
+  border: 1px solid rgba(21, 21, 19, 0.16);
+  padding: 9px 13px;
+  transform: rotate(-5deg);
+  box-shadow:
+    0 8px 16px -6px rgba(38, 32, 20, 0.35),
+    0 1px 0 #fff inset;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 9px;
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg);
+  z-index: 3;
+}
+
+.sticker b {
+  color: var(--accent-text);
+}
+
+/* --- tape ----------------------------------------------------------------- */
+
+.tape {
+  position: absolute;
+  width: 132px;
+  height: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(240, 236, 226, 0.42));
+  transform: rotate(-3.5deg);
+  clip-path: polygon(1% 4%, 99% 0, 100% 52%, 98% 100%, 2% 96%, 0 48%);
+  border-left: 1px dotted rgba(21, 21, 19, 0.18);
+  border-right: 1px dotted rgba(21, 21, 19, 0.18);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* --- stamp ---------------------------------------------------------------- */
+
+.stamp {
+  display: inline-block;
+  transform: rotate(-11deg);
+  border: 2px solid var(--accent);
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  box-shadow: 0 0 0 1px rgba(233, 82, 28, 0.14);
+}
+
+.stamp.ink {
+  border-color: var(--fg);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px rgba(21, 21, 19, 0.14);
+}
+
+.spread--invert .stamp {
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+/* --- redaction ------------------------------------------------------------ */
+
+.redact {
+  background: var(--fg);
+  color: transparent;
+  padding: 0 0.22em;
+  border-radius: 1px;
+  cursor: help;
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.redact:hover,
+.redact:focus-visible {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+/* --- sidenote / footnote -------------------------------------------------- */
+
+.sidenote {
+  border-left: 1px solid var(--rule);
+  padding-left: 14px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+}
+
+.sidenote b {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.footnote {
+  border-top: 1px solid var(--rule);
+  margin-top: 18px;
+  padding-top: 10px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 9.5px;
+  line-height: 1.85;
+  letter-spacing: 0.04em;
+  color: var(--fg-mute);
+}
+
+.footnote sup {
+  color: var(--accent-text);
+}
+
+/* --- figure caption ------------------------------------------------------- */
+
+.figcap {
+  display: flex;
+  gap: 10px;
+  margin-top: 9px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 9px;
+  line-height: 1.7;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+}
+
+.figcap b {
+  color: var(--accent-text);
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+
+/* --- plate (halftone figure) ---------------------------------------------- */
+
+.plate {
+  position: relative;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+  transition:
+    transform 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
+}
+
+.plate canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.plate:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -14px rgba(38, 32, 20, 0.5);
+}
+
+.plate-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--fg);
+  color: var(--bg-sheet);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 8.5px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  padding: 6px 8px;
+  text-transform: uppercase;
+}
+
+.plate-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 22px 10px 8px;
+  background: linear-gradient(transparent, rgba(246, 243, 235, 0.94) 40%);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 8.5px;
+  line-height: 1.6;
+  letter-spacing: 0.12em;
+  color: var(--fg-soft);
+  text-transform: uppercase;
+}
+
+/* --- data table ----------------------------------------------------------- */
+
+.tab {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tab caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding-bottom: 12px;
+}
+
+.tab thead th {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 8.5px;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  text-align: left;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--fg);
+}
+
+.tab td {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--fg-soft);
+}
+
+.tab td.n {
+  text-align: right;
+}
+
+.tab tr.hot td {
+  color: var(--accent-text);
+}
+
+.tab tr.hot td::before {
+  content: '▍';
+  margin-right: 4px;
+}
+
+/* --- outline numeral annotation ------------------------------------------- */
+
+.big-no {
+  position: relative;
+  padding-left: 26px;
+}
+
+.big-no .anno {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--rule);
+}
+
+.big-no .anno::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+}
+
+/* --- drop cap and columns ------------------------------------------------- */
+
+.dropcap::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 54px;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
+  margin: 4px 8px 0 0;
+  color: var(--fg);
+}
+
+.body-cols {
+  column-count: 2;
+  column-gap: 30px;
+}
+
+.body-cols > p + p {
+  margin-top: 0.9em;
+  text-indent: 2em;
+}
+
+@media (max-width: 700px) {
+  .body-cols {
+    column-count: 1;
+  }
+}
+
+/* --- pull quote ----------------------------------------------------------- */
+
+.pull {
+  border-top: 2px solid var(--fg);
+  border-bottom: 1px solid var(--rule);
+  padding: 14px 0;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+}
+
+/* --- keyword strip -------------------------------------------------------- */
+
+.cv-kw {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--rule);
+  margin-top: 28px;
+  padding-top: 9px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+/* --- seal (unseal overlay) ------------------------------------------------ */
+
+.unseal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  /* The band is wider than the viewport and rotated, so the overlay has to clip
+     it or the whole page gains a horizontal scrollbar. */
+  overflow: hidden;
+  background: radial-gradient(120% 100% at 50% 40%, #f6f3eb 0%, #e4e0d5 70%, #d8d3c6 100%);
+  transition:
+    opacity 0.62s ease,
+    visibility 0.62s;
+}
+
+.unseal.off {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.unseal .band {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 66px;
+  background: var(--ink-plate);
+  transform: rotate(-1.6deg);
+  transition:
+    transform 0.8s cubic-bezier(0.7, 0, 0.2, 1),
+    opacity 0.5s 0.35s;
+}
+
+.unseal.off .band {
+  transform: translateY(-50%) translateX(-104%) rotate(-1.6deg);
+}
+
+.unseal .seal {
+  position: relative;
+  width: 172px;
+  height: 172px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 50%;
+  background: var(--bg-sheet);
+  transform: rotate(-7deg);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg);
+  text-align: center;
+  padding: 0 18px;
+}
+
+.unseal .seal:hover {
+  transform: rotate(-3deg) scale(1.02);
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+
+.unseal .seal.stamping {
+  transform: rotate(-7deg) scale(0.86);
+}
+
+.unseal.off .seal {
+  transform: translateY(26px) rotate(6deg) scale(0.9);
+  opacity: 0;
+  transition: 0.5s;
+}
+
+/* --- HUD ------------------------------------------------------------------ */
+
+.hud {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 40;
+  display: flex;
+  gap: 12px;
+  padding: 7px 10px;
+  background: rgba(246, 243, 235, 0.86);
+  border: 1px solid var(--rule);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 8.5px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  pointer-events: none;
+}
+
+/* --- grid overlay --------------------------------------------------------- */
+
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+body.grid-on .grid-overlay {
+  opacity: 1;
+}
+
+.grid-overlay .cols {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--gutter);
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+}
+
+.grid-overlay .cols i {
+  border-left: 1px solid rgba(233, 82, 28, 0.28);
+  border-right: 1px solid rgba(233, 82, 28, 0.28);
+}
+
+.grid-overlay .base {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 120, 200, 0.1) 0 1px,
+    transparent 1px var(--baseline)
+  );
+  mix-blend-mode: multiply;
+}
+
+/* --- masthead ------------------------------------------------------------- */
+
+.masthead {
+  position: relative;
+  z-index: 3;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-sheet);
+}
+
+.masthead .inner {
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 0;
+}
+
+.masthead .logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.masthead .mh-sub {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  white-space: nowrap;
+}
+
+.masthead .mh-nav {
+  display: flex;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.masthead .mh-nav a {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fg-mute);
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.masthead .mh-nav a:hover,
+.masthead .mh-nav a[aria-current='page'] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .masthead .mh-sub,
+  .masthead .mh-meta {
+    display: none;
+  }
+
+  .masthead .mh-nav {
+    gap: 12px;
+  }
+}
+
+/* --- cover ---------------------------------------------------------------- */
+
+.cover {
+  padding-top: 40px;
+}
+
+.cover .micro-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.cover-body {
+  display: grid;
+  grid-template-columns: 1fr 262px;
+  gap: 38px;
+  align-items: start;
+}
+
+.cv-rule {
+  height: 1px;
+  background: var(--fg);
+  margin: 22px 0 14px;
+}
+
+.cv-lockup {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 22px;
+}
+
+.cv-marks {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 26px;
+}
+
+.meta-rows {
+  margin: 20px 0 0;
+  border-top: 1px solid var(--fg);
+}
+
+.meta-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.meta-rows dt {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+.meta-rows dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-align: right;
+  color: var(--fg-soft);
+}
+
+.barcode {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  margin-top: 14px;
+}
+
+.cv-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 40px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+
+/* The right rail carries the loose physical layer: a strip of tape over the
+   plate's top corner and a sticker that overhangs the page edge. Both are
+   absolutely placed, so the rail has to be the containing block. */
+.cv-right {
+  position: relative;
+}
+
+.cv-tape {
+  top: 96px;
+  left: -34px;
+  transform: rotate(-3.5deg);
+}
+
+.cv-sticker {
+  top: 268px;
+  right: -78px;
+}
+
+@media (max-width: 860px) {
+  .cv-tape,
+  .cv-sticker {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .cover-body {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+}
+
+/* --- index page ----------------------------------------------------------- */
+
+.ix-list {
+  margin-top: 18px;
+}
+
+.ix-year {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding: 20px 0 6px;
+  border-bottom: 1px solid var(--fg);
+}
+
+/* --- article -------------------------------------------------------------- */
+
+.article-head {
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 22px;
+  margin-bottom: 26px;
+}
+
+.article-head .kicker {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.article-meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+.toc {
+  position: sticky;
+  top: 24px;
+}
+
+.toc .t-micro {
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.toc ol {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.toc a {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+  color: var(--fg-mute);
+  text-decoration: none;
+  display: block;
+  border-left: 1px solid var(--rule);
+  padding-left: 10px;
+}
+
+.toc a:hover,
+.toc a.on {
+  color: var(--accent-text);
+  border-left-color: var(--accent);
+}
+
+.toc .lvl3 a {
+  padding-left: 22px;
+  font-size: 9px;
+}
+
+/* Reading progress: a hairline under the masthead. */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background: var(--accent);
+  z-index: 70;
+  transition: width 80ms linear;
+}
+
+/* --- post navigation ------------------------------------------------------ */
+
+.post-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border-top: 1px solid var(--fg);
+  padding-top: 16px;
+  margin-top: 40px;
+}
+
+.post-nav a {
+  text-decoration: none;
+  display: block;
+}
+
+.post-nav .dir {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 6px;
+}
+
+.post-nav .ttl {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.post-nav a:hover .ttl {
+  color: var(--accent-text);
+}
+
+.post-nav .next {
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .post-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .post-nav .next {
+    text-align: left;
+  }
+}
+
+/* --- tags ----------------------------------------------------------------- */
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  /* The cloud's sizing is content-driven, so the page sets it per chip as a
+     custom property rather than a `font-size` — a skin that wants every chip
+     the same size (a register, not a cloud) can then just ignore it. */
+  font-size: var(--tag-size, 9px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fg-soft);
+  border: 1px solid var(--rule);
+  padding: 5px 8px;
+  transition:
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.tag:hover {
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.tag .n {
+  color: var(--fg-mute);
+  font-size: 8px;
+}
+
+/* --- colophon ------------------------------------------------------------- */
+
+.colo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 26px;
+  margin-bottom: 26px;
+}
+
+.colo > div > .t-micro {
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.colo p {
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--fg-soft);
+}
+
+.disc {
+  border-top: 1px solid var(--fg);
+  padding-top: 12px;
+  margin-top: 26px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+}
+
+@media (max-width: 800px) {
+  .colo {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .colo {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- skin switcher -------------------------------------------------------- */
+
+.skin-switch {
+  position: relative;
+  margin-left: 8px;
+}
+
+.skin-switch summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+}
+
+.skin-switch summary::-webkit-details-marker {
+  display: none;
+}
+
+.skin-switch summary:hover {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+.skin-switch .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.skin-switch ul {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 210px;
+  list-style: none;
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule);
+  box-shadow: 0 18px 40px -22px rgba(38, 32, 20, 0.5);
+  padding: 6px;
+  z-index: 50;
+}
+
+.skin-switch li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+.skin-switch li a,
+.skin-switch li button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.skin-switch li a:hover,
+.skin-switch li button:hover {
+  background: var(--bg-elev);
+}
+
+.skin-switch .sw {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--rule);
+  flex: none;
+}
+
+.skin-switch .sw-body {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+.skin-switch .nm {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The active marker sits on the name row, pushed right, and never on the
+   tagline row — as a sibling of the name it stole ~37px from the tagline and
+   made the active row taller than the others. */
+.skin-switch .cur {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+.skin-switch .tg {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-top: 2px;
+}
+
+/* --- 404 ------------------------------------------------------------------ */
+
+.notfound {
+  text-align: center;
+  padding: 80px 0 100px;
+}
+
+.notfound .code {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(96px, 22vw, 260px);
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--rule);
+  user-select: none;
+}

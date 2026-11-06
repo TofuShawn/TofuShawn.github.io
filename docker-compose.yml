@@ -1,0 +1,36 @@
+# One service, because the deliverable is static files.
+#
+#   docker compose up -d --build --force-recreate   serve on http://localhost:8080
+#   docker compose down                             stop and remove
+#
+# `--force-recreate` is load-bearing, not habit. Compose decides whether to
+# recreate a container by comparing the *service config*, not the image
+# contents, so `up --build` after a source-only change builds a new image and
+# then keeps running the old container. `--force-recreate` is the one flag that
+# closes that hole. (Measured — see docker/README.md.)
+#
+# To publish on port 80, change the host side of `ports` to "80:80".
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: archive-blog:local
+    container_name: archive-blog
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    # The container only ever reads its own files; nothing needs to be written.
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true

@@ -1,0 +1,63 @@
+---
+/**
+ * Rhine skin chrome: the seal, the coordinate HUD, the grid overlay.
+ *
+ * These are the skin's own furniture, so they live with the skin rather than in
+ * the shared layout. A skin that does not want them simply does not render this
+ * component — which is why every block below is gated on a feature flag instead
+ * of always emitting DOM that a flag then hides.
+ */
+import { featuresOf } from '../registry';
+
+export interface Props {
+  /** Show the unseal ceremony. Only the cover page should pass true. */
+  seal?: boolean;
+}
+
+const { seal = false } = Astro.props;
+const f = featuresOf('rhine');
+const showSeal = seal && f.unseal;
+---
+
+{showSeal && (
+  <div class="unseal" id="unseal" data-ceremony role="dialog" aria-label="Open the archive">
+    <div class="band" aria-hidden="true"></div>
+    <button class="seal" type="button" aria-label="Break the seal and open the archive">
+      Break<br />the seal
+    </button>
+  </div>
+)}
+
+{f.hud && (
+  <div class="hud" aria-hidden="true">
+    <span>X <span id="hx">0000</span></span>
+    <span>Y <span id="hy">0000</span></span>
+  </div>
+)}
+
+{f.gridOverlay && (
+  <div class="grid-overlay" id="gridov" aria-hidden="true">
+    <div class="base"></div>
+    <div class="cols" id="gridcols"></div>
+  </div>
+)}
+
+<script>
+  import './client';
+</script>
+
+{
+  showSeal && (
+    <script is:inline>
+      // If the main script fails to load, the overlay must not trap the page.
+      // This is insurance against a blank screen, not the normal path.
+      setTimeout(function () {
+        var o = document.getElementById('unseal');
+        if (o && !o.classList.contains('off')) {
+          o.classList.add('off');
+          document.body.classList.remove('locked');
+        }
+      }, 8000);
+    </script>
+  )
+}

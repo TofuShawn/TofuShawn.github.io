@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>kids</title>
+<style>body{font:12px monospace;margin:0}iframe{width:390px;height:900px;border:0}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+const url = decodeURIComponent(location.hash.slice(1) || '/?skin=lone-trail&skip=1');
+const frame = document.createElement('iframe');
+frame.src = url;
+frame.onload = () => setTimeout(() => {
+  const w = frame.contentWindow, d = w.document;
+  const host = d.querySelector('.cv-left');
+  const out = [];
+  if (host) {
+    [...host.children].forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const cs = w.getComputedStyle(el);
+      out.push(`${el.tagName.toLowerCase()}.${(el.className||'').toString().split(' ').join('.')} w=${r.width.toFixed(1)} sw=${el.scrollWidth} disp=${cs.display} ws=${cs.whiteSpace} minw=${cs.minWidth}`);
+    });
+  }
+  const cb = d.querySelector('.cover-body');
+  const cbs = w.getComputedStyle(cb);
+  out.push('cover-body: cols=' + cbs.gridTemplateColumns + ' disp=' + cbs.display + ' pad=' + cbs.paddingLeft + '/' + cbs.paddingRight);
+  const sp = d.querySelector('.spread.cover');
+  out.push('spread: pad=' + w.getComputedStyle(sp).paddingLeft + ' w=' + sp.getBoundingClientRect().width);
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(out, null, 1);
+}, 3000);
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

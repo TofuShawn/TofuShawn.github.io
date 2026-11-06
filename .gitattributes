@@ -1,0 +1,24 @@
+# Normalise line endings in the repository to LF.
+#
+# The working copy on this machine is Windows, where Git's `core.autocrlf`
+# would otherwise check files out as CRLF. The site is also built inside a
+# Linux container (`node:24-alpine`) and deployed by CI, so a repository that
+# stores LF and checks out LF removes a whole class of "works here, not there"
+# noise and keeps diffs free of whitespace churn.
+* text=auto eol=lf
+
+# Binary: never touch these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+# Windows-only scripts keep their native endings if they ever appear.
+*.bat text eol=crlf
+*.cmd text eol=crlf

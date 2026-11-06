@@ -1,0 +1,43 @@
+---
+/** One tag's entries. */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RunningHead from '../../components/RunningHead.astro';
+import Folio from '../../components/Folio.astro';
+import IndexRow from '../../components/IndexRow.astro';
+import { getTags, getPostsByTag, tagSlug } from '../../lib/posts';
+
+export function getStaticPaths() {
+  return getTags().map((t) => ({
+    params: { tag: tagSlug(t.tag) },
+    props: { tag: t.tag, count: t.count },
+  }));
+}
+
+const { tag, count } = Astro.props;
+const posts = getPostsByTag(tag);
+---
+
+<BaseLayout title={`Tag: ${tag}`} path={`/tags/${tagSlug(tag)}/`}>
+  <div class="sheet">
+    <section class="spread">
+      <RunningHead no="05" title={tag} en={`${count} entries`} />
+
+      <h1 class="t-display" data-rev>{tag}</h1>
+      <p class="t-cap" style="margin-top:12px">{count} entries under this label</p>
+
+      <div class="g" style="margin-top:30px">
+        <div class="c1-8 stag-group">
+          {posts.map((p) => <IndexRow post={p} mark={p.displayCode} />)}
+        </div>
+      </div>
+
+      <p style="margin-top:26px">
+        <a class="t-cap" href="/tags/" style="color:var(--accent-text);text-decoration:none">
+          ← All tags
+        </a>
+      </p>
+
+      <Folio page="P.06" note={tag.toUpperCase()} />
+    </section>
+  </div>
+</BaseLayout>

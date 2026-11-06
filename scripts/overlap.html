@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><title>overlap</title></head><body>
+<pre id="out">pending</pre>
+<script>
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText='width:1440px;height:1200px;border:0';
+frame.src=target;
+frame.onload=function(){
+  setTimeout(function(){
+    var out=[];
+    try{
+      var w=frame.contentWindow,d=w.document;
+      function box(sel){
+        var el=d.querySelector(sel);
+        if(!el) return null;
+        var r=el.getBoundingClientRect();
+        return {sel:sel,l:Math.round(r.left),t:Math.round(r.top),r:Math.round(r.right),b:Math.round(r.bottom)};
+      }
+      var keys=['.cv-left','.cv-right','.cv-sticker','.cv-tape','.cover-body','.cv-foot','.folio'];
+      var boxes={};
+      keys.forEach(function(k){var b=box(k); if(b) boxes[k]=b; else out.push(k+'=ABSENT');});
+
+      function inter(a,b){
+        var x=Math.max(0,Math.min(a.r,b.r)-Math.max(a.l,b.l));
+        var y=Math.max(0,Math.min(a.b,b.b)-Math.max(a.t,b.t));
+        return x*y;
+      }
+      // Does the sticker/tape cover the left text column?
+      ['.cv-sticker','.cv-tape'].forEach(function(s){
+        if(!boxes[s]||!boxes['.cv-left'])return;
+        var area=inter(boxes[s],boxes['.cv-left']);
+        var self=(boxes[s].r-boxes[s].l)*(boxes[s].b-boxes[s].t);
+        out.push(s+' vs .cv-left overlap='+(100*area/self).toFixed(1)+'%');
+      });
+      // Does the sticker escape the sheet to the right?
+      var sheet=box('.spread');
+      if(boxes['.cv-sticker']&&sheet){
+        out.push('sticker.right='+boxes['.cv-sticker'].r+' sheet.right='+sheet.r
+          +' overhang='+(boxes['.cv-sticker'].r-sheet.r));
+      }
+      // Does the cover body bottom collide with cv-foot?
+      if(boxes['.cover-body']&&boxes['.cv-foot']){
+        out.push('body.bottom='+boxes['.cover-body'].b+' foot.top='+boxes['.cv-foot'].t
+          +' gap='+(boxes['.cv-foot'].t-boxes['.cover-body'].b));
+      }
+      // Plate size in the right rail
+      var pl=d.querySelector('.cv-right .plate');
+      if(pl){var r=pl.getBoundingClientRect();out.push('plate='+Math.round(r.width)+'x'+Math.round(r.height));}
+      Object.keys(boxes).forEach(function(k){out.push(k+'='+JSON.stringify(boxes[k]));});
+    }catch(e){out.push('ERR '+e.message);}
+    document.getElementById('out').textContent='RESULT::'+out.join(' | ');
+  },3000);
+};
+document.body.appendChild(frame);
+</script></body></html>

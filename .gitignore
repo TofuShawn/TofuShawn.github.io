@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.astro/
+*.log
+.DS_Store
+.npm-cache/
+docs/screenshots/actual/
+
+# `scope-skins.mjs` writes this on every `dev` and `build`, and `BaseLayout`
+# imports it. It is a build artifact: committing it means a stale copy can be
+# served by anything that imports the layout without running the scoper first.
+src/skins/.generated/
+
+# NOTE: `scripts/*.html` are intentionally tracked. Each is a throwaway harness
+# written to answer one question during development, and `SKINS.md` and
+# `DESIGN.md` cite them as the evidence behind specific conclusions — deleting
+# them would leave those citations dangling. `.dockerignore` keeps them out of
+# the published image, which is the only place they would matter.
+
+# Local scratch: screenshot passes taken while developing, and the reference
+# captures the first skin was built from. Both are working material, not
+# source — a clone of the template does not need ~28MB of PNGs.
+shots/
+shots*/
+ref/
+
+# Local package-manager config. It can carry registry credentials, and it is
+# machine-specific in any case: the project must build from package.json and
+# the lockfile alone. Committed by mistake once while initialising this repo.
+.npmrc
+npmrc

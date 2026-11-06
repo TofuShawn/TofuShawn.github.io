@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>rh probe</title>
+<style>body{font:11px/1.4 monospace;margin:0;padding:8px}pre{margin:0}</style></head>
+<body><pre id="out">loading…</pre>
+<script>
+const f = document.createElement('iframe');
+f.style.cssText = 'width:1440px;height:1600px;border:0;position:absolute;left:-9999px';
+f.src = '/tags/?skin=lone-trail&skip=1';
+f.onload = () => setTimeout(() => {
+  const d = f.contentDocument, w = f.contentWindow, out = [];
+  const box = (sel) => {
+    const el = d.querySelector(sel);
+    if (!el) return `${sel}: MISSING`;
+    const r = el.getBoundingClientRect(); const s = w.getComputedStyle(el);
+    return `${sel}: x=${Math.round(r.left)} y=${Math.round(r.top)} w=${Math.round(r.width)} h=${Math.round(r.height)} bg=${s.backgroundColor} color=${s.color} fs=${s.fontSize}`;
+  };
+  ['.spread', '.rh', '.rh .no', '.rh .ti', '.rh .en', 'h1', '.tag-cloud', '.tag', '.folio'].forEach(s => out.push(box(s)));
+  const tags = [...d.querySelectorAll('.tag')];
+  out.push(`tags=${tags.length}`);
+  if (tags.length) {
+    const r0 = tags[0].getBoundingClientRect(), rN = tags[tags.length-1].getBoundingClientRect();
+    out.push(`first tag h=${Math.round(r0.height)} last tag bottom=${Math.round(rN.bottom)}`);
+  }
+  const spread = d.querySelector('.spread').getBoundingClientRect();
+  out.push(`spread h=${Math.round(spread.height)}`);
+  document.getElementById('out').textContent = out.join('\n');
+}, 1500);
+document.body.appendChild(f);
+</script>
+</body></html>

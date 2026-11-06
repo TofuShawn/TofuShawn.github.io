@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><title>click probe</title></head><body>
+<pre id="out">pending</pre>
+<script>
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText='width:1280px;height:900px;border:0';
+frame.src=target;
+frame.onload=function(){
+  var out=[];
+  function snap(tag){
+    var w=frame.contentWindow,d=w.document;
+    var un=d.getElementById('unseal');
+    var s=un?w.getComputedStyle(un):null;
+    out.push(tag+': locked='+d.body.classList.contains('locked')
+      +' unsealed='+w._unsealed
+      +' cls='+(un?un.className:'-')
+      +' op='+(s?s.opacity:'-')
+      +' vis='+(s?s.visibility:'-'));
+  }
+  setTimeout(function(){
+    snap('before');
+    var d=frame.contentWindow.document;
+    var seal=d.querySelector('.seal')||d.getElementById('unseal');
+    if(seal) seal.click(); else out.push('no seal element');
+    setTimeout(function(){
+      snap('after300');
+      setTimeout(function(){
+        snap('after1500');
+        // Did the cover reveals become visible?
+        var revs=[].slice.call(d.querySelectorAll('[data-rev]'));
+        var vis=revs.filter(function(el){return parseFloat(frame.contentWindow.getComputedStyle(el).opacity)>0.9;}).length;
+        out.push('coverVisible='+vis+'/'+revs.length);
+        var cv=d.querySelector('canvas[data-barcode]');
+        if(cv){
+          var c=cv.getContext('2d');
+          var px=c.getImageData(0,0,cv.width,cv.height).data;
+          var ink=0;for(var i=0;i<px.length;i+=4){if(px[i+3]>0)ink++;}
+          out.push('barcodeInk='+(100*ink/(px.length/4)).toFixed(1)+'%');
+        }
+        document.getElementById('out').textContent='RESULT::'+out.join(' | ');
+      },1200);
+    },300);
+  },2500);
+};
+document.body.appendChild(frame);
+</script></body></html>

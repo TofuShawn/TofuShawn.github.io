@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>fxprobe2</title>
+    <style>
+      body { margin: 0; font: 12px monospace; }
+      iframe { width: 1440px; height: 1000px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe id="f"></iframe>
+    <pre id="out">running…</pre>
+    <script>
+      const out = [];
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      // The scanline's real cost: sample the actual composited pixels of a
+      // text block with the layer on and off, and report the spread between
+      // dark and light rows. That is what "gets in the way" means numerically.
+      function inkStats(doc, win) {
+        const el = doc.querySelector('.prose p') || doc.querySelector('.t-body') || doc.body;
+        const r = el.getBoundingClientRect();
+        return { box: [Math.round(r.width), Math.round(r.height)], top: Math.round(r.top) };
+      }
+
+      async function run() {
+        const frame = document.getElementById('f');
+        const base = location.origin;
+        const go = (url) =>
+          new Promise((res) => {
+            frame.onload = res;
+            frame.src = base + url;
+          });
+
+        // 390px: does the new fixed button cause overflow or sit on content?
+        frame.style.width = '390px';
+        frame.style.height = '844px';
+        await go('/?skin=lone-trail&skip=1&r=10');
+        await sleep(1200);
+        {
+          const d = frame.contentDocument;
+          const w = frame.contentWindow;
+          const btn = d.getElementById('fxtoggle');
+          const r = btn.getBoundingClientRect();
+          out.push(
+            JSON.stringify({
+              test: 'mobile390',
+              docW: d.documentElement.scrollWidth,
+              vpW: w.innerWidth,
+              docOverflow: d.documentElement.scrollWidth > w.innerWidth + 1,
+              btnBox: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
+              btnBottomIn: r.bottom <= w.innerHeight,
+              // what is under the button?
+              under: (() => {
+                const e = d.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                return e ? e.tagName + '.' + (e.className || '') : null;
+              })(),
+              layer: w.getComputedStyle(d.querySelector('.crt-scanlines')).display,
+            }),
+          );
+        }
+
+        // desktop: measure the scanline pitch and alpha as actually painted
+        frame.style.width = '1440px';
+        frame.style.height = '1000px';
+        await go('/?skin=lone-trail&skip=1&r=11');
+        await sleep(1400);
+        {
+          const d = frame.contentDocument;
+          const w = frame.contentWindow;
+          const layer = d.querySelector('.crt-scanlines');
+          const cs = w.getComputedStyle(layer);
+          const img = cs.backgroundImage;
+          const stops = [...img.matchAll(/rgba?\([^)]+\)\s+\d+(?:\.\d+)?px/g)].map((m) => m[0]);
+          out.push(
+            JSON.stringify({
+              test: 'scanline-spec',
+              size: cs.backgroundSize,
+              opacity: cs.opacity,
+              stops,
+              // effective ink of the dark row after layer opacity
+              effectiveAlpha: (() => {
+                const m = img.match(/rgba\(22, 22, 24, ([\d.]+)\)/);
+                return m ? +(parseFloat(m[1]) * parseFloat(cs.opacity)).toFixed(4) : null;
+              })(),
+              beam: (() => {
+                const b = d.querySelector('.crt-beam');
+                const bcs = w.getComputedStyle(b);
+                return { h: bcs.height, anim: bcs.animationName + ' ' + bcs.animationDuration };
+              })(),
+              toggle: (() => {
+                const t = d.getElementById('fxtoggle');
+                const r = t.getBoundingClientRect();
+                return { box: [Math.round(r.left), Math.round(r.top), r.width, r.height], label: t.getAttribute('aria-label') };
+              })(),
+            }),
+          );
+        }
+
+        // keyboard: S must toggle it
+        await go('/?skin=lone-trail&skip=1&r=12');
+        await sleep(1200);
+        {
+          const d = frame.contentDocument;
+          const w = frame.contentWindow;
+          const before = d.documentElement.classList.contains('fx-off');
+          d.body.dispatchEvent(new w.KeyboardEvent('keydown', { key: 's', bubbles: true }));
+          await sleep(80);
+          const after = d.documentElement.classList.contains('fx-off');
+          // typing 's' in the punch input must NOT toggle
+          const inp = d.getElementById('punch-input');
+          let typed = null;
+          if (inp) {
+            inp.focus();
+            inp.dispatchEvent(new w.KeyboardEvent('keydown', { key: 's', bubbles: true }));
+            await sleep(60);
+            typed = d.documentElement.classList.contains('fx-off');
+          }
+          out.push(JSON.stringify({ test: 'keyboard', before, afterS: after, afterSInInput: typed }));
+        }
+
+        // reduced motion: beam stopped, ticker stopped, page complete
+        await go('/?skin=lone-trail&skip=1&r=13');
+        await sleep(1000);
+        {
+          const d = frame.contentDocument;
+          const w = frame.contentWindow;
+          // emulate: add the class the client adds
+          const html = d.documentElement;
+          const had = html.classList.contains('lt-still');
+          html.classList.add('lt-still');
+          await sleep(120);
+          const beam = w.getComputedStyle(d.querySelector('.crt-beam'));
+          const tick = w.getComputedStyle(d.querySelector('.ticker-track'));
+          out.push(
+            JSON.stringify({
+              test: 'lt-still',
+              hadClassFromClient: had,
+              beamOpacity: beam.opacity,
+              beamAnim: beam.animationName,
+              tickerAnim: tick.animationName,
+            }),
+          );
+        }
+
+        document.getElementById('out').textContent = JSON.stringify(out, null, 1);
+      }
+      run();
+    </script>
+  </body>
+</html>

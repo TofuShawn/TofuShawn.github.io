@@ -1,0 +1,63 @@
+---
+/**
+ * Plate — a figure painted procedurally by the active skin.
+ *
+ * The build cannot know which skin a visitor will be wearing (the switch is a
+ * runtime attribute change), so this component emits the superset: one canvas
+ * carrying the sampler variant, and the skin's client layer decides how to
+ * paint it — a halftone screen, a scanline sphere, or nothing at all. A skin
+ * with neither feature hides the canvas and shows the fallback image instead,
+ * which is why `src`/`alt` are still honoured.
+ */
+import { featuresAny } from '../skins/registry';
+
+export interface Props {
+  /** Which procedural sampler to draw. */
+  variant?: 'orbit' | 'wave' | 'noise' | 'figure' | 'grid';
+  /** Halftone cell size in px. 3.6–5 reads well at plate sizes. */
+  cell?: number;
+  /** Tag chip in the top-left, e.g. "PL.01". */
+  tag?: string;
+  /** Caption along the bottom scrim. */
+  caption?: string;
+  /** CSS aspect ratio, e.g. "4 / 3". A plate with no height collapses. */
+  ratio?: string;
+  /** Real image to use when the active skin paints no canvas. */
+  src?: string;
+  alt?: string;
+}
+
+const {
+  variant = 'figure',
+  cell = 4.4,
+  tag,
+  caption,
+  ratio = '4 / 3',
+  src,
+  alt = '',
+} = Astro.props;
+
+// `featuresAny`, not `featuresOf(DEFAULT_SKIN_ID)`: the default skin is only the
+// default. A visitor can switch, and then the DOM must already contain the
+// canvas. Skins that do not paint hide it via CSS.
+const anyPaint = featuresAny().halftone || featuresAny().scanline;
+---
+
+<figure class="plate" style={`aspect-ratio:${ratio}`}>
+  {
+    anyPaint ? (
+      <canvas
+        data-plate={variant}
+        data-cell={cell}
+        role="img"
+        aria-label={alt || caption || tag || 'Figure'}
+      />
+    ) : src ? (
+      <img src={src} alt={alt} loading="lazy" />
+    ) : (
+      <div role="img" aria-label={alt || caption || 'Figure'} />
+    )
+  }
+  {tag && <span class="plate-tag">{tag}</span>}
+  {caption && <figcaption class="plate-cap">{caption}</figcaption>}
+</figure>

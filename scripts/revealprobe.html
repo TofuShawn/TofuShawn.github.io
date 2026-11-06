@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>reveal probe</title></head>
+<body>
+<pre id="out">pending</pre>
+<script>
+/* Does an above-the-fold element actually become visible without scrolling? */
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText = 'width:1280px;height:900px;border:0';
+frame.src = target;
+
+frame.onload = function () {
+  setTimeout(function () {
+    var out = [];
+    try {
+      var w = frame.contentWindow;
+      var d = w.document;
+      out.push('locked=' + d.body.classList.contains('locked'));
+      out.push('jsmotion=' + d.documentElement.classList.contains('js-motion'));
+      out.push('unsealed=' + w._unsealed);
+
+      var revs = [].slice.call(d.querySelectorAll('[data-rev]'));
+      out.push('total-revs=' + revs.length);
+
+      revs.forEach(function (el, i) {
+        var s = w.getComputedStyle(el);
+        var r = el.getBoundingClientRect();
+        var inFold = r.top < 900 && r.bottom > 0;
+        out.push(
+          '#' + i +
+          ' op=' + (+s.opacity).toFixed(2) +
+          ' in=' + el.classList.contains('in') +
+          ' fold=' + inFold +
+          ' top=' + Math.round(r.top)
+        );
+      });
+
+      var visible = revs.filter(function (el) {
+        return parseFloat(w.getComputedStyle(el).opacity) > 0.9;
+      }).length;
+      out.push('visible=' + visible + '/' + revs.length);
+    } catch (e) {
+      out.push('ERR ' + e.message);
+    }
+    document.getElementById('out').textContent = 'RESULT::' + out.join(' | ');
+  }, 4000);
+};
+document.body.appendChild(frame);
+</script>
+</body>
+</html>

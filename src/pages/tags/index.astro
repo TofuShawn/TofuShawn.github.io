@@ -1,0 +1,42 @@
+---
+/** All tags, with counts. */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RunningHead from '../../components/RunningHead.astro';
+import Folio from '../../components/Folio.astro';
+import { getTags, tagSlug } from '../../lib/posts';
+
+const tags = getTags();
+const max = tags.reduce((n, t) => Math.max(n, t.count), 1);
+---
+
+<BaseLayout title="Tags" path="/tags/">
+  <div class="sheet">
+    <section class="spread">
+      <RunningHead no="04" title="Tags" en={`${tags.length} labels`} />
+
+      <h1 class="t-display" data-rev>Labels</h1>
+      <p class="t-lead" style="margin-top:14px;max-width:60ch">
+        扁平标签，没有层级。一个条目可以属于多个标签，标签之间没有父子关系。
+      </p>
+
+      <div class="g" style="margin-top:34px">
+        <div class="c1-12">
+          <div class="tag-cloud">
+            {tags.map((t) => (
+              <a
+                class="tag"
+                href={`/tags/${tagSlug(t.tag)}/`}
+                style={`--tag-size:${(9 + (t.count / max) * 5).toFixed(1)}px`}
+              >
+                {t.tag}
+                <span class="n">{String(t.count).padStart(2, '0')}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Folio page="P.05" note="TAGS" />
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cover probe</title>
+<style>
+  body { font: 12px/1.4 monospace; margin: 0; padding: 8px; background: #fff; color: #000; }
+  table { border-collapse: collapse; }
+  td, th { border: 1px solid #bbb; padding: 2px 6px; text-align: left; }
+  .hi { background: #ffe; }
+</style>
+</head>
+<body>
+<pre id="out">loading…</pre>
+<script>
+const SKIN = new URLSearchParams(location.search).get('skin') || 'rhine';
+const url = '/' + (SKIN === 'rhine' ? '' : '?skin=' + SKIN + '&skip=1');
+
+const frame = document.createElement('iframe');
+frame.style.cssText = 'width:1440px;height:1400px;border:0;position:absolute;left:-9999px';
+frame.src = url;
+document.body.appendChild(frame);
+
+frame.onload = () => {
+  setTimeout(() => {
+    const d = frame.contentDocument;
+    const lines = [];
+    const box = (el) => {
+      const r = el.getBoundingClientRect();
+      return `x=${Math.round(r.left)} y=${Math.round(r.top)} w=${Math.round(r.width)} h=${Math.round(r.height)}`;
+    };
+    const pick = (sel) => d.querySelector(sel);
+
+    lines.push(`skin=${SKIN} docH=${d.documentElement.scrollHeight} docW=${d.documentElement.scrollWidth}`);
+
+    const cover = pick('.spread.cover');
+    lines.push(`cover          ${box(cover)}`);
+    const body = pick('.cover-body');
+    lines.push(`cover-body     ${box(body)}`);
+    lines.push(`  cols=${getComputedStyle(body).gridTemplateColumns} rows=${getComputedStyle(body).gridTemplateRows} gap=${getComputedStyle(body).gap}`);
+    const left = pick('.cv-left'), right = pick('.cv-right');
+    lines.push(`cv-left        ${box(left)}`);
+    lines.push(`cv-right       ${box(right)}`);
+
+    lines.push('');
+    lines.push('--- left children ---');
+    for (const c of left.children) {
+      lines.push(`  ${c.tagName.toLowerCase()}.${(c.className || '').toString().split(' ')[0]}  ${box(c)}`);
+    }
+    lines.push('--- right children ---');
+    for (const c of right.children) {
+      const cls = (c.className || '').toString().split(' ')[0];
+      const r = c.getBoundingClientRect();
+      if (r.height === 0) continue;
+      lines.push(`  ${c.tagName.toLowerCase()}.${cls}  ${box(c)}`);
+    }
+
+    // where does content actually stop in the left column?
+    let lastBottom = 0;
+    for (const c of left.children) {
+      const r = c.getBoundingClientRect();
+      if (r.height > 0) lastBottom = Math.max(lastBottom, r.bottom);
+    }
+    const lr = left.getBoundingClientRect();
+    const rr = right.getBoundingClientRect();
+    lines.push('');
+    lines.push(`left content ends at y=${Math.round(lastBottom)}, left box bottom=${Math.round(lr.bottom)}, right bottom=${Math.round(rr.bottom)}`);
+    lines.push(`DEAD SPACE in left column: ${Math.round(rr.bottom - lastBottom)}px`);
+
+    // text mass
+    const words = (d.body.innerText || '').trim().split(/\s+/).length;
+    lines.push(`visible words in doc: ${words}`);
+
+    // count visible elements that paint ink
+    let painted = 0, total = 0;
+    for (const el of d.querySelectorAll('.spread.cover *')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      total++;
+      const s = getComputedStyle(el);
+      if (s.backgroundColor !== 'rgba(0, 0, 0, 0)' || s.borderTopWidth !== '0px' || s.backgroundImage !== 'none') painted++;
+    }
+    lines.push(`cover descendants: ${total}, with surface/border: ${painted}`);
+
+    // plate size
+    const cv = d.querySelector('.plate canvas');
+    if (cv) {
+      const r = cv.getBoundingClientRect();
+      lines.push(`plate canvas ${Math.round(r.width)}x${Math.round(r.height)}`);
+    }
+    const plate = d.querySelector('.plate');
+    if (plate) lines.push(`plate box ${box(plate)}`);
+
+    document.getElementById('out').textContent = lines.join('\n');
+    window.__done = true;
+  }, 1800);
+};
+</script>
+</body>
+</html>

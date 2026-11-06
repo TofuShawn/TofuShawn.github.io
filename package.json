@@ -1,0 +1,21 @@
+{
+  "name": "archive-blog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A multi-skin personal blog template. Ship one skin, swap in another.",
+  "scripts": {
+    "dev": "node scripts/scope-skins.mjs && astro dev",
+    "build": "node scripts/scope-skins.mjs && astro build",
+    "preview": "astro preview",
+    "check": "node scripts/check.mjs",
+    "verify": "npm run build && node scripts/verify.mjs",
+    "verify:docker": "node scripts/verify-docker.mjs",
+    "test:verify": "node scripts/test-verify-docker.mjs"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "astro": "^7.4.5",
+    "zod": "^4.6.7"
+  }
+}

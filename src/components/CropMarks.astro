@@ -1,0 +1,15 @@
+---
+/** Crop marks. Purely decorative, so the whole group is hidden from AT. */
+export interface Props {
+  /** Four corner marks, or just the top two for short blocks. */
+  corners?: 2 | 4;
+}
+const { corners = 4 } = Astro.props;
+---
+
+<div class="cropmarks" aria-hidden="true">
+  <span class="tl"></span>
+  <span class="tr"></span>
+  {corners === 4 && <span class="bl"></span>}
+  {corners === 4 && <span class="br"></span>}
+</div>

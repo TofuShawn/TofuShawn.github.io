@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>lt cover probe</title>
+<style>body{font:12px monospace;margin:0}iframe{border:0;display:block}</style></head>
+<body>
+<pre id="out">running…</pre>
+<script>
+const out = [];
+function probe(url, width, label) {
+  return new Promise((resolve) => {
+    const f = document.createElement('iframe');
+    f.style.width = width + 'px';
+    f.style.height = '1600px';
+    f.src = url;
+    f.onload = () => setTimeout(() => {
+      const w = f.contentWindow, d = w.document;
+      const info = (sel) => {
+        const el = d.querySelector(sel);
+        if (!el) return { missing: true };
+        const r = el.getBoundingClientRect();
+        const s = w.getComputedStyle(el);
+        return {
+          box: [+r.x.toFixed(0), +r.y.toFixed(0), +r.width.toFixed(0), +r.height.toFixed(0)],
+          op: s.opacity, vis: s.visibility, disp: s.display,
+          color: s.color, bg: s.backgroundColor, fs: s.fontSize,
+        };
+      };
+      out.push({
+        label, width,
+        html: { cls: d.documentElement.className, skin: d.documentElement.dataset.skin },
+        body: { cls: d.body.className, h: d.body.scrollHeight },
+        h1: info('h1'),
+        masthead: info('.masthead'),
+        cover: info('.cover-body') ,
+        cvLeft: info('.cv-left'),
+        launch: info('.launch'),
+        unseal: info('.unseal'),
+        ticker: info('.ticker'),
+        punch: info('#punch'),
+        topText: (d.querySelector('h1') ? d.querySelector('h1').textContent : null),
+        firstText: (d.body.innerText || '').slice(0, 160).replace(/\n+/g, ' | '),
+      });
+      f.remove();
+      resolve();
+    }, 3600);
+    document.body.appendChild(f);
+  });
+}
+(async () => {
+  await probe('/?skin=lone-trail&skip=1', 1440, 'lt-skip');
+  await probe('/?skin=lone-trail', 1440, 'lt-sealed');
+  await probe('/?skip=1', 1440, 'rhine-skip');
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(out, null, 1);
+})();
+</script>
+</body>
+</html>

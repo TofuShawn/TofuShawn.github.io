@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>mq probe</title>
+<style>body{font:11px/1.4 monospace;margin:0;padding:8px}pre{margin:0}</style></head>
+<body><pre id="out">loading…</pre>
+<script>
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+(async () => {
+  const out = [];
+  for (const w of [390, 760, 900]) {
+    const f = document.createElement('iframe');
+    f.style.cssText = `width:${w}px;height:2400px;border:0;position:absolute;left:-99999px`;
+    f.src = '/?skin=lone-trail&skip=1';
+    await new Promise((res) => { f.onload = res; document.body.appendChild(f); });
+    await sleep(800);
+    const d = f.contentDocument, win = f.contentWindow;
+    const p = d.querySelector('.punch'), m = d.querySelector('.punch-matrix');
+    const ps = win.getComputedStyle(p), ms = win.getComputedStyle(m);
+    out.push(`--- iframe w=${w} innerWidth=${win.innerWidth} mq760=${win.matchMedia('(max-width:760px)').matches}`);
+    out.push(`  .punch cols=${ps.gridTemplateColumns} w=${Math.round(p.getBoundingClientRect().width)}`);
+    out.push(`  .matrix col=${ms.gridColumnStart}/${ms.gridColumnEnd} row=${ms.gridRowStart}/${ms.gridRowEnd} autoCols=${ms.gridAutoColumns} w=${Math.round(m.getBoundingClientRect().width)} scrollW=${m.scrollWidth} clientW=${m.clientWidth}`);
+    out.push(`  .matrix rect x=${Math.round(m.getBoundingClientRect().left)}`);
+    const sheet = d.querySelector('.spread');
+    out.push(`  spread w=${Math.round(sheet.getBoundingClientRect().width)}`);
+    f.remove();
+  }
+  document.getElementById('out').textContent = out.join('\n');
+})();
+</script>
+</body></html>

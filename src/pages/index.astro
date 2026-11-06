@@ -1,0 +1,256 @@
+---
+/**
+ * The cover: masthead micro-row, the big title, an index of recent posts, and
+ * the metadata block that reads like the front of a bound dossier.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RunningHead from '../components/RunningHead.astro';
+import Folio from '../components/Folio.astro';
+import CropMarks from '../components/CropMarks.astro';
+import IndexRow from '../components/IndexRow.astro';
+import Plate from '../components/Plate.astro';
+import { SITE, COVER_INDEX_LIMIT } from '../lib/site';
+import { POSTS, getTags, POSTS as ALL } from '../lib/posts';
+import { stampDate, monthLabel } from '../lib/format';
+import { featuresAny } from '../skins/registry';
+
+const f = featuresAny();
+const recent = POSTS.slice(0, COVER_INDEX_LIMIT);
+const tags = getTags().slice(0, 8);
+const totalWords = ALL.reduce((n, p) => n + p.words, 0);
+const latest = POSTS[0];
+
+// A stable-looking serial for the metadata block. Derived from content, so it
+// changes when the archive does, and is identical on every build.
+const serial = `AR-${String(ALL.length).padStart(3, '0')}-${latest ? latest.year : '0000'}`;
+---
+
+<BaseLayout seal={true} path="/">
+  <div class="sheet">
+    <!-- ============================ cover ============================ -->
+    <section class="spread cover" aria-labelledby="cover-title">
+      {f.printArtifacts && <CropMarks />}
+
+      <div class="micro-row">
+        <span class="t-micro">{SITE.title} / {SITE.subtitle}</span>
+        <span class="t-micro">
+          {latest ? monthLabel(latest.dateObj) : '—'} · {ALL.length} ENTRIES
+        </span>
+      </div>
+
+      <div class="cover-body">
+        <div class="cv-left">
+          <p class="t-micro" data-rev>Vol. {String(ALL.length).padStart(2, '0')} — Field notes</p>
+
+          <h1 class="t-cover" id="cover-title" data-rev style="--d:90ms">
+            {SITE.title}
+          </h1>
+
+          <div class="cv-rule"></div>
+
+          <div class="cv-lockup">
+            <span data-scramble>{SITE.author}</span>
+            <span>Est. 2026</span>
+            <span data-scramble>{serial}</span>
+          </div>
+
+          <p class="t-lead" data-rev style="--d:180ms">
+            {SITE.description}
+          </p>
+
+          <p class="t-body" data-rev style="--d:240ms">
+            记录、归档、偶尔重写。每篇文章都是一份卷宗：标题、编号、图示、脚注。
+            纸是暖灰的，墨是近黑的，唯一的高饱和留给需要你注意的那一处。
+          </p>
+
+          <div class="cv-kw" data-rev style="--d:300ms">
+            <span>Index</span>
+            {tags.slice(0, 5).map((t) => <span>{t.tag}</span>)}
+          </div>
+
+          <!--
+            Skin furniture is a superset: the switch happens in the browser, so
+            every skin's pieces are in the DOM and CSS decides which are seen.
+            `display: contents` on the active wrapper keeps this out of layout.
+
+            The punch card sits in the *wide* column, not the narrow one. It is
+            a ten-column bit matrix; at 320px the columns collapse into a
+            squeeze and the card reads as a widget, not as a card. At the full
+            column width it is the one piece of this skin that a still frame
+            actually shows, so it belongs where there is room for it.
+          -->
+          {f.punchcard && (
+            <div class="skin-only" data-only="lone-trail">
+              <section class="punch" id="punch" aria-label="Punch card encoder">
+                <div class="punch-head">
+                  <p class="t-micro">Punch card</p>
+                  <span class="t-micro" id="punch-count">0 / 0 BITS</span>
+                </div>
+                <div class="punch-entry">
+                  <input
+                    class="punch-input"
+                    id="punch-input"
+                    type="text"
+                    value="LONE TRAIL"
+                    maxlength="12"
+                    aria-label="Text to encode"
+                    spellcheck="false"
+                  />
+                  <div class="punch-presets">
+                    <button type="button" data-punch-preset="LONE TRAIL">Lone Trail</button>
+                    <button type="button" data-punch-preset="RHINE LAB">Rhine Lab</button>
+                    <button type="button" data-punch-preset="SECTOR 04">Sector 04</button>
+                  </div>
+                </div>
+                <div class="punch-matrix" id="punch-matrix" aria-live="polite" />
+                <div class="punch-foot">
+                  <span>7-bit · <b>1</b> = punched</span>
+                  <span class="punch-morse" id="punch-morse">—</span>
+                </div>
+              </section>
+
+              <div class="morse-bar">
+                <span class="morse-lamp" aria-hidden="true" />
+                <span class="morse-text" data-morse="LONE TRAIL">…</span>
+                <button
+                  class="morse-play"
+                  type="button"
+                  data-morse-play="LONE TRAIL"
+                  aria-label="Play morse for LONE TRAIL"
+                >
+                  ▶ Play
+                </button>
+              </div>
+            </div>
+          )}
+
+          {f.printArtifacts && (
+            <div class="cv-marks" data-rev style="--d:360ms">
+              <div class="reg" aria-hidden="true"><i></i><b></b></div>
+              <div class="colorbar" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i>
+              </div>
+              <span class="t-micro">CMYK + 1 spot</span>
+            </div>
+          )}
+        </div>
+
+        <aside class="cv-right">
+          {f.halftone ? (
+            <Plate
+              variant="figure"
+              cell={4}
+              ratio="1 / 1"
+              tag="PL.00"
+              caption="Specimen — halftone, 45°"
+              alt="A halftone specimen plate"
+            />
+          ) : (
+            <Plate variant="figure" ratio="1 / 1" tag="PL.00" caption="Specimen" />
+          )}
+
+          <dl class="meta-rows">
+            <div><dt>Archive</dt><dd>{SITE.title}</dd></div>
+            <div><dt>Editor</dt><dd>{SITE.author}</dd></div>
+            <div><dt>Entries</dt><dd>{String(ALL.length).padStart(3, '0')}</dd></div>
+            <div><dt>Words</dt><dd>{totalWords.toLocaleString('en-US')}</dd></div>
+            <div><dt>Updated</dt><dd>{latest ? stampDate(latest.dateObj) : '—'}</dd></div>
+            <div><dt>Serial</dt><dd>{serial}</dd></div>
+          </dl>
+
+          {f.barcode && (
+            <canvas
+              class="barcode"
+              data-barcode={serial}
+              width="440"
+              height="88"
+              role="img"
+              aria-label={`Serial barcode ${serial}`}
+            ></canvas>
+          )}
+
+          <p class="t-micro" style="margin-top:10px">
+            Scan for provenance · Not machine-readable
+          </p>
+
+          {f.printArtifacts && (
+            <>
+              <div class="tape cv-tape" aria-hidden="true"></div>
+              <div class="sticker cv-sticker">
+                <b>Vol. 07</b>
+                <br />
+                Reading copy
+              </div>
+            </>
+          )}
+
+        </aside>
+      </div>
+
+      <div class="cv-foot">
+        <span class="t-micro">{SITE.colophon.type}</span>
+        <span class="t-micro">Press G for grid</span>
+        {f.gridOverlay && (
+          <span class="skin-only" data-only="lone-trail">
+            <button class="t-micro lt-gridbtn" id="gridbtn" type="button">Grid</button>
+          </span>
+        )}
+        <span class="t-micro">P.00</span>
+      </div>
+
+      {f.printArtifacts && (
+        <div class="fold" style="left:63%" aria-hidden="true">
+          <em>fold</em>
+        </div>
+      )}
+      <Folio page="P.00" note="COVER" />
+    </section>
+
+    <!-- ============================ index ============================ -->
+    {f.destijl && (
+      <div class="skin-only" data-only="lone-trail">
+        <div class="destijl" aria-hidden="true">
+          <i /><i /><i /><i />
+        </div>
+      </div>
+    )}
+
+    <section class="spread" aria-labelledby="index-title">
+      <RunningHead no="01" title="Index" en="Recent entries" />
+
+      <div class="g">
+        <div class="c1-7">
+          <h2 class="t-h1" id="index-title" data-rev>Recent entries</h2>
+          <p class="t-cap" style="margin-top:6px">Newest first</p>
+
+          <div class="ix-list">
+            {recent.map((post) => <IndexRow post={post} showEn={true} />)}
+          </div>
+
+          <p style="margin-top:18px">
+            <a class="t-cap" href="/posts/" style="color:var(--accent-text);text-decoration:none">
+              → All entries ({POSTS.length})
+            </a>
+          </p>
+        </div>
+
+        <div class="c9-12 big-no">
+          <div class="anno" aria-hidden="true"></div>
+          <p class="t-micro">Entries on file</p>
+          <span class="t-outline" data-ode={String(ALL.length)} aria-hidden="true">
+            {ALL.length}
+          </span>
+          <p class="t-cap" style="margin-top:8px">Since 2026</p>
+
+          <div class="sidenote" style="margin-top:22px">
+            <p><b>注 01</b> 每篇都有一个编号，用在索引、脚注和交叉引用里。</p>
+            <p style="margin-top:8px"><b>注 02</b> 归档页按年份分组，索引页按时间倒序。</p>
+            <p style="margin-top:8px"><b>注 03</b> 标签是扁平的，没有层级。</p>
+          </div>
+        </div>
+      </div>
+
+      <Folio page="P.01" note="INDEX" />
+    </section>
+  </div>
+</BaseLayout>

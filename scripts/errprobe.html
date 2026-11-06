@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>err probe</title>
+<style>body{font:12px monospace;margin:0}iframe{border:0;display:block}</style></head>
+<body>
+<pre id="out">running…</pre>
+<script>
+const out = [];
+function probe(url, width, label, wait) {
+  return new Promise((resolve) => {
+    const f = document.createElement('iframe');
+    f.style.width = width + 'px';
+    f.style.height = '1200px';
+    f.src = url;
+    f.onload = () => {
+      const w = f.contentWindow;
+      const errs = [];
+      w.addEventListener('error', (e) => errs.push(String(e.message)));
+      const origErr = w.console.error;
+      w.console.error = (...a) => { errs.push('console: ' + a.map(String).join(' ')); origErr.apply(w.console, a); };
+      setTimeout(() => {
+        const d = w.document;
+        const o = d.getElementById('lt-launch');
+        out.push({
+          label,
+          errs,
+          htmlCls: d.documentElement.className,
+          launchCls: o ? o.className : 'missing',
+          launchOp: o ? w.getComputedStyle(o).opacity : null,
+          launchVis: o ? w.getComputedStyle(o).visibility : null,
+          hasJsMotion: d.documentElement.classList.contains('js-motion'),
+          punchDots: d.querySelectorAll('.punch-dot').length,
+          morse: (d.querySelector('.morse-text') || {}).textContent,
+          tickerItems: d.querySelectorAll('.ticker-item').length,
+          gridCols: d.querySelectorAll('#gridcols > *').length,
+          unsealed: w._unsealed,
+        });
+        f.remove();
+        resolve();
+      }, wait);
+    };
+    document.body.appendChild(f);
+  });
+}
+(async () => {
+  await probe('/?skin=lone-trail&skip=1', 1440, 'lt-skip', 4000);
+  await probe('/?skin=lone-trail&skip=1', 1440, 'lt-skip-late', 10000);
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(out, null, 1);
+})();
+</script>
+</body>
+</html>

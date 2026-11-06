@@ -1,0 +1,1990 @@
+/* ==========================================================================
+   lone-trail — "Control room on paper"
+
+   A second skin, deliberately unlike rhine: the same Swiss foundation, a
+   different medium. Rhine is a printed dossier; this is a CRT console.
+
+   Rule for this file: it may use plain selectors (`.masthead { … }`). The build
+   wraps every rule in `:root[data-skin='lone-trail']` (scripts/scope-skins.mjs),
+   so nothing here can leak into another skin. Only the token block is written
+   pre-scoped, because tokens are the one thing the scoper must not touch.
+
+   Colour decisions:
+     - accent stays #e9521c (see meta.ts for why the reference's #e85d2a is a
+       sampling artefact, not a choice)
+     - --accent-text is #a8380a: 5.66:1 on the sheet, 5.03:1 on the ground.
+       #e9521c is 3.22:1 and cannot carry small text.
+     - --fg-mute is #5a5852: 6.20:1. The portal's own muted value, which
+       happens to pass.
+     - the De Stijl trio is structural decoration only; it is never used for
+       text on paper. Red #d6382b is 4.44:1, blue #1d569e is 6.89:1.
+   ========================================================================== */
+
+:root[data-skin='lone-trail'] {
+  color-scheme: light;
+
+  /* --- surface ----------------------------------------------------------- */
+  --bg: #e7e2d8;
+  --bg-sheet: #faf8f5;
+  --bg-elev: #f2efe9;
+  --fg: #161618;
+  --fg-soft: #2e2e2c;
+  --fg-mute: #5a5852;
+  --rule: #161618;
+  --rule-soft: rgba(22, 22, 24, 0.22);
+
+  /* --- accent ------------------------------------------------------------ */
+  --accent: #e9521c;
+  --accent-text: #a8380a;
+  --accent-soft: rgba(233, 82, 28, 0.12);
+  --on-accent: #faf8f5;
+
+  /* --- type -------------------------------------------------------------- */
+  --font-display: 'Jost', 'Futura', 'Century Gothic', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter', 'Helvetica Neue', 'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+
+  --fs-cover: clamp(54px, 11vw, 150px);
+  --fs-display: clamp(34px, 5vw, 64px);
+  --fs-h1: 24px;
+  --fs-h2: 16px;
+  --fs-lead: 14px;
+  --fs-body: 15px;
+  --fs-cap: 10.5px;
+  --fs-micro: 10.5px;
+
+  --lh-body: 1.85;
+  --lh-display: 0.94;
+  --tracking-display: -0.045em;
+  --tracking-caps: 0.26em;
+
+  /* --- layout ------------------------------------------------------------ */
+  --measure: 1280px;
+  --margin: 0px;
+  --gutter: 0px;
+  --baseline: 8px;
+  --radius: 0px;
+  --shadow-sheet: none;
+
+  /* --- motion ------------------------------------------------------------ */
+  --dur-fast: 160ms;
+  --dur-base: 620ms;
+  --dur-slow: 1400ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --- skin-local extras -------------------------------------------------- */
+  --ds-red: #d6382b;
+  --ds-blue: #1d569e;
+  --ds-yellow: #e3a724;
+  /* Ink bands (running head, ticker, inverted strips) need their own on-colour
+     ramp: the paper ramp above is all wrong on #161618. Accent stays the hue
+     but is lightened until it passes 4.5:1 on ink. */
+  --on-ink: #faf8f5;
+  --on-ink-mute: #a9a6a0;
+  --on-ink-accent: #ff8a4d;
+  --on-ink-rule: rgba(250, 248, 245, 0.28);
+  /* Ambient CRT texture. Deliberately near the threshold of visibility: at
+     5px pitch and this alpha the effective ink per dark row is ~1.8%, which
+     reads as paper tooth rather than as a screen. It was 0.0495 once and that
+     is 2.7x heavier — enough to shimmer under 13.5px body text. */
+  --scanline: repeating-linear-gradient(
+    180deg,
+    rgba(22, 22, 24, 0.03) 0 1px,
+    transparent 1px 5px
+  );
+}
+
+/* --- shell ---------------------------------------------------------------- */
+
+/* The sheet is a bounded panel with a hard 2px frame, not a page of paper. */
+.spread {
+  border: 2px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0 0 40px;
+  margin-bottom: 0;
+}
+
+.sheet {
+  margin-top: 0;
+  width: var(--measure);
+  max-width: 100%;
+}
+
+.sheet + .sheet {
+  margin-top: 0;
+}
+
+/* Every direct child of a spread carries the inner gutter, so the outer frame
+   stays flush with the grid — the border is the outermost column. */
+.spread > *:not(.skin-only):not(.grid-overlay):not(.progress) {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.spread--bleed > * {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* --- grid: rules instead of whitespace ------------------------------------ */
+
+/* This is the single biggest structural difference from rhine. There, columns
+   are separated by 20px of air. Here they are separated by a 1px rule, and the
+   gap is zero — the grid is drawn, not implied. */
+.g {
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.g > * {
+  border-left: 1px solid var(--rule);
+  padding: 22px 24px;
+}
+
+.g > *:first-child {
+  border-left: 0;
+}
+
+/* Span classes that start at column 1 must not lose their left border by
+   accident when another span sits before them; the nth-child rule above is
+   about visual start, so re-add it where a block begins a row. */
+.g > .c1-12,
+.g > .c1-7,
+.g > .c1-6,
+.g > .c1-5,
+.g > .c1-4 {
+  border-left: 0;
+}
+
+/* --- type ----------------------------------------------------------------- */
+
+/* Geometric, uppercase, tightly tracked. Where rhine sets a sentence case
+   headline, this sets a stencil. */
+.t-cover {
+  text-transform: uppercase;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+}
+
+.t-display {
+  text-transform: uppercase;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+
+.t-h1 {
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 700;
+}
+
+.t-cap {
+  font-size: var(--fs-cap);
+  letter-spacing: 0.18em;
+  color: var(--fg-mute);
+}
+
+.t-micro {
+  letter-spacing: 0.26em;
+  color: var(--fg-mute);
+}
+
+/* A wide-tracked display variant, for the "inextinguishable" register. */
+.t-void {
+  font-family: var(--font-display);
+  font-weight: 200;
+  text-transform: uppercase;
+  letter-spacing: 0.38em;
+  line-height: 1.1;
+}
+
+/* --- running head + folio ------------------------------------------------- */
+
+/* The running head is a solid ink band, not a ruled caption. It is the one
+   piece of this skin that appears on *every* page, so it carries the tone:
+   with paper-only sub-pages, a black bar at the top is what stops the sheet
+   reading as an empty page with a sentence on it. Flush to the frame on all
+   three sides because the spread has no top padding. */
+.rh {
+  border-bottom: 0;
+  background: var(--fg);
+  color: var(--bg-sheet);
+  padding: 13px 40px 11px;
+  margin-bottom: 26px;
+}
+
+.rh .no {
+  color: var(--on-ink-accent);
+  font-weight: 700;
+}
+
+.rh .ti {
+  letter-spacing: 0.3em;
+  color: var(--bg-sheet);
+}
+
+.rh .en {
+  color: var(--on-ink-mute);
+}
+
+.folio {
+  right: 40px;
+  bottom: 14px;
+  color: var(--fg-mute);
+}
+
+/* --- masthead ------------------------------------------------------------- */
+
+.masthead {
+  border-bottom: 2px solid var(--rule);
+  background: var(--bg-sheet);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.masthead .inner {
+  width: var(--measure);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  gap: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.masthead .logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 14px 18px;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.masthead .mh-sub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--rule-soft);
+  white-space: nowrap;
+}
+
+.masthead .mh-nav {
+  display: flex;
+  margin-left: auto;
+  gap: 0;
+}
+
+.masthead .mh-nav a {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fg-mute);
+  padding: 16px 18px;
+  border-left: 1px solid var(--rule-soft);
+  border-bottom: 0;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.masthead .mh-nav a:hover {
+  color: var(--fg);
+  background: var(--bg-elev);
+}
+
+.masthead .mh-nav a[aria-current='page'] {
+  color: var(--bg-sheet);
+  background: var(--fg);
+}
+
+/* --- cover ---------------------------------------------------------------- */
+
+.cover {
+  padding-top: 0;
+}
+
+.cover .micro-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 40px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0;
+  background: var(--bg-elev);
+}
+
+.cover-body {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  align-items: stretch;
+  border-bottom: 1px solid var(--rule);
+}
+
+.cv-left {
+  /* Grid items default to `min-width: auto`, which means a long word or a
+     wide figure can push the track past the container and the whole page
+     scrolls sideways. base.css sets this for `.g > *`; the cover grid needs
+     the same guarantee. */
+  min-width: 0;
+  padding: 40px;
+  border-right: 1px solid var(--rule);
+}
+
+.cv-right {
+  position: relative;
+  min-width: 0;
+  padding: 26px 24px 30px;
+  background: var(--bg-elev);
+}
+
+.cv-rule {
+  height: 2px;
+  background: var(--fg);
+  margin: 22px 0 16px;
+}
+
+.cv-lockup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--fg-mute);
+  margin-bottom: 24px;
+}
+
+.cv-lockup > span + span {
+  padding-left: 16px;
+  border-left: 1px solid var(--rule-soft);
+}
+
+.cv-left > .t-cover {
+  /* A 150px glyph set at 0.94 line-height has ink above its own line box, and
+     the kicker above it has no bottom margin: measured 13px of overlap at
+     1440 and 5px at 390. The cover title wants air above it anyway. */
+  margin-top: 14px;
+}
+
+.cv-left > .t-lead {
+  max-width: 56ch;
+  font-size: 18px;
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.cv-left > .t-body {
+  max-width: 42em;
+  color: var(--fg-mute);
+}
+
+.cv-rule {
+  background: linear-gradient(90deg, var(--accent) 0 64px, var(--fg) 64px);
+}
+
+.cv-kw {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-cap);
+  text-transform: uppercase;
+  border-top: 1px solid var(--rule);
+  margin-top: 26px;
+  padding-top: 10px;
+  letter-spacing: 0.16em;
+}
+
+.cv-marks {
+  display: none; /* print artifacts only — this skin does not use them */
+}
+
+.cv-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 0;
+  padding: 12px 40px;
+  border-top: 1px solid var(--rule);
+}
+
+.meta-rows {
+  margin-top: 18px;
+  border-top: 2px solid var(--rule);
+}
+
+.meta-rows > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.meta-rows dt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-mute);
+}
+
+.meta-rows dd {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.barcode,
+.cv-tape,
+.cv-sticker {
+  display: none; /* print-shop furniture, not used by this skin */
+}
+
+/* The grid toggle lives in the cover foot, where the print skin says
+   "Press G for grid". Same instruction, an actual control. */
+.lt-gridbtn {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  border: 1px solid var(--rule);
+  padding: 5px 9px;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+
+.lt-gridbtn:hover {
+  background: var(--fg);
+  color: var(--bg-sheet);
+}
+
+/* --- plates --------------------------------------------------------------- */
+
+.plate {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--bg-sheet);
+}
+
+.plate canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.plate-tag {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bg-sheet);
+  background: var(--fg);
+  padding: 3px 6px;
+  top: 0;
+  left: 0;
+}
+
+.plate-cap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding: 6px 8px;
+  background: var(--bg-elev);
+  border-top: 1px solid var(--rule-soft);
+}
+
+/* --- index rows ----------------------------------------------------------- */
+
+.ix-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid var(--rule-soft);
+  border-left: 2px solid transparent;
+  padding: 18px 10px;
+  gap: 16px;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.ix-row > span:nth-child(2) {
+  min-width: 0;
+}
+
+.ix-row .en {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.ix-row .lead {
+  display: none;
+}
+
+.ix-row .pg {
+  white-space: nowrap;
+}
+
+.ix-row:hover,
+.ix-row:focus-visible {
+  background: var(--bg-elev);
+  border-left-color: var(--accent);
+}
+
+.ix-row .code {
+  color: var(--accent-text);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.ix-row .nm {
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.ix-row .lead {
+  border-bottom: 1px dotted var(--rule-soft);
+}
+
+.ix-row:hover .nm,
+.ix-row:focus-visible .nm {
+  color: var(--accent-text);
+}
+
+.ix-year {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding: 22px 0 7px;
+  border-bottom: 2px solid var(--rule);
+}
+
+/* --- article -------------------------------------------------------------- */
+
+.article-head {
+  border-bottom: 2px solid var(--rule);
+  padding: 26px 40px 22px;
+  margin-bottom: 0;
+}
+
+.article-head .kicker,
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 24px;
+  font-family: var(--font-mono);
+}
+
+.article-head .kicker {
+  margin-bottom: 24px;
+}
+
+.article-head .t-display {
+  max-width: 20ch;
+}
+
+.prose {
+  max-width: 65ch;
+}
+
+.prose h2 {
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-soft);
+  scroll-margin-top: 100px;
+}
+
+.article-meta {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--fg-mute);
+  margin-top: 14px;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1.1em;
+}
+
+/* The Shiki theme paints its own background inline and its tokens are
+   light-on-dark. This skin's `.prose code` rule outranks base.css's
+   `.prose pre code` reset, so every token inside a fenced block was sitting on
+   a paper chip — measured 1.72:1 to 3.38:1 against #F2EFE9. Reset the nested
+   code box so the block keeps the colours it was generated with. */
+.prose pre {
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 18px 20px;
+}
+
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.prose code {
+  border-radius: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-soft);
+}
+
+.prose th {
+  border-bottom: 2px solid var(--fg);
+}
+
+/* --- TOC ------------------------------------------------------------------ */
+
+.toc {
+  position: sticky;
+  top: 60px;
+}
+
+.toc .t-micro {
+  border-bottom: 2px solid var(--fg);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+
+/* Inline links that are real destinations (RSS, tag chips in the kicker).
+   Captions stay compact; only the anchors get a thumb-sized box. */
+a.t-cap,
+.article-head .kicker a {
+  display: inline-block;
+  padding: 6px 0;
+}
+
+.toc a {
+  display: block;
+  border-left: 2px solid var(--rule-soft);
+  /* The anchor used to be an 11px-tall inline box. A block with vertical
+     padding gives it a 24px target without changing the type size. */
+  padding: 7px 0 7px 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+}
+
+.toc a:hover,
+.toc a.on {
+  color: var(--accent-text);
+  border-left-color: var(--accent);
+}
+
+/* --- post nav ------------------------------------------------------------- */
+
+.post-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  border-top: 2px solid var(--fg);
+  padding: 16px 40px 0;
+  margin-top: 36px;
+}
+
+.post-nav a {
+  display: block;
+  padding: 12px 0;
+  text-decoration: none;
+}
+
+.post-nav .dir {
+  font-family: var(--font-mono);
+  font-size: var(--fs-cap);
+  color: var(--accent-text);
+  margin-bottom: 8px;
+}
+
+.post-nav .next {
+  text-align: right;
+}
+
+.post-nav .ttl {
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.post-nav a:hover .ttl {
+  color: var(--accent-text);
+}
+
+/* --- tags ----------------------------------------------------------------- */
+
+/* The cloud is structural (it is in a component, not in this skin), but its
+   wrapping is a skin decision — rhine's version sets it, and a skin that does
+   not would inherit `display:block` and run every tag onto one line.
+
+   This skin does not want a cloud. Nine chips in a corner leave a 550px void
+   under them and read as a scatter of buttons; a ruled index reads as a
+   register, which is what the page is. Same markup, a different object: one
+   row per label, count right-aligned, zebra banded so the block carries a
+   mid-tone instead of floating on bare paper. */
+.tag-cloud {
+  display: block;
+  border-top: 2px solid var(--rule);
+}
+
+.tag {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg);
+  border: 0;
+  border-bottom: 1px solid var(--rule-soft);
+  border-radius: 0;
+  padding: 13px 12px;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+
+.tag:nth-child(odd) {
+  background: var(--bg-elev);
+}
+
+.tag:hover,
+.tag:focus-visible {
+  color: var(--bg-sheet);
+  background: var(--fg);
+  border-color: var(--fg);
+}
+
+.tag .n {
+  color: inherit;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- colophon ------------------------------------------------------------- */
+
+.colo {
+  border-top: 1px solid var(--rule);
+}
+
+.colo > div {
+  border-left: 1px solid var(--rule);
+  padding: 18px 20px;
+}
+
+.colo > div:first-child {
+  border-left: 0;
+}
+
+.colo > div > .t-micro {
+  border-bottom: 2px solid var(--fg);
+}
+
+.disc {
+  border-top: 2px solid var(--fg);
+  letter-spacing: 0.06em;
+}
+
+/* --- 404 ------------------------------------------------------------------ */
+
+.notfound {
+  padding: 70px 40px 90px;
+}
+
+.notfound .code {
+  color: var(--fg);
+  -webkit-text-stroke: 0;
+  text-transform: uppercase;
+}
+
+/* --- skin switcher -------------------------------------------------------- */
+
+.skin-switch {
+  /* The dropdown is absolutely positioned; without a positioned ancestor it
+     anchors to the masthead and hangs off the right edge at 390px. */
+  position: relative;
+  margin-left: 0;
+}
+
+.skin-switch summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  border-bottom: 0;
+  padding: 16px 18px;
+  border-left: 1px solid var(--rule-soft);
+  height: 100%;
+}
+
+.skin-switch summary::-webkit-details-marker {
+  display: none;
+}
+
+.skin-switch ul {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 210px;
+  list-style: none;
+  padding: 0;
+  background: var(--bg-sheet);
+  border: 2px solid var(--rule);
+  box-shadow: 0 14px 30px -18px rgba(22, 22, 24, 0.4);
+  border-radius: 0;
+  z-index: 50;
+}
+
+.skin-switch li a,
+.skin-switch li button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 11px;
+  text-decoration: none;
+  color: var(--fg);
+  border: 0;
+  background: transparent;
+}
+
+.skin-switch li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+.skin-switch li a:hover,
+.skin-switch li button:hover {
+  background: var(--bg-elev);
+}
+
+/* The swatch is an empty span whose only styling is its size — a skin that
+   forgets this rule renders nothing at all, not a wrong colour. */
+.skin-switch .sw {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--rule);
+  flex: none;
+}
+
+.skin-switch .sw-body {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+.skin-switch .nm {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.skin-switch .tg {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-top: 2px;
+}
+
+/* The active marker sits on the name row, pushed right, and never on the
+   tagline row — as a sibling of the name it stole ~37px from the tagline and
+   made the active row taller than the others. */
+.skin-switch .cur {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+/* --- reading progress ----------------------------------------------------- */
+
+/* The layout script animates `width` from 0 to the scroll fraction. Without
+   `position: fixed` and `width: 0` it was a static orange block in the flow,
+   one 3px rule under the masthead — which read as a second border, not as an
+   indicator. */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  z-index: 70;
+  background: var(--accent);
+  transition: width 90ms linear;
+}
+
+/* ==========================================================================
+   motion
+
+   This skin is a document, so the motion has to read as printing rather than
+   as UI: things arrive, they do not bounce. Everything here is gated behind
+   `.js-motion`, which the shared boot only sets when motion is wanted and
+   possible — so `?skip=1`, `prefers-reduced-motion` and no-JS all get the
+   finished page with no hidden content. `data-stag` is set by the skin's own
+   client script and removed once the group has settled, which returns each
+   child's own hover transition.
+   ========================================================================== */
+
+/* These are animations held paused at their first frame, not transitions from
+   a hidden start state. The difference matters: a child that is already
+   painted when the script runs would *fade out* if the hidden state were a
+   plain `opacity:0` rule, and a transition would also swallow the element's
+   own `:hover` transition while the delay is pending. A paused animation with
+   `both` fill shows its first frame without touching the base style, so the
+   row's hover keeps working and the script only ever has to start it. */
+html.js-motion [data-stag] > * {
+  animation: lt-stag-in var(--dur-base) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 46ms);
+  animation-play-state: paused;
+}
+
+html.js-motion [data-stag].in > * {
+  animation-play-state: running;
+}
+
+@keyframes lt-stag-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The De Stijl bar is the one graphic in the page that can be drawn rather
+   than faded: four rules wiping in from the left, one after the other. */
+html.js-motion .destijl[data-stag] > i {
+  transform-origin: left center;
+  animation: lt-stag-wipe var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+  animation-play-state: paused;
+}
+
+html.js-motion .destijl[data-stag].in > i {
+  animation-play-state: running;
+}
+
+@keyframes lt-stag-wipe {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The running head is the first thing on every inner page. Its accent rule
+   draws across after the band lands — the same gesture as the cover's
+   orange-then-ink rule, at page scale.
+
+   The hidden start state lives under `.js-motion` and not on `.rh::after`
+   itself: outside the motion path nothing ever adds `.in`, so a rule that
+   started at scaleX(0) would simply never be drawn. It is a paused animation
+   for the same reason as the stagger above — the running head is off-screen
+   only on rare layouts, so it usually starts in the same tick it is revealed,
+   and a transition would then never run. */
+.rh {
+  position: relative;
+}
+
+.rh::after {
+  content: '';
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 0;
+  height: 2px;
+  background: var(--on-ink-accent);
+}
+
+html.js-motion .rh::after {
+  transform-origin: left center;
+  animation: lt-rule-draw 900ms var(--ease-out) 120ms both;
+  animation-play-state: paused;
+}
+
+html.js-motion .rh.in::after {
+  animation-play-state: running;
+}
+
+@keyframes lt-rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.toc a {
+  transition:
+    color var(--dur-fast),
+    border-color var(--dur-fast),
+    padding-left var(--dur-fast);
+}
+
+.toc a:hover {
+  padding-left: 14px;
+}
+
+.post-nav a {
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+
+.post-nav a:hover {
+  background: var(--bg-elev);
+}
+
+/* --- responsive ----------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  .cover-body {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-left {
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .cv-right {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .g {
+    border-top: 0;
+  }
+
+  .g > * {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+    padding: 18px 24px;
+  }
+
+  .g > *:first-child {
+    border-top: 0;
+  }
+
+  .colo > div {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .colo > div:first-child {
+    border-top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  :root[data-skin='lone-trail'] {
+    --margin: 0px;
+  }
+
+  .spread > *:not(.skin-only):not(.grid-overlay):not(.progress) {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .rh,
+  .article-head,
+  .post-nav,
+  .cv-left,
+  .cover .micro-row,
+  .cv-foot {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .masthead .mh-sub {
+    display: none;
+  }
+
+  .masthead .mh-nav a {
+    padding: 14px 10px;
+  }
+
+  /* The switcher is a boxed cell in this skin, so its label costs width the
+     nav cannot spare at 390px. The swatch dot alone still says "theme". */
+  .skin-switch summary {
+    padding: 14px 10px;
+    gap: 0;
+  }
+
+  .skin-switch summary span.lbl {
+    display: none;
+  }
+
+  .skin-switch ul {
+    min-width: 196px;
+  }
+
+  .folio {
+    right: 20px;
+  }
+}
+
+/* ==========================================================================
+   CRT layer
+   ========================================================================== */
+
+/* Scanlines sit above everything and take no pointer events. 4px pitch, 1px
+   dark line — subtle enough to read through, present enough to register as a
+   screen rather than a page. */
+.crt-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  background: var(--scanline);
+  opacity: 0.9;
+}
+
+/* A single 2px line sweeping the viewport every 7s. It is the one piece of
+   perpetual motion in this skin, which is why it is the first thing
+   `prefers-reduced-motion` removes. */
+.crt-beam {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 56;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+  box-shadow: 0 0 8px rgba(233, 82, 28, 0.5);
+  opacity: 0;
+  animation: lt-beam 11s linear infinite;
+}
+
+@keyframes lt-beam {
+  0% {
+    top: -6%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.22;
+  }
+  85% {
+    opacity: 0.22;
+  }
+  100% {
+    top: 106%;
+    opacity: 0;
+  }
+}
+
+html.lt-still .crt-beam {
+  animation: none;
+  opacity: 0;
+}
+
+/* The ambient layer is opt-out, because a texture that sits on top of every
+   glyph on the page is the visitor's business, not the designer's. The
+   preference is stored by the shell (`localStorage.fx`) and applied as
+   `html.fx-off` before first paint, so it never flashes back on.
+   Note the `html` prefix: the scoper splices it into the skin scope, so this
+   stays a root-element rule instead of becoming a descendant rule. */
+html.fx-off .crt-scanlines,
+html.fx-off .crt-beam {
+  display: none;
+}
+
+/* The switch for it: a 20px tab flush in the bottom-left corner. It is a real
+   control, so it cannot be faded to invisibility — WCAG 1.4.11 wants 3:1 for
+   the boundary and the glyph, and `opacity:.3` measured 1.58:1. The quietness
+   comes from size and from having no label, not from transparency. */
+.fx-toggle {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 57;
+  display: grid;
+  place-items: center;
+  /* 20px was under the 24px minimum target size. The extra 4px is invisible
+     because the tab is flush in the corner. */
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--fg-mute);
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule-soft);
+  border-left: 0;
+  border-bottom: 0;
+  transition:
+    color var(--dur-fast),
+    border-color var(--dur-fast),
+    background var(--dur-fast);
+}
+
+.fx-toggle:hover,
+.fx-toggle:focus-visible {
+  color: var(--fg);
+  border-color: var(--rule);
+  background: var(--bg-elev);
+}
+
+/* Three stacked rules = "scanlines". Filled when on, hollow when off. */
+.fx-bar {
+  display: grid;
+  gap: 2px;
+  width: 10px;
+}
+
+.fx-bar i {
+  height: 1px;
+  background: currentColor;
+  transition: opacity var(--dur-fast);
+}
+
+.fx-toggle[aria-pressed='false'] .fx-bar i {
+  opacity: 0.28;
+}
+
+/* ==========================================================================
+   telemetry marquee
+   ========================================================================== */
+
+.ticker {
+  overflow: hidden;
+  border-bottom: 2px solid var(--rule);
+  background: var(--fg);
+  color: var(--bg-sheet);
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: lt-marquee 42s linear infinite;
+}
+
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+@keyframes lt-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-run {
+  display: flex;
+  flex: none;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 24px;
+  font-family: var(--font-mono);
+  /* 9px was below the legibility floor for the one band that is always on
+     screen. 12px is the floor; the tighter tracking keeps the marquee from
+     turning into a shout. */
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-right: 1px solid rgba(250, 248, 245, 0.2);
+}
+
+.ticker-item i {
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+  flex: none;
+}
+
+html.lt-still .ticker-track {
+  animation: none;
+}
+
+/* ==========================================================================
+   launch overlay
+   ========================================================================== */
+
+.launch {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--bg-sheet);
+  transition:
+    opacity 0.5s ease,
+    visibility 0.5s;
+}
+
+.launch.off {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Three De Stijl bars behind the wordmark, breathing at different rates. */
+.launch-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  pointer-events: none;
+}
+
+.launch-grid span {
+  transform-origin: bottom;
+  opacity: 0.12;
+}
+
+.launch-grid span:nth-child(1) {
+  background: var(--ds-red);
+  animation: lt-rise-1 3.6s ease-in-out infinite;
+}
+
+.launch-grid span:nth-child(2) {
+  background: var(--ds-yellow);
+  animation: lt-rise-2 2.9s ease-in-out infinite;
+}
+
+.launch-grid span:nth-child(3) {
+  background: var(--ds-blue);
+  animation: lt-rise-3 4.2s ease-in-out infinite;
+}
+
+@keyframes lt-rise-1 {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.86);
+  }
+}
+
+@keyframes lt-rise-2 {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.14);
+  }
+}
+
+@keyframes lt-rise-3 {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.78);
+  }
+}
+
+.launch-body {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 32px;
+  max-width: 520px;
+}
+
+.launch-kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 22px;
+}
+
+.launch-count {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(40px, 8vw, 76px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  margin-bottom: 26px;
+}
+
+.launch-btn {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 2px solid var(--fg);
+  padding: 15px 44px;
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out);
+}
+
+.launch-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--fg);
+}
+
+.launch-btn:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+.launch-note {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-top: 22px;
+}
+
+/* ==========================================================================
+   punch card
+   ========================================================================== */
+
+/* The card lives in the cover's wide column, so it is laid out as a two-up
+   instrument rather than a narrow stack: text entry and presets on the left,
+   the bit field on the right. As a single 320px column the matrix columns
+   collapse to ~27px and the dots stop reading as a grid; at half of 795px they
+   get ~49px each and the thing looks like a card reader. */
+.punch {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  border: 1px solid var(--rule);
+  background: var(--bg-sheet);
+  margin-top: 22px;
+}
+
+.punch-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-elev);
+}
+
+.punch-head .t-micro {
+  margin: 0;
+}
+
+.punch-entry {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--rule);
+}
+
+.punch-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
+  background: var(--bg-sheet);
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 12px;
+}
+
+.punch-input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.punch-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0;
+}
+
+.punch-presets button {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding: 7px 9px;
+  border-right: 1px solid var(--rule-soft);
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+
+.punch-presets button:hover {
+  background: var(--fg);
+  color: var(--bg-sheet);
+}
+
+.punch-matrix {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-auto-flow: column;
+  /* `1fr` is `minmax(auto, 1fr)`, so each column still refuses to go below its
+     min-content width and ten of them push the card past the viewport at 390.
+     An explicit `minmax(0, 1fr)` lets them share what is there. */
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 14px 8px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.punch-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+  border-left: 1px solid var(--rule-soft);
+}
+
+.punch-col:first-child {
+  border-left: 0;
+}
+
+.punch-ch {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 10.5px;
+  color: var(--fg);
+  border-bottom: 1px solid var(--rule-soft);
+  width: 100%;
+  text-align: center;
+  padding-bottom: 3px;
+}
+
+.punch-bits {
+  display: flex;
+  flex-direction: column;
+  /* No gap: each bit is a 24px target, so the circles are already separated by
+     the empty part of the box. Adding a gap on top would double the field's
+     height for nothing. */
+  gap: 0;
+}
+
+.punch-dot {
+  /* A punched bit is a 16px circle, but the target is 24×24: the button keeps
+     the full box and the circle is drawn in a pseudo-element, so the field
+     stays legible while every bit is still comfortably clickable on touch. */
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.punch-dot::before {
+  content: '';
+  position: absolute;
+  /* 24px box, 6px inset → a 12px circle: the same dot as before, now with a
+     full-size target around it. */
+  inset: 6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule);
+  background: transparent;
+  transition:
+    background var(--dur-fast),
+    border-color var(--dur-fast);
+}
+
+.punch-dot:hover::before {
+  border-color: var(--accent);
+}
+
+.punch-dot.on::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.punch-idx {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+}
+
+.punch-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--rule);
+  background: var(--bg-elev);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+.punch-foot b {
+  color: var(--accent-text);
+}
+
+.punch-morse {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+/* ==========================================================================
+   morse bar
+   ========================================================================== */
+
+.morse-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--rule);
+  border-top: 0;
+  background: var(--bg-elev);
+  padding: 9px 12px;
+}
+
+.morse-lamp {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule);
+  flex: none;
+  transition:
+    background 0.1s,
+    box-shadow 0.1s;
+}
+
+.morse-lamp.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.morse-text {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--accent-text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.morse-play {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bg-sheet);
+  background: var(--fg);
+  padding: 5px 9px;
+  flex: none;
+  transition: background var(--dur-fast);
+}
+
+.morse-play:hover {
+  background: var(--accent);
+}
+
+/* ==========================================================================
+   De Stijl blocks — structural decoration
+   ========================================================================== */
+
+/* A tri-colour bar used as a section divider. It is the only place the
+   secondary palette appears, and it never carries text: red is 4.44:1 and
+   yellow is 1.86:1 against paper, so neither may hold a label. */
+.destijl {
+  display: flex;
+  height: 10px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.destijl i {
+  display: block;
+}
+
+.destijl i:nth-child(1) {
+  background: var(--ds-red);
+  flex: 3;
+}
+
+.destijl i:nth-child(2) {
+  background: var(--ds-yellow);
+  flex: 1;
+}
+
+.destijl i:nth-child(3) {
+  background: var(--ds-blue);
+  flex: 2;
+}
+
+.destijl i:nth-child(4) {
+  background: var(--fg);
+  flex: 6;
+}
+
+/* ==========================================================================
+   grid overlay
+   ========================================================================== */
+
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+body.grid-on .grid-overlay {
+  opacity: 1;
+}
+
+.grid-overlay .cols {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0;
+  width: var(--measure);
+  max-width: 100%;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+}
+
+.grid-overlay .cols i {
+  border-left: 1px solid rgba(233, 82, 28, 0.35);
+}
+
+.grid-overlay .cols i:last-child {
+  border-right: 1px solid rgba(233, 82, 28, 0.35);
+}
+
+.grid-overlay .base {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(29, 86, 158, 0.08) 0 1px,
+    transparent 1px var(--baseline)
+  );
+}
+
+/* ==========================================================================
+   furniture this skin does not use
+   ========================================================================== */
+
+/* The DOM is a superset across skins (a visitor can switch at runtime), so the
+   skin that does not want a piece has to say so. Hiding is the whole contract. */
+.hud,
+.unseal,
+.cropmarks,
+.fold,
+.binding,
+.sticker,
+.tape,
+.stamp,
+.redact,
+.footnote,
+.figcap,
+.cv-tape,
+.cv-sticker,
+.barcode {
+  display: none;
+}
+
+/* .sidenote is shared furniture — a margin note — so it is kept, restyled. */
+.sidenote {
+  border-left: 2px solid var(--accent);
+  padding-left: 12px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+  color: var(--fg-mute);
+  /* As a margin note inside a 65ch prose column it ran to 106 characters per
+     line. A note is short by nature; cap it. */
+  max-width: 46ch;
+}
+
+.sidenote b {
+  color: var(--accent-text);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+/* --- punch card, narrow screens ------------------------------------------- */
+
+/* This block has to live after the base `.punch` rules above, not up with the
+   other media queries: the scoper flattens every rule to the same specificity,
+   so source order alone decides, and a media block placed before the base rule
+   loses to it. (Measured: at 390 the matrix kept `grid-column:2` and was 16px
+   wide until this moved to the end of the file.)
+
+   Below 760px there is no second column to give the card reader, so the
+   instrument stacks: entry on top, bit field underneath, full width. */
+@media (max-width: 760px) {
+  .punch {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .punch-entry {
+    grid-column: 1;
+    grid-row: 2;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .punch-matrix {
+    grid-column: 1;
+    grid-row: 3;
+    padding: 12px 6px;
+  }
+
+  .punch-dot {
+    width: 24px;
+    height: 24px;
+  }
+
+  .spread > .cover-body:not(.skin-only):not(.grid-overlay):not(.progress) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .cv-left {
+    padding: 28px 20px;
+  }
+
+  .cv-lockup {
+    gap: 8px 12px;
+  }
+
+  .cv-lockup > span + span {
+    padding-left: 12px;
+  }
+
+  .cv-left > .t-cover {
+  /* A 150px glyph set at 0.94 line-height has ink above its own line box, and
+     the kicker above it has no bottom margin: measured 13px of overlap at
+     1440 and 5px at 390. The cover title wants air above it anyway. */
+  margin-top: 14px;
+}
+
+.cv-left > .t-lead {
+    font-size: 16px;
+  }
+
+  .ix-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+    padding: 16px 8px;
+  }
+
+  .ix-row .code {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ix-row > span:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .ix-row .pg {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .cv-foot > span:first-child {
+    flex-basis: 100%;
+  }
+
+  .post-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .post-nav .next {
+    text-align: left;
+  }
+}

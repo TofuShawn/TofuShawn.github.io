@@ -1,0 +1,264 @@
+---
+/**
+ * BaseLayout — the only place that decides which skin is active.
+ *
+ * All skin stylesheets are bundled together and scoped by `[data-skin="<id>"]`,
+ * so switching skins is a single attribute change: no reload, no flash, no
+ * network request. The cost is a few KB of unused CSS per extra skin, which is
+ * the right trade for a template that is meant to be forked and re-skinned.
+ */
+import '../styles/base.css';
+import { SKINS, DEFAULT_SKIN_ID, getSkin } from '../skins/registry';
+import { SITE, NAV } from '../lib/site';
+
+// The skin is fixed at build time for the initial paint; the inline boot script
+// below may override it from localStorage before first paint.
+const skin = getSkin(DEFAULT_SKIN_ID);
+
+// Every skin's rules ship, pre-scoped by `scripts/scope-skins.mjs` so that one
+// skin's `.masthead` rule cannot repaint another's. The generated bundle is
+// built before `astro build` (see package.json) because unscoped skin CSS is a
+// silent cross-skin leak, not a cosmetic issue.
+import '../skins/.generated/skins.css';
+
+// Skin furniture (seal, HUD, grid overlay). Every skin's Chrome is emitted,
+// each wrapped so only the active skin's shows — the same reason plates are a
+// superset: the switch happens in the browser, after the build.
+const chromes = import.meta.glob<{ default: any }>('../skins/*/Chrome.astro', { eager: true });
+
+const chromeList = SKINS.map((s) => ({
+  id: s.id,
+  Component: chromes[`../skins/${s.id}/Chrome.astro`]?.default ?? null,
+})).filter((c) => c.Component);
+
+export interface Props {
+  title?: string;
+  description?: string;
+  /** Extra classes on <body>, used by pages for page-local layout. */
+  bodyClass?: string;
+  /** Canonical path, e.g. "/posts/foo/". */
+  path?: string;
+  /** Set on the article page so the reading-progress bar can mount. */
+  progress?: boolean;
+  /** Show the skin's opening ceremony (the cover only). */
+  seal?: boolean;
+}
+
+const {
+  title,
+  description = SITE.description,
+  bodyClass = '',
+  path = Astro.url.pathname,
+  progress = false,
+  seal = false,
+} = Astro.props;
+
+const pageTitle = title ? `${title} — ${SITE.title}` : `${SITE.title} — ${SITE.subtitle}`;
+const canonical = new URL(path, SITE.url).href;
+
+// The seal locks scrolling until it is broken. It is a build-time class, so the
+// `?skip=1` escape hatch has to be decided in the browser — a static build has
+// no query string to read. `seal` here only decides whether the overlay is
+// rendered at all; the pre-paint script below decides whether it is shown.
+const bodyCls = [bodyClass, seal ? 'locked' : ''].filter(Boolean).join(' ');
+
+// Runs before first paint so the page never flashes the wrong skin, and so a
+// `?skip=1` visit never paints the seal at all.
+// Kept tiny and inline: a network request here would reintroduce the flash.
+const skinBoot = `
+(function(){
+  var html = document.documentElement;
+  var meta = ${JSON.stringify(
+    Object.fromEntries(SKINS.map((s) => [s.id, { theme: s.themeColor, scheme: s.scheme }])),
+  )};
+  try {
+    var id = new URLSearchParams(location.search).get('skin');
+    if (!id) id = localStorage.getItem('skin');
+    if (id && Object.prototype.hasOwnProperty.call(meta, id)) {
+      html.setAttribute('data-skin', id);
+      // The head was rendered for the build-time default skin; the browser
+      // chrome colour has to follow the skin that actually got applied.
+      var tc = document.querySelector('meta[name="theme-color"]');
+      if (tc) tc.setAttribute('content', meta[id].theme);
+      var cs = document.querySelector('meta[name="color-scheme"]');
+      if (cs) cs.setAttribute('content', meta[id].scheme);
+    }
+  } catch (e) {}
+  try {
+    var skip = new URLSearchParams(location.search).get('skip') === '1';
+    if (skip || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      html.classList.add('no-seal');
+    }
+  } catch (e) {}
+  // A generic "turn the ambient effects off" preference, so the shell never has
+  // to know which skin is wearing it. Skins opt in by styling the fx-off class
+  // on <html>. The query form exists so a link can pin the state and so
+  // screenshots can be taken both ways without touching storage.
+  try {
+    var fx = new URLSearchParams(location.search).get('fx');
+    if (fx === 'off') html.classList.add('fx-off');
+    else if (fx === 'on') html.classList.remove('fx-off');
+    else if (localStorage.getItem('fx') === 'off') html.classList.add('fx-off');
+  } catch (e) {}
+})();
+`;
+---
+
+<!doctype html>
+<html lang={SITE.locale} data-skin={skin.id}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="color-scheme" content={skin.scheme} />
+    <meta name="theme-color" content={skin.themeColor} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <script is:inline set:html={skinBoot} />
+  </head>
+
+  <body class={bodyCls}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    {
+      chromeList.map((c) => (
+        <div class="skin-only" data-only={c.id}>
+          <c.Component seal={seal} />
+        </div>
+      ))
+    }
+
+    <header class="masthead">
+      <div class="inner">
+        <a class="logo" href="/">{SITE.title}</a>
+        <span class="mh-sub">{SITE.subtitle}</span>
+
+        <nav class="mh-nav" aria-label="Primary">
+          {
+            NAV.map((item) => (
+              <a
+                href={item.href}
+                aria-current={
+                  item.href === '/'
+                    ? path === '/'
+                      ? 'page'
+                      : undefined
+                    : path.startsWith(item.href)
+                      ? 'page'
+                      : undefined
+                }
+              >
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+
+        {
+          SKINS.length > 1 && (
+            <details class="skin-switch">
+              <summary>
+                <span class="dot" aria-hidden="true" />
+                <span class="lbl">Skin</span>
+              </summary>
+              <ul>
+                {SKINS.map((s) => (
+                  <li>
+                    <button
+                      type="button"
+                      data-set-skin={s.id}
+                      aria-pressed="false"
+                      data-skin-name={s.name}
+                    >
+                      <span class="sw" style={`background:${s.swatch}`} aria-hidden="true" />
+                      <span class="sw-body">
+                        <span class="nm">
+                          {s.name}
+                          <span class="cur" aria-hidden="true">active</span>
+                        </span>
+                        <span class="tg">{s.tagline}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )
+        }
+      </div>
+    </header>
+
+    {progress && <div class="progress" id="progress" aria-hidden="true"></div>}
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <script>
+      // Skin switching. Writes the choice, then flips the attribute — the whole
+      // switch is one DOM write, so it is instant and does not reload.
+      import { SKINS } from '../skins/registry';
+
+      const known = new Set(SKINS.map((s) => s.id));
+      const root = document.documentElement;
+
+      // The build renders for the default skin, but the boot script may have
+      // switched to another one from `?skin=` or localStorage. The pressed
+      // state is therefore derived from the live attribute, not from the build.
+      const markActive = (id: string) => {
+        document.querySelectorAll<HTMLElement>('[data-set-skin]').forEach((b) => {
+          b.setAttribute('aria-pressed', String(b.dataset.setSkin === id));
+        });
+      };
+      markActive(root.dataset.skin ?? '');
+
+      document.querySelectorAll<HTMLElement>('[data-set-skin]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.setSkin!;
+          if (!known.has(id)) return;
+          root.setAttribute('data-skin', id);
+          try {
+            localStorage.setItem('skin', id);
+          } catch {
+            /* private mode: the switch still works for this page */
+          }
+          markActive(id);
+          btn.closest('details')?.removeAttribute('open');
+          // Skin changes can change which features are active (sound, halftone,
+          // grid). Reload once so the feature layer re-initialises cleanly.
+          // The `?skin=` param outranks localStorage, so it has to go or the
+          // reload would immediately undo the choice that was just made.
+          const url = new URL(location.href);
+          if (url.searchParams.has('skin')) {
+            url.searchParams.delete('skin');
+            location.replace(url.href);
+          } else {
+            location.reload();
+          }
+        });
+      });
+
+      // Reading progress, only when the page asked for it.
+      const bar = document.getElementById('progress');
+      if (bar) {
+        const update = () => {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          const pct = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+          bar.style.width = `${(pct * 100).toFixed(2)}%`;
+        };
+        update();
+        addEventListener('scroll', update, { passive: true });
+        addEventListener('resize', update);
+      }
+    </script>
+  </body>
+</html>

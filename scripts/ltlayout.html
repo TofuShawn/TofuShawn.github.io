@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>lt layout</title>
+<style>body{font:12px monospace;margin:0}iframe{border:0;display:block}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/*
+ * Layout facts for the second skin that a screenshot cannot state precisely:
+ * column pitch, whether the punch card fits its column, whether the ticker
+ * actually scrolls, and whether the De Stijl bar is the height it claims.
+ */
+const WIDTHS = [1440, 1024, 390];
+const out = [];
+
+function probe(width) {
+  return new Promise((resolve) => {
+    const frame = document.createElement('iframe');
+    frame.style.width = width + 'px';
+    frame.style.height = '900px';
+    frame.src = '/?skin=lone-trail&skip=1';
+    frame.onload = () => setTimeout(() => {
+      const w = frame.contentWindow, d = w.document;
+      const box = (sel) => {
+        const el = d.querySelector(sel);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { w: +r.width.toFixed(1), h: +r.height.toFixed(1), l: +r.left.toFixed(1), r: +r.right.toFixed(1) };
+      };
+      const cs = (sel, p) => {
+        const el = d.querySelector(sel);
+        return el ? w.getComputedStyle(el)[p] : null;
+      };
+      const cols = d.querySelector('.g');
+      let pitch = null;
+      if (cols) {
+        const tracks = w.getComputedStyle(cols).gridTemplateColumns.split(' ').map(parseFloat);
+        pitch = { count: tracks.length, first: +tracks[0].toFixed(2) };
+      }
+      const ticker = d.querySelector('.ticker-track');
+      const punch = box('#punch');
+      const cvr = box('.cv-right');
+      out.push({
+        width,
+        viewport: w.innerWidth,
+        docW: d.documentElement.scrollWidth,
+        tracks: pitch,
+        gutter: cs('.g', 'gap'),
+        spreadPad: cs('.spread', 'paddingLeft'),
+        tickerAnim: ticker ? w.getComputedStyle(ticker).animationName + ' ' + w.getComputedStyle(ticker).animationDuration : null,
+        tickerW: ticker ? +ticker.getBoundingClientRect().width.toFixed(0) : null,
+        tickerItems: d.querySelectorAll('.ticker-item').length,
+        punch,
+        punchFits: punch && cvr ? punch.w <= cvr.w + 0.5 : null,
+        destijl: box('.destijl'),
+        h1Size: cs('h1', 'fontSize'),
+        h1Text: (d.querySelector('h1') || {}).textContent,
+        scanline: cs('.crt-scanlines', 'backgroundImage') ? 'set' : 'none',
+        punchCols: d.querySelectorAll('.punch-col').length,
+      });
+      frame.remove();
+      resolve();
+    }, 3200);
+    document.body.appendChild(frame);
+  });
+}
+
+(async () => {
+  for (const w of WIDTHS) await probe(w);
+  document.getElementById('out').textContent = 'RESULT:' + JSON.stringify(out, null, 1);
+})();
+</script>
+</body>
+</html>

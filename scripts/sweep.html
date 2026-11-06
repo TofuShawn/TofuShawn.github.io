@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>probe-sweep</title>
+    <style>
+      body { margin: 0; font: 12px monospace; }
+      iframe { width: 1440px; height: 1000px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe id="f"></iframe>
+    <pre id="out">running…</pre>
+    <script>
+      const rows = [];
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const PAGES = ['/', '/posts/', '/tags/', '/about/', '/posts/on-keeping-an-archive/'];
+      const SKINS = ['', 'skin=lone-trail&'];
+
+      async function run() {
+        const frame = document.getElementById('f');
+        const base = location.origin;
+        for (const w of [1440, 390]) {
+          frame.style.width = w + 'px';
+          frame.style.height = w === 390 ? '844px' : '1000px';
+          for (const s of SKINS) {
+            for (const p of PAGES) {
+              await new Promise((res) => {
+                frame.onload = res;
+                frame.src = base + p + '?' + s + 'skip=1&probe=1';
+              });
+              await sleep(700);
+              const d = frame.contentDocument;
+              const win = frame.contentWindow;
+              const skin = d.documentElement.dataset.skin;
+              let ovf = 0;
+              const bad = [];
+              for (const el of d.querySelectorAll('body *')) {
+                const r = el.getBoundingClientRect();
+                if (r.width === 0 && r.height === 0) continue;
+                if (r.right > win.innerWidth + 1 && r.left < win.innerWidth) {
+                  // ignore things clipped by an ancestor
+                  let p = el.parentElement,
+                    clipped = false;
+                  while (p && p !== d.body) {
+                    const cs = win.getComputedStyle(p);
+                    if (cs.overflowX === 'hidden' || cs.overflowX === 'clip' || cs.overflow === 'hidden') {
+                      clipped = true;
+                      break;
+                    }
+                    p = p.parentElement;
+                  }
+                  if (!clipped) {
+                    ovf++;
+                    if (bad.length < 3) bad.push(el.tagName + '.' + (el.className || '').toString().slice(0, 40) + ' r=' + Math.round(r.right));
+                  }
+                }
+              }
+              const h1 = d.querySelectorAll('h1').length;
+              const docOvf = d.documentElement.scrollWidth > win.innerWidth + 1;
+              // the fx toggle must never sit on text
+              let fxOver = null;
+              const fx = d.getElementById('fxtoggle');
+              if (fx) {
+                const r = fx.getBoundingClientRect();
+                fxOver = win.getComputedStyle(fx).display !== 'none' ? [Math.round(r.width), Math.round(r.height)] : null;
+              }
+              rows.push({
+                w,
+                p,
+                skin,
+                ovf,
+                bad,
+                docOvf,
+                h1,
+                fx: fxOver,
+                layer: (() => {
+                  const l = d.querySelector('.crt-scanlines');
+                  return l ? win.getComputedStyle(l).display : null;
+                })(),
+              });
+            }
+          }
+        }
+        document.getElementById('out').textContent = JSON.stringify(rows, null, 0);
+      }
+      run();
+    </script>
+  </body>
+</html>

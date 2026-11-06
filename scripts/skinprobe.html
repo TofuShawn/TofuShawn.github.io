@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><title>skin probe</title></head><body>
+<pre id="out">pending</pre>
+<script>
+var target = decodeURIComponent(location.hash.slice(1));
+var frame = document.createElement('iframe');
+frame.style.cssText='width:1280px;height:900px;border:0';
+frame.src=target;
+frame.onload=function(){
+  setTimeout(function(){
+    var out=[];
+    try{
+      var w=frame.contentWindow,d=w.document;
+      var html=d.documentElement;
+      out.push('data-skin='+html.getAttribute('data-skin'));
+      out.push('bg='+w.getComputedStyle(html).getPropertyValue('--bg').trim());
+      // Which furniture actually rendered?
+      out.push('has-unseal='+!!d.getElementById('unseal'));
+      out.push('has-hud='+!!d.querySelector('.hud'));
+      out.push('has-grid='+!!d.getElementById('gridov'));
+      out.push('has-cropmarks='+!!d.querySelector('.cropmarks'));
+      // Is the switcher present? (only when >1 skin)
+      out.push('switcher='+!!d.querySelector('[data-set-skin]'));
+    }catch(e){out.push('ERR '+e.message);}
+    document.getElementById('out').textContent='RESULT::'+out.join(' | ');
+  },3000);
+};
+document.body.appendChild(frame);
+</script></body></html>

@@ -1,0 +1,119 @@
+---
+/**
+ * Lone Trail chrome: CRT layer, telemetry marquee, the launch overlay, the grid
+ * overlay.
+ *
+ * Same contract as rhine's Chrome — only this skin's own furniture, gated on
+ * its own feature flags. The layout wraps this in `.skin-only[data-only]`, so
+ * nothing here is painted unless this skin is the active one.
+ */
+import { featuresOf } from '../registry';
+
+export interface Props {
+  /** Show the launch ceremony. Only the cover page should pass true. */
+  seal?: boolean;
+}
+
+const { seal = false } = Astro.props;
+const f = featuresOf('lone-trail');
+const showSeal = seal && f.unseal;
+
+const TICKER = [
+  'RL-ARCHIVE // FILE-04',
+  'ORBIT NOMINAL',
+  'SWISS GRID 12 // 1280',
+  'SECTOR 04 — STELLARIA RING',
+  'TELEMETRY LIVE',
+  'ACCENT #E9521C',
+  'INK #161618',
+  'PAPER #FAF8F5',
+];
+---
+
+{
+  f.crt && (
+    <>
+      <div class="crt-scanlines" aria-hidden="true" />
+      <div class="crt-beam" aria-hidden="true" />
+      <button
+        class="fx-toggle"
+        id="fxtoggle"
+        type="button"
+        aria-pressed="true"
+        aria-label="Toggle CRT scanlines"
+        title="Scanlines — press S"
+      >
+        <span class="fx-bar" aria-hidden="true"><i /><i /><i /></span>
+      </button>
+    </>
+  )
+}
+
+{
+  f.marquee && (
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        {[0, 1].map(() => (
+          <span class="ticker-run">
+            {TICKER.map((t) => (
+              <span class="ticker-item">
+                <i />
+                {t}
+              </span>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+{
+  showSeal && (
+    <div class="launch" id="lt-launch" data-ceremony role="dialog" aria-label="Enter the control room">
+      <div class="launch-grid" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <div class="launch-body">
+        <p class="launch-kicker">Rhine Lab // Control Room</p>
+        <p class="launch-count" aria-hidden="true">
+          T-<span id="lt-count">00:00:04</span>
+        </p>
+        <button class="launch-btn" type="button" aria-label="Enter the control room">
+          Enter
+        </button>
+        <p class="launch-note">Press Enter or click · Skip with ?skip=1</p>
+      </div>
+    </div>
+  )
+}
+
+{
+  f.gridOverlay && (
+    <div class="grid-overlay" id="gridov" aria-hidden="true">
+      <div class="base" />
+      <div class="cols" id="gridcols" />
+    </div>
+  )
+}
+
+<script>
+  import './client';
+</script>
+
+{
+  showSeal && (
+    <script is:inline>
+      // If the client bundle never loads, the overlay must not trap the page.
+      setTimeout(function () {
+        var o = document.getElementById('lt-launch');
+        if (o && !o.classList.contains('off')) {
+          o.classList.add('off');
+          document.body.classList.remove('locked');
+        }
+      }, 8000);
+    </script>
+  )
+}
