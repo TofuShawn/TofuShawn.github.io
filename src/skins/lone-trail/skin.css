@@ -2023,7 +2023,11 @@ body.grid-on .grid-overlay {
 
 html.js-rail .rail {
   position: fixed;
-  top: 0;
+  /* Below the ticker band and the masthead, both of which are pinned at the top
+     of the viewport on this skin. `--rail-top` comes from `src/lib/rail.ts`,
+     which measures the chrome that is actually on screen — a rail running up
+     through the ticker reads as part of the instrument panel, and it is not. */
+  top: var(--rail-top, 0px);
   right: 0;
   bottom: 0;
   z-index: 65; /* under .progress (70) and the launch overlay, over the sheet */

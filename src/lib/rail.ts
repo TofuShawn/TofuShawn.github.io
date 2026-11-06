@@ -17,9 +17,21 @@
  *
  *   --rail-p   progress, 0..1
  *   --rail-h   viewport / document height, 0..1 — the thumb's share
+ *   --rail-travel  the px distance the thumb may move
  *
  * and the skin decides where the rail sits and what it looks like.
+ *
+ * The rail also publishes `--rail-top`, the height of whatever chrome is
+ * currently pinned to the top of the viewport, so the track starts below the
+ * navigation instead of running through it.
  */
+
+/**
+ * Chrome that can sit on top of the page. Measured rather than assumed: the
+ * skins differ — Lone Trail stacks a ticker band above a sticky masthead, rhine
+ * has only a masthead and it scrolls away.
+ */
+const CHROME = ['.ticker', '.masthead'];
 
 export interface RailOptions {
   /**
@@ -53,6 +65,34 @@ export function initRail(opts: RailOptions): void {
   const root = document.documentElement;
   let lastPct = -1;
 
+  // The rail is an instrument for the text, not part of the page's frame, so
+  // it starts below whatever is currently pinned to the top of the viewport.
+  // The chrome is not uniform across skins: Lone Trail stacks a ticker band
+  // above a sticky masthead (only the masthead is still there once you scroll),
+  // rhine's masthead scrolls away completely. So this measures the contiguous
+  // stack that touches the top edge, in document order, and lets it dissolve as
+  // the reader scrolls past it.
+  const chromeTop = () => {
+    // Array.from, not the NodeList itself: a NodeList has forEach but no
+    // filter, and calling one makes the whole paint throw — which silently
+    // leaves every custom property unset and the rail collapsed to nothing.
+    const boxes = Array.from(document.querySelectorAll<HTMLElement>(CHROME.join(',')))
+      .filter((el) => el.getClientRects().length > 0)
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.height > 0 && r.bottom > 0)
+      .sort((a, b) => a.top - b.top);
+
+    let edge = 0;
+    for (const r of boxes) {
+      // Only a box that continues the stack counts. A sticky element parked
+      // further down the page is scenery, not something the rail can pass
+      // through, and counting it would push the rail off the page.
+      if (r.top > edge + 4) break;
+      edge = Math.max(edge, r.bottom);
+    }
+    return Math.max(0, Math.min(edge, window.innerHeight - 40));
+  };
+
   // The thumb's own travel is read from the live layout rather than cached:
   // the thumb height changes as the document grows (fonts, images, a section
   // that expands on click), and a cached travel length makes a drag drift out
@@ -74,6 +114,7 @@ export function initRail(opts: RailOptions): void {
     //   --rail-travel  the px distance the thumb may move
     rail!.style.setProperty('--rail-p', p.toFixed(4));
     rail!.style.setProperty('--rail-h', doc > 0 ? Math.min(1, win / doc).toFixed(4) : '1');
+    rail!.style.setProperty('--rail-top', `${chromeTop()}px`);
     rail!.style.setProperty('--rail-travel', `${travel()}px`);
 
     // A page that fits in one screen has nothing to indicate. Rather than let
