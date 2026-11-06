@@ -15,8 +15,46 @@
  *
  * Exits 1 on the first hard failure; prints a table either way.
  */
-const PORT = process.env.BLOG_PORT || '4322';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
+
+/**
+ * Port resolution order: explicit URL argument, `BLOG_PORT` env, `.env`, the
+ * default declared in `docker-compose.yml`, then the template fallback.
+ *
+ * `docker-compose.yml` is read because it is the thing that actually decides
+ * the published port — the compose file carries `${BLOG_PORT:-4322}`, and a
+ * checkout that renames it changes that literal. Without reading it, this
+ * script would verify whatever happens to be on 4322, which on a machine with
+ * two checkouts is the *other* site, and report 22 checks passed.
+ */
+function composePort() {
+  const p = join(ROOT, 'docker-compose.yml');
+  if (!existsSync(p)) return null;
+  const m = readFileSync(p, 'utf8').match(/BLOG_PORT:-(\d+)/);
+  return m ? m[1] : null;
+}
+
+function envFilePort() {
+  const p = join(ROOT, '.env');
+  if (!existsSync(p)) return null;
+  const line = readFileSync(p, 'utf8').match(/^\s*BLOG_PORT\s*=\s*(\d+)/m);
+  return line ? line[1] : null;
+}
+
+const PORT = process.env.BLOG_PORT || envFilePort() || composePort() || '4322';
 const BASE = (process.argv[2] || `http://localhost:${PORT}`).replace(/\/$/, '');
+
+/** The identity this checkout claims, used to prove the server is *this* site. */
+function expectedTitle() {
+  const p = join(ROOT, 'src', 'lib', 'site.ts');
+  if (!existsSync(p)) return null;
+  const m = readFileSync(p, 'utf8').match(/^\s*title:\s*['"](.+?)['"]/m);
+  return m ? m[1] : null;
+}
 
 let failures = 0;
 const rows = [];
@@ -41,8 +79,41 @@ async function get(path) {
 }
 
 async function main() {
+  // --- is this even the right site? ---------------------------------------
+  // On a machine with two checkouts the wrong container is a very live
+  // possibility, and every assertion below would pass against it — they check
+  // server *behaviour*, which is identical for both. Comparing the served
+  // title against this checkout's own `site.ts` is the only cheap way to know.
+  {
+    const want = expectedTitle();
+    const { res, body } = await get('/');
+    const got = body.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
+    if (!want) {
+      bad('serves this checkout', 'could not read SITE.title from src/lib/site.ts');
+    } else if (!got.includes(want)) {
+      bad(
+        'serves this checkout',
+        `title "${got}" does not contain "${want}" — ${BASE} is a different site`,
+      );
+    } else {
+      ok('serves this checkout', `title matches site.ts ("${want}")`);
+    }
+  }
+
   // --- routes -------------------------------------------------------------
-  const routes = ['/', '/posts/', '/tags/', '/about/', '/posts/on-keeping-an-archive/', '/rss.xml', '/sitemap.xml'];
+  // The article route is *derived* from the index rather than hardcoded: a
+  // personal site has its own slugs, and naming a sample post here made this
+  // script fail on every checkout that replaced the demo content — which is
+  // the documented first move.
+  const routes = ['/', '/posts/', '/tags/', '/about/', '/rss.xml', '/sitemap.xml'];
+  const index = await get('/posts/');
+  const article = index.body.match(/href="(\/posts\/[^"?#]+\/)"/)?.[1];
+  if (article) {
+    routes.push(article);
+  } else {
+    // An archive with no posts is valid; the feed check below still runs.
+    ok('article route', 'no posts yet — skipped');
+  }
   for (const r of routes) {
     const res = await head(r);
     if (res.status === 200) ok(`GET ${r}`, '200');
@@ -138,9 +209,14 @@ async function main() {
   // that only exists in the current skin build.
   {
     const { body } = await get('/tags/');
+    // One tag is the honest minimum for an archive with one post; requiring
+    // five asserted the sample content rather than the skin's markup, and so
+    // failed on every checkout that replaced the demo. What is being tested is
+    // that `.tag` elements exist at all — the ruled register is a CSS rule,
+    // checked by the token probe below.
     const rows_ = (body.match(/class="tag"/g) || []).length;
-    if (rows_ >= 5) ok('tags register markup', `${rows_} tag rows`);
-    else bad('tags register markup', `expected the ruled register (>=5 rows), found ${rows_}`);
+    if (rows_ >= 1) ok('tags register markup', `${rows_} tag row(s)`);
+    else bad('tags register markup', 'no element carries class="tag" — the register is missing');
 
     if (/--tag-size/.test(body)) ok('tags sizing token', '--tag-size present');
     else bad('tags sizing token', 'per-chip --tag-size missing — page is from an older build');
