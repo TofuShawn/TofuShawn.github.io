@@ -498,22 +498,29 @@ function initCrt() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Scroll-driven telemetry band                                               */
+/* Telemetry band — a news crawl                                             */
 /* -------------------------------------------------------------------------- */
 
 /**
- * The marquee used to be a 42s CSS animation — a fixed speed that read as
- * wallpaper. It now runs on its own clock and takes its speed from the page:
- * scrolling spins the band up, scrolling back runs it in reverse, and when the
- * page is still it drifts slowly enough to stay alive without pulling the eye.
+ * One line, always travelling left, at a speed you can read.
+ *
+ * The speed is the whole point: the CSS animation it replaces ran for a fixed
+ * 42s per cycle, so the crawl's pace was whatever `track width / 42` happened
+ * to be — add a word to the ticker list and the whole band slows down. A crawl
+ * is a reading pace, so the clock is px/s and the geometry is solved per frame.
+ *
+ * That is also why this is scripted at all: CSS can animate `translateX(-50%)`
+ * on a timer, but it cannot say "84 pixels per second" — the duration depends
+ * on the width, which depends on the copy. The CSS animation stays as the
+ * no-JS baseline; `html.js-marquee` turns it off, because two things writing
+ * translateX fight each other.
  *
  * Two details that matter:
- *   - the track holds two identical runs, so one full cycle is half its width.
- *     Wrapping at `width / 2` makes the seam invisible; wrapping at the full
- *     width leaves a visible gap.
- *   - velocity is injected from the scroll delta, not from scroll position, so
- *     the band keeps its own momentum and coasts instead of snapping to the
- *     pointer. A position-driven band looks like a scrollbar, not telemetry.
+ *   - the track holds two identical runs, so one cycle is half its width.
+ *     Wrapping at `scrollWidth / 2` makes the seam invisible; wrapping at the
+ *     full width would leave a gap.
+ *   - the crawl pauses under the pointer, because a band that cannot be read
+ *     while you aim at it is decoration rather than information.
  */
 function initTicker() {
   const track = document.querySelector<HTMLElement>('.ticker-track');
@@ -525,20 +532,22 @@ function initTicker() {
 
   document.documentElement.classList.add('js-marquee');
 
-  // Idle drift is deliberately faster than the 42s marquee this replaced
-  // (~41px/s). Slower than the thing it replaced is not "alive", it is the
-  // wallpaper again with more code behind it.
-  const DRIFT = 62; // px/s when the page is idle
-  const MAX = 2400; // px/s ceiling, so a flung scroll cannot outrun the paint
-  const DECAY = 6.4; // 1/s; injected velocity halves in ~110ms
+  // px/s, one constant for the whole band — that is the point of scripting it.
+  // A broadcast crawl reads at roughly 70–110; above that the 12px caps stop
+  // resolving, below it the band is wallpaper with a clock attached.
+  const SPEED = 70;
 
-  let x = 0;
-  let injected = 0;
-  let lastY = window.scrollY;
+  let width = track.scrollWidth / 2;
+
+  // Start one run to the left rather than at zero. The band travels rightward
+  // and wraps at `x >= 0` back to `-width`; those two positions are the same
+  // picture (the second run stands where the first one was), so anchoring at
+  // `-width` just means the first wrap is a full cycle away instead of the
+  // very next frame.
+  let x = -width;
   let last = performance.now();
   let paused = false;
   let hidden = document.hidden;
-  let width = track.scrollWidth / 2;
 
   band.addEventListener('pointerenter', () => (paused = true));
   band.addEventListener('pointerleave', () => (paused = false));
@@ -555,16 +564,6 @@ function initTicker() {
   addEventListener('resize', measure, { passive: true });
   if (document.fonts) document.fonts.ready.then(measure).catch(() => {});
 
-  addEventListener(
-    'scroll',
-    () => {
-      const y = window.scrollY;
-      injected += (y - lastY) * 9;
-      lastY = y;
-    },
-    { passive: true },
-  );
-
   const frame = (now: number) => {
     requestAnimationFrame(frame);
     if (hidden) {
@@ -572,22 +571,16 @@ function initTicker() {
       return;
     }
 
+    // Cap dt so a stalled frame or a long tab wake cannot teleport the band.
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
-    // Frame-rate independent decay: the old `*= 0.9` per frame made the same
-    // flick coast twice as long on a 60Hz screen as on a 120Hz one.
-    injected *= Math.exp(-DECAY * dt);
-    if (Math.abs(injected) < 0.5) injected = 0;
+    if (!paused) x += SPEED * dt;
 
-    const speed = paused ? 0 : DRIFT + Math.max(-MAX, Math.min(MAX, injected));
-    x -= speed * dt;
-
-    // Wrap in both directions so reverse scrolling does not run out of track.
-    if (width > 0) {
-      if (x <= -width) x += width;
-      else if (x > 0) x -= width;
-    }
+    // Travel is rightward only, so only the right seam ever needs wrapping:
+    // one run of travel plus one run of content is the same picture again,
+    // which is what makes `x = 0 → x = -width` invisible.
+    if (width > 0 && x >= 0) x -= width;
 
     // translate3d keeps this on the compositor; translateX can be promoted too
     // but only when the property is not also being animated by CSS.
