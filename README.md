@@ -1,8 +1,8 @@
-# Archive — a multi-skin blog template
+# Paper Dossier — a multi-skin blog template
 
-A personal blog template built on the idea that a website can behave like a
-printed object: numbered spreads, crop marks, a registration target, a fold line,
-a colophon. Two skins ship, and they are deliberately far apart.
+A blog template built on the idea that a website can behave like a printed
+object: numbered spreads, crop marks, a registration target, a fold line, a
+colophon. Two skins ship, and they are deliberately far apart.
 
 - **Rhine Lab** — a bound dossier on a desk. Faithful port of
   [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion) (MIT).
@@ -38,6 +38,24 @@ docker/
 Dockerfile             two-stage: node build → nginx serve
 ```
 
+## Quick start
+
+```bash
+git clone https://github.com/TofuShawn/paper-dossier
+cd paper-dossier
+npm install
+npm run dev        # http://localhost:4321/
+```
+
+Then:
+
+1. `src/content/posts/` — delete the five sample posts, write your own. `npm run
+   new` scaffolds the frontmatter; [WRITING.md](WRITING.md) explains the rest.
+2. `src/lib/site.ts` — title, subtitle, author, navigation, colophon.
+3. `astro.config.mjs` — set `site` to your production origin.
+4. `public/robots.txt` — point the sitemap line at the same origin.
+5. `src/skins/` — pick a default, or write a third ([SKINS.md](SKINS.md)).
+
 ## Requirements
 
 Node ≥ 22.23.4 (Astro 7 needs it), or Docker. No other services, no database,
@@ -71,11 +89,13 @@ page is a real 404. Details and the three nginx traps worth knowing live in
 Without Docker, `node scripts/serve.mjs` after a build serves `dist/` on :4399
 for local viewing only.
 
-> **Dev server caveat.** `astro dev` cannot start in every environment — it fails
-> with `require is not defined` or `spawn EPERM` under some sandboxed hosts. This
-> template was developed and verified against `astro build` plus a static file
-> server, which is also what the image does. Nothing in the template depends on
-> the dev server.
+> **Dev server.** `npm run dev` runs on `http://localhost:4321/` with hot reload;
+> a new `.md` file appears in `/posts/` within seconds. Bad frontmatter makes the
+> dev server return a 500 and recovers as soon as the file is fixed — no restart.
+> The template does not *depend* on the dev server (everything it ships is
+> prerendered), so if `astro dev` will not start in your environment — it has been
+> seen to fail with `require is not defined` or `spawn EPERM` under some sandboxed
+> hosts — `astro build` plus a static server is a complete workflow.
 
 ## Template and content are two layers
 
