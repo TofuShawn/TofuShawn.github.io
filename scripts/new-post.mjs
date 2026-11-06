@@ -20,7 +20,7 @@
  *   npm run new -- --title "On paper" --date 2026-04-01
  *   npm run new -- --title "On paper" --dry-run  print, do not write
  */
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
@@ -116,6 +116,7 @@ function pad(n, width) {
  */
 function nextCode(prefix) {
   let max = 0;
+  if (!existsSync(POSTS_DIR)) return `${prefix}-${pad(1, 4)}`;
   for (const file of readdirSync(POSTS_DIR)) {
     if (!file.endsWith('.md')) continue;
     const head = readFileSync(join(POSTS_DIR, file), 'utf8').slice(0, 600);
@@ -151,10 +152,17 @@ async function main() {
     return;
   }
 
+  // An empty `src/content/posts/` is the normal starting state, not a broken
+  // checkout: the README's first move is to delete the sample posts, and git
+  // does not track empty directories, so a fresh clone of someone's site after
+  // that deletion arrives with no posts folder at all. Create it instead of
+  // refusing to run in the one situation the script exists for.
   if (!existsSync(POSTS_DIR)) {
-    console.error(`× Not in a blog checkout: ${POSTS_DIR} does not exist.`);
-    console.error('  Run this from the project root.');
-    process.exit(1);
+    if (args['dry-run']) {
+      console.error(`! ${POSTS_DIR} does not exist yet — a real run would create it.`);
+    } else {
+      mkdirSync(POSTS_DIR, { recursive: true });
+    }
   }
 
   // Interactive only when something is missing and stdin is a terminal. An
