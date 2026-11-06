@@ -3,11 +3,12 @@
  *
  * Everything here is progressive: with JavaScript disabled the site is a
  * complete, readable document. This file adds the press-room behaviour —
- * halftone plates, the seal, sound, the grid overlay, the coordinate HUD.
+ * halftone plates, the seal, the grid overlay, the coordinate HUD.
  *
  * Design rules carried from the reference dossier:
- *   - No sound before a user gesture. The AudioContext is created inside the
- *     first sfx() call and resumed there, never at load.
+ *   - Nothing here makes a noise. This skin used to synthesise a click on every
+ *     hover; a page that makes a sound because the pointer crossed a link is a
+ *     page people close, and the audio layer is gone rather than muted.
  *   - prefers-reduced-motion short-circuits the whole intro, and every tween
  *     checks it.
  *   - Canvas backing stores are capped at DPR 2.
@@ -27,151 +28,11 @@ import {
   reduceMotion,
   scramble,
   settleEverything,
-  throttled,
 } from '../../lib/motion';
 import { initRail } from '../../lib/rail';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const outCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-
-/* -------------------------------------------------------------------------- */
-/* sound                                                                       */
-/* -------------------------------------------------------------------------- */
-
-type Voice = {
-  noise?: boolean;
-  dur: number;
-  g: number;
-  f?: number;
-  sweep?: [number, number];
-  sweepFilter?: [number, number];
-  hp?: number;
-  type?: OscillatorType;
-  drop?: number;
-  notes?: number[];
-  gap?: number;
-};
-
-/**
- * Synthesised voices. No audio files ship with this template: every sound is
- * built from an oscillator or a filtered noise buffer at call time.
- */
-const VOICES: Record<string, Voice> = {
-  ui: { type: 'sine', f: 660, dur: 0.05, g: 0.08 },
-  beep: { type: 'square', f: 880, dur: 0.04, g: 0.05 },
-  chime: { notes: [880, 1320], type: 'sine', dur: 0.3, g: 0.1, gap: 0.08 },
-  thump: { type: 'sine', f: 120, drop: 0.4, dur: 0.16, g: 0.24 },
-  stamp: { notes: [140, 96], type: 'sine', dur: 0.07, g: 0.3, gap: 0.04 },
-  step: { type: 'sine', f: 200, drop: 0.7, dur: 0.05, g: 0.05 },
-  paper: { noise: true, dur: 0.42, g: 0.2, sweepFilter: [2400, 900], hp: 480 },
-  tear: { noise: true, dur: 0.5, g: 0.2, sweepFilter: [5200, 700], hp: 1200 },
-  scratch: { noise: true, dur: 0.19, g: 0.16, sweepFilter: [3600, 1400], hp: 900 },
-  scan: { type: 'sawtooth', sweep: [400, 1600], dur: 1.1, g: 0.16 },
-  power: { type: 'triangle', sweep: [180, 720], dur: 0.6, g: 0.12 },
-  unlock: { notes: [520, 780], type: 'sine', dur: 0.12, g: 0.1, gap: 0.06 },
-};
-
-let ac: AudioContext | null = null;
-
-function audio(): AudioContext | null {
-  if (typeof AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
-    return null;
-  }
-  if (!ac) {
-    const Ctor = window.AudioContext ?? (window as any).webkitAudioContext;
-    ac = new Ctor() as AudioContext;
-  }
-  return ac;
-}
-
-/** Silences sound during programmatic scrolling, by deadline rather than flag. */
-let muteUntil = 0;
-
-export function sfx(kind: string = 'ui'): void {
-  const v = VOICES[kind];
-  if (!v) return;
-  if (performance.now() < muteUntil) return;
-
-  try {
-    const ctx = audio();
-    if (!ctx) return;
-    if (ctx.state === 'suspended') void ctx.resume();
-
-    const t0 = ctx.currentTime;
-
-    if (v.noise) {
-      // Smoothed noise: raw white noise sounds like static, not paper.
-      const len = Math.max(1, Math.floor(ctx.sampleRate * v.dur));
-      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      let last = 0;
-      for (let i = 0; i < len; i++) {
-        last = last * 0.35 + (Math.random() * 2 - 1) * 0.65;
-        data[i] = last;
-      }
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      if (v.sweepFilter) {
-        filter.frequency.setValueAtTime(v.sweepFilter[0], t0);
-        filter.frequency.exponentialRampToValueAtTime(v.sweepFilter[1], t0 + v.dur);
-      }
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(v.g, t0);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + v.dur);
-
-      let node: AudioNode = src;
-      node.connect(filter);
-      node = filter;
-
-      if (v.hp) {
-        const hp = ctx.createBiquadFilter();
-        hp.type = 'highpass';
-        hp.frequency.value = v.hp;
-        node.connect(hp);
-        node = hp;
-      }
-
-      node.connect(gain).connect(ctx.destination);
-      src.start(t0);
-      src.stop(t0 + v.dur);
-      return;
-    }
-
-    const play = (freq: number, at: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = v.type ?? 'sine';
-      osc.frequency.setValueAtTime(freq, at);
-
-      if (v.sweep) {
-        osc.frequency.exponentialRampToValueAtTime(v.sweep[1], at + v.dur);
-      } else if (v.drop) {
-        osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq * v.drop), at + v.dur * 4);
-      }
-
-      gain.gain.setValueAtTime(v.g, at);
-      gain.gain.setValueAtTime(v.g, at + v.dur * 0.6);
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + v.dur);
-
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(at);
-      osc.stop(at + v.dur + 0.02);
-    };
-
-    if (v.notes) {
-      v.notes.forEach((n, i) => play(n, t0 + i * (v.gap ?? 0)));
-    } else {
-      play(v.sweep ? v.sweep[0] : (v.f ?? 440), t0);
-    }
-  } catch {
-    // Audio is a garnish. Any failure — no device, blocked context, headless
-    // browser — degrades to silence and must never break the page.
-  }
-}
 
 /* -------------------------------------------------------------------------- */
 /* halftone                                                                    */
@@ -396,7 +257,6 @@ function initGrid() {
 
   const toggle = () => {
     document.body.classList.toggle('grid-on');
-    sfx('ui');
   };
 
   document.getElementById('gridbtn')?.addEventListener('click', toggle);
@@ -436,17 +296,6 @@ function initHud() {
   );
 }
 
-function initPaperSound() {
-  const hoverPaper = throttled(() => sfx('paper'), 220);
-  const hoverGlass = throttled(() => sfx('ui'), 80);
-
-  document.querySelectorAll('.plate').forEach((p) => p.addEventListener('pointerenter', hoverPaper));
-  document.querySelectorAll('.redact').forEach((r) => r.addEventListener('pointerenter', () => sfx('scratch')));
-  document.querySelectorAll('.sticker, .stamp').forEach((s) => s.addEventListener('click', () => sfx('stamp')));
-  document.querySelectorAll('.ix-row').forEach((r) => r.addEventListener('pointerenter', () => sfx('step')));
-  document.querySelectorAll('.tag, .masthead a').forEach((a) => a.addEventListener('pointerenter', hoverGlass));
-}
-
 /** Break the seal: the page's one ceremonial gesture. */
 function unseal() {
   const overlay = document.getElementById('unseal');
@@ -454,11 +303,6 @@ function unseal() {
 
   const seal = overlay.querySelector('.seal');
   seal?.classList.add('stamping');
-
-  sfx('tear');
-  setTimeout(() => sfx('stamp'), 240);
-  setTimeout(() => sfx('paper'), 420);
-  setTimeout(() => sfx('chime'), 520);
 
   setTimeout(() => {
     overlay.classList.add('off');
@@ -537,12 +381,12 @@ function boot() {
   initBarcodes();
   initGrid();
   initHud();
-  initPaperSound();
   initToc();
   // The rail is chrome, not an effect: it must mount even for a visitor who
   // asked for reduced motion, or the native bar stays hidden with nothing in
   // its place. `initRail` gates on `js-rail`, not on `.js-motion`.
   initRail({ skin: 'rhine' });
+
 
   const sealed =
     !noSeal && !!document.getElementById('unseal') && document.body.classList.contains('locked');

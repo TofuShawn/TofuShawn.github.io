@@ -69,8 +69,6 @@ export type SkinFeatures = {
   halftone: boolean;
   /** Plates are painted as a scanline sphere on canvas. */
   scanline: boolean;
-  /** Synthesised UI sound. Always gated behind a user gesture. */
-  sound: boolean;
   /** Press `G` to overlay the layout grid. */
   gridOverlay: boolean;
   /** Fixed coordinate readout in the corner. */
@@ -113,7 +111,6 @@ export const DEFAULT_FEATURES: SkinFeatures = {
   unseal: false,
   halftone: false,
   scanline: false,
-  sound: false,
   gridOverlay: false,
   hud: false,
   printArtifacts: false,

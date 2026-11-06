@@ -7,10 +7,10 @@ colophon. Two skins ship, and they are deliberately far apart.
 - **Rhine Lab** — a bound dossier on a desk. Faithful port of
   [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion) (MIT).
   Crop marks, fold line, binding holes, tape, stamp, redacted lines, halftone
-  plates, a paper sound on every interaction.
+  plates.
 - **Lone Trail** — a control room printed on paper. Ruled 12-column grid with no
   gutters, CRT scanlines (toneable, and switchable off with `S`), an 11s scan
-  beam, a live ticker, a punch card you can type into, a morse lamp, De Stijl
+  beam, a live ticker, a punch card you can type into, a morse readout, De Stijl
   bars. Every page opens under a solid ink running head; `/tags/` is a ruled
   register rather than a cloud.
 
@@ -220,9 +220,9 @@ Adding a skin means copying one folder. Two things make that work:
   before first paint.
 - Every interactive element is reachable by keyboard; the seal responds to
   `Enter`/`Space`, the grid overlay to `G`, and the CRT overlay to `S`. The
-  punch-card input and the morse button are ordinary form controls.
-- Sound is opt-in in Lone Trail (it starts muted) and absent from Rhine until a
-  user gesture, because both browsers require one.
+  punch-card input is an ordinary form control.
+- Silent by design. Neither skin makes a noise — no hover ticks, no interface
+  tones, no audio files.
 
 ## Licence
 

@@ -18,7 +18,6 @@ const rhine: SkinMeta = {
     unseal: true,
     halftone: true,
     scanline: false,
-    sound: true,
     gridOverlay: true,
     hud: true,
     printArtifacts: true,

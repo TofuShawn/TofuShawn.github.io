@@ -15,7 +15,6 @@ export const SITE = {
     published: 'Archive Press',
     printed: 'Set in Helvetica Neue and Source Han Sans, with JetBrains Mono for data.',
     type: 'Twelve columns on a 1180px measure, 8px baseline.',
-    sound: 'Interface tones are synthesised at runtime. No audio files are shipped.',
   },
 } as const;
 
