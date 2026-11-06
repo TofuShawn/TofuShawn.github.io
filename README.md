@@ -77,6 +77,36 @@ for local viewing only.
 > server, which is also what the image does. Nothing in the template depends on
 > the dev server.
 
+## Template and content are two layers
+
+This repository is the **template**. It is published as a library, so it ships
+with demo content rather than anyone's real archive. Keep that separation
+straight when changing things:
+
+| Layer | Files | Who owns it |
+| --- | --- | --- |
+| Template | `src/skins/`, `src/styles/`, `src/layouts/`, `src/components/`, `src/pages/`, `src/lib/posts.ts`, `scripts/` | This repo. Changes are library changes and should stay generic. |
+| Content | `src/content/posts/*.md`, `src/lib/site.ts`, `public/` | Whoever deploys it. Changes are personal and never upstreamed. |
+
+What that means in practice:
+
+- **The five sample posts are demonstration material.** They are about the
+  template's own subject — layout, print, typography, archive-keeping — chosen
+  so the site is legible without any personal history attached. Delete them and
+  drop your own in; nothing in the layout depends on them existing.
+- **`src/lib/site.ts` is the seam.** Title, subtitle, author, URL, navigation,
+  and colophon all live there. Nothing else in the template hardcodes a name.
+- **Do not make the template more opinionated to fit one blog.** If a change
+  only makes sense for one person's archive, it belongs in their content layer,
+  not in a component.
+- **The demo voice is not the house style.** [WRITING.md](WRITING.md) documents
+  it as an example of one coherent editorial stance, and says explicitly that
+  keep-the-structure, discard-the-voice is the expected path.
+
+If you are deploying this for yourself, the intended first moves are: replace
+`src/content/posts/`, edit `src/lib/site.ts`, set `site` in `astro.config.mjs`,
+and update `public/robots.txt`.
+
 ## Writing a post
 
 ```bash

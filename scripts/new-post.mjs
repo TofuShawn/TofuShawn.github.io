@@ -27,7 +27,7 @@ import { stdin, stdout } from 'node:process';
 
 const POSTS_DIR = join(process.cwd(), 'src', 'content', 'posts');
 
-/** The tag vocabulary the site ships with. A new tag is allowed, not default. */
+/** The tag vocabulary the sample posts ship with. Not binding — see WRITING.md. */
 const KNOWN_TAGS = [
   'design', 'writing', 'typography', 'print', 'grids', 'archives', 'notes', 'colour', 'canvas',
 ];
@@ -244,8 +244,9 @@ async function main() {
     const unknown = tags.filter((t) => !KNOWN_TAGS.includes(t));
     if (unknown.length) {
       warnings.push(
-        `New tag(s): ${unknown.join(', ')}. /tags/ is a ruled register — every tag costs a row. ` +
-          'Merge into an existing tag unless the subject genuinely has no home.',
+        `Tag(s) outside the sample vocabulary: ${unknown.join(', ')}. ` +
+          'Fine if this is your own archive — the sample nine are a placeholder. ' +
+          'Keep the final list small: /tags/ is a ruled register, one row per tag.',
       );
     }
     if (!code) {

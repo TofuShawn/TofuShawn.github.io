@@ -1,11 +1,24 @@
 # Writing
 
-How to add a post in a form the site will actually render well. This is a
-specification, not a suggestion: the layouts were built around these rules, and
-a post that ignores them will look wrong even though it builds.
+How to add a post in a form the site will actually render well.
 
-For the mechanical field list, see the frontmatter table below. For *how the
-prose should sound*, see [Voice](#voice).
+This repository is a **template**. It ships with five sample posts so that a
+fresh clone has something to display, but they are demonstration content, not
+anyone's archive — delete them. The rules below fall into two groups, and the
+difference matters:
+
+- **Structural rules are requirements.** Heading depth, required frontmatter,
+  the fenced-code language tag, the note/entry distinction: the layouts were
+  built around these, and a post that ignores them will look wrong even though
+  it builds.
+- **The voice section is an example, not a requirement.** It describes how the
+  sample posts happen to read, as a worked illustration of one coherent
+  editorial stance. Your own blog should not sound like it. If you are
+  replacing the samples with your own writing, keep the structure and discard
+  the voice entirely.
+
+For the mechanical field list, see the frontmatter table below. For the demo
+voice, see [Voice](#voice-the-sample-content).
 
 ---
 
@@ -96,28 +109,40 @@ a date — it does not need to increase, and reusing a retired number is fine.
 Leaving `code` out is also fine: the slug fallback is ugly on purpose, which is
 a gentle nudge to set one.
 
-### `tags` — keep the vocabulary small
+### `tags` — start from the sample vocabulary
 
-Nine tags exist. Adding a tenth is a real decision, because `/tags/` is a ruled
-register: every tag takes a row, and rows have to be worth the space.
+The five sample posts use nine tags. A new clone can start there, because an
+empty `/tags/` page looks broken, and a tag vocabulary you did not choose is
+still better than a page with nothing on it.
 
 ```
 design (4)   writing (2)   typography (2)   print (2)   grids (2)
 archives (2) notes (1)     colour (1)       canvas (1)
 ```
 
-A tag with one post is not a category, it is a label. That is allowed — but if a
-tag stays at one post after several entries, merge it into a neighbour.
+**These are not binding.** Once you are writing your own archive, replace them
+wholesale — the vocabulary should describe your subjects, not this template's.
+`/tags/` is a ruled register where every tag takes a row, so keep the final list
+to something a reader can scan: roughly five to twelve tags, and a tag that
+holds one post for a long time is a label rather than a category. Merge it into
+a neighbour or fold it back into the post.
 
-Tags are lowercase, one word where possible, and never pluralised
-(`archives` is the exception and predates this rule).
+Whatever you settle on: lowercase, one word where possible, no plurals.
 
 ---
 
-## Voice
+## Voice (the sample content)
 
-The site's voice is the reason the rules above exist. Six properties, all
-visible in the five posts that ship:
+**This section describes the sample posts, not a rule.** It is here because the
+five demonstration posts do share a recognisable editorial stance, and a new
+owner has to decide *something* about their own prose. Seeing one worked
+example makes that decision easier, and copying it wholesale is the wrong
+response to it.
+
+If you keep the samples, they read consistently. If you are writing your own
+archive, ignore everything below except the last paragraph.
+
+Six properties, all visible in the five posts that ship:
 
 **Start with a claim, not a context.** The first sentence is the argument:
 
@@ -126,7 +151,7 @@ visible in the five posts that ship:
 
 No "In this post I will…", no "Recently I have been thinking about…".
 
-**State the number.** This site is about craft, and craft has measurements:
+**State the number.** These posts are about craft, and craft has measurements:
 
 > Seventy point six six six. It never divides evenly, and it never will, and
 > this is the single most useful thing about the number.
@@ -135,7 +160,7 @@ No "In this post I will…", no "Recently I have been thinking about…".
 after long ones. The rhythm is a print rhythm, not a blog rhythm.
 
 **Concede the counter-argument in the middle, not the end.** A post that only
-proves its thesis reads as advocacy. The strongest entries here argue against
+proves its thesis reads as advocacy. The strongest samples argue against
 themselves for a paragraph and then come back.
 
 **End without a summary.** The last line is a fact, an aphorism, or an image —
@@ -147,6 +172,18 @@ never "in conclusion". Compare:
 why they are true, not a bolded list. The one exception is a `<dl class="meta-rows">`
 (see [Structured blocks](#structured-blocks)), which is a table wearing prose
 clothes.
+
+### What is transferable, whatever your voice
+
+Almost nothing above. Two things are:
+
+- **Do not announce the structure.** "First I'll cover, then I'll argue" is a
+  presentational habit, not a voice, and it wastes the opening.
+- **Do not end by summarising what you just said.** The reader finished the
+  post; they were there. A summary is a tell that the piece had no ending.
+
+Everything else — the measurements, the concessions, the aphorisms — belongs to
+whoever wrote these samples.
 
 ### What to avoid
 
@@ -290,26 +327,54 @@ typo in prose, but it will catch a post that builds to an empty page.
 
 ## For an AI writing a post
 
-Paste this section, or point the agent at this file. The constraints that
-actually matter, in order:
+Point the agent at this file. **First establish which of the two jobs it is**, because
+they have opposite instructions:
+
+### Job A — improving the template's sample content
+
+The five posts exist so a clone is not an empty shell. An agent working here
+should keep them *about the template's own subject*: layout, print, typography,
+archive-keeping — the things the site is demonstrably built from. The writing
+must remain generic enough to be replaceable, and must not invent an author
+persona, a personal history, or opinions that would commit a new owner to
+anything.
+
+Rules for job A:
 
 1. **Pick the mode first.** Under 400 words with no headings is a note and is
    complete. Do not pad it.
 2. **Required frontmatter is exactly three fields:** `title`, `description`,
    `date`. Quote the first two.
-3. **Use the existing tag vocabulary** (`design`, `writing`, `typography`,
-   `print`, `grids`, `archives`, `notes`, `colour`, `canvas`) unless the subject
-   genuinely has no home. A new tag is a decision to justify, not a default.
+3. **Stay in the sample tag vocabulary** (`design`, `writing`, `typography`,
+   `print`, `grids`, `archives`, `notes`, `colour`, `canvas`), because `/tags/`
+   must look populated on a fresh clone.
 4. **Set `code`** with a prefix matching the primary tag from the table above.
-5. **The first sentence is the claim.** Do not write an introduction.
-6. **The last sentence is not a summary.** Do not write a conclusion.
-7. **`##` and `###` only.** Deeper headings vanish from the TOC.
-8. **No listicle structure** unless it is a `<dl class="meta-rows">` table.
-9. **Fenced code blocks need a language tag.**
-10. **Do not invent footer/frontmatter fields.** The Zod schema is strict and
-    extra keys are stripped; unknown fields fail silently rather than loudly.
+5. **`##` and `###` only.** Deeper headings vanish from the TOC.
+6. **Fenced code blocks need a language tag.**
+7. **Do not invent frontmatter fields.** The Zod schema is strict; unknown keys
+   are stripped silently rather than reported.
 
-What an agent should *not* do: rewrite the existing five posts for consistency,
-add a "related posts" section, or introduce a new prose style. The voice
-section describes a target the shipped posts already hit; match it rather than
-re-deriving it.
+### Job B — writing someone's actual posts
+
+Everything about voice is theirs, not yours. Do not import the sample voice, do
+not add the measurements-and-concessions rhythm from the section above, and do
+not "make it consistent with the existing posts" — the existing posts are demo
+material that the owner is replacing.
+
+Rules for job B:
+
+1. **Ask for the voice before writing.** Or better, ask for one paragraph they
+   have already written and match that.
+2. **Structure still applies** — modes, frontmatter, heading depth, language
+   tags, no invented fields. Those are layout constraints, not style choices.
+3. **Tags are the owner's choice.** The sample vocabulary is a placeholder. Confirm
+   which tags exist in *their* archive before assigning any.
+4. **Do not rewrite their other posts for consistency.** That is the single most
+   damaging thing an agent does to someone's archive.
+
+### For both jobs
+
+What an agent should *not* do: add a "related posts" section, change the prose
+style of posts it was not asked to touch, or delete the sample posts unless
+explicitly told to — the samples are the working example that makes the
+template legible to a new owner.
