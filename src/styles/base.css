@@ -20,6 +20,22 @@ html {
   scroll-behavior: smooth;
 }
 
+/* The custom scroll rail.
+   Hidden only once `initRail()` has actually mounted a replacement — the
+   `js-rail` class is set by the script, never by a media query or a skin
+   selector. Getting this direction wrong leaves a page that cannot be
+   scrolled with a mouse when the script fails, which is worse than an ugly
+   native bar. Both properties are needed: `scrollbar-width` covers Firefox,
+   the pseudo-element covers Blink and WebKit. */
+html.js-rail {
+  scrollbar-width: none;
+}
+
+html.js-rail ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 body {
   margin: 0;
   background: var(--bg);

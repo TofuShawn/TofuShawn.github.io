@@ -21,6 +21,7 @@ import {
   settleEverything,
   throttled,
 } from '../../lib/motion';
+import { initRail } from '../../lib/rail';
 
 /* -------------------------------------------------------------------------- */
 /* sound — a console, not a press room                                        */
@@ -843,6 +844,9 @@ function boot() {
   initHovers();
   initStagger();
   initTicker();
+  // Chrome, not an effect: mounted even under reduced motion, because the
+  // native bar is hidden as soon as `js-rail` is set.
+  initRail({ skin: 'lone-trail' });
 
   const sealed =
     !noSeal && !!document.getElementById('lt-launch') && document.body.classList.contains('locked');

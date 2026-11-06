@@ -1996,3 +1996,141 @@ body.grid-on .grid-overlay {
     text-align: left;
   }
 }
+
+/* ==========================================================================
+   the scroll rail
+
+   Native scrollbar hidden by `src/styles/base.css` only once `src/lib/rail.ts`
+   has mounted this — the two always move together.
+
+   This skin is a control-room readout, so its rail is a measuring instrument
+   rather than a piece of browser furniture: a hard ink rule down the right
+   edge, six engraved ticks, and a solid ink thumb carrying a live percentage.
+   The counter rides *inside* the thumb because on this skin the position is
+   telemetry, and telemetry belongs on the moving part.
+   ========================================================================== */
+
+.rail {
+  display: none;
+}
+
+html.js-rail .rail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 65; /* under .progress (70) and the launch overlay, over the sheet */
+  display: block;
+  width: 16px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* The channel: one ink rule the full height, flush to the edge. No inset —
+   a control-room rail is bolted to the frame, not floating inside it. */
+html.js-rail .rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  background: var(--rule);
+}
+
+html.js-rail .rail-ticks {
+  position: absolute;
+  inset: 0;
+}
+
+html.js-rail .rail-ticks i {
+  position: absolute;
+  right: 0;
+  width: 7px;
+  height: 2px;
+  background: var(--rule);
+}
+
+html.js-rail .rail-ticks i:nth-child(1) {
+  top: 0;
+}
+html.js-rail .rail-ticks i:nth-child(2) {
+  top: 20%;
+}
+html.js-rail .rail-ticks i:nth-child(3) {
+  top: 40%;
+}
+html.js-rail .rail-ticks i:nth-child(4) {
+  top: 60%;
+}
+html.js-rail .rail-ticks i:nth-child(5) {
+  top: 80%;
+}
+html.js-rail .rail-ticks i:nth-child(6) {
+  top: 100%;
+}
+
+/* The thumb: a solid ink block, hard-edged, sitting on the channel. */
+html.js-rail .rail-thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: calc(var(--rail-h, 1) * 100%);
+  min-height: 32px;
+  background: var(--fg);
+  transform: translateY(calc(var(--rail-p, 0) * var(--rail-travel, 0px)));
+  transition: transform 90ms linear;
+}
+
+html.js-rail .rail.is-drag .rail-thumb {
+  transition: none;
+}
+
+html.js-rail .rail:hover .rail-thumb,
+html.js-rail .rail.is-drag .rail-thumb {
+  background: var(--accent);
+}
+
+/* The counter, hung off the left of the thumb so it never sits on the ink. */
+html.js-rail .rail-pct {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  padding: 2px 4px;
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+html.js-rail .rail.is-drag .rail-pct {
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+/* A page that fits one screen has nothing to report. */
+html.js-rail .rail.is-idle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  html.js-rail .rail {
+    width: 10px;
+  }
+
+  html.js-rail .rail-thumb {
+    width: 5px;
+  }
+
+  html.js-rail .rail-pct {
+    display: none;
+  }
+}

@@ -1311,3 +1311,138 @@ body.grid-on .grid-overlay {
   -webkit-text-stroke: 1px var(--rule);
   user-select: none;
 }
+
+/* ==========================================================================
+   the scroll rail
+
+   The native scrollbar is hidden by `src/styles/base.css` only after
+   `src/lib/rail.ts` has mounted this replacement, so the two move together:
+   no script, native bar; script, this bar.
+
+   It sits on the right edge as a print artifact rather than as browser
+   furniture — a 1px ruled track with quarter ticks, and a vermilion thumb the
+   width of a hairline. Nothing about it is 3D, rounded or translucent; it has
+   to read as a mark made on the sheet.
+
+   The `.hud` owns the bottom-right corner (right/bottom 14px, z-index 40), so
+   the percentage readout is lifted clear of it rather than stacked on it.
+   ========================================================================== */
+
+.rail {
+  display: none;
+}
+
+html.js-rail .rail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 65; /* under .progress (70), over the sheet */
+  display: block;
+  width: 14px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* The track: a single hairline running the full height. It is deliberately
+   not inset — `--rail-travel` is measured as rail height minus thumb height,
+   so the thumb starts at 0 and ends flush at the bottom only if the track
+   does the same. An inset track would leave the thumb hanging past its end. */
+html.js-rail .rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 6px;
+  width: 1px;
+  background: var(--rule);
+}
+
+/* Quarter ticks. Four marks divide the document into fifths visually and give
+   the eye an anchor while the thumb travels — the same job the crop marks do
+   at the page corners. */
+html.js-rail .rail-scale {
+  position: absolute;
+  inset: 0;
+}
+
+html.js-rail .rail-scale i {
+  position: absolute;
+  right: 4px;
+  width: 5px;
+  height: 1px;
+  background: var(--rule);
+}
+
+html.js-rail .rail-scale i:nth-child(1) {
+  top: 0;
+}
+html.js-rail .rail-scale i:nth-child(2) {
+  top: 33.333%;
+}
+html.js-rail .rail-scale i:nth-child(3) {
+  top: 66.666%;
+}
+html.js-rail .rail-scale i:nth-child(4) {
+  top: 100%;
+}
+
+html.js-rail .rail-thumb {
+  position: absolute;
+  /* Flush to the rail's own box, not inset: `--rail-travel` is measured as
+     rail height minus thumb height, so any inset here would make the thumb
+     stop short of the bottom by exactly that inset. */
+  top: 0;
+  right: 5px;
+  width: 3px;
+  height: calc(var(--rail-h, 1) * 100%);
+  min-height: 28px;
+  background: var(--accent);
+  transform: translateY(calc(var(--rail-p, 0) * var(--rail-travel, 0px)));
+  /* A short linear catch-up, not a spring: a scroll rail that eases reads as
+     lag, and this bar's whole job is to report where you are right now. */
+  transition: transform 90ms linear, background 180ms var(--ease-out);
+}
+
+html.js-rail .rail:hover .rail-thumb,
+html.js-rail .rail.is-drag .rail-thumb {
+  background: var(--accent-text);
+}
+
+html.js-rail .rail.is-drag .rail-thumb {
+  transition: none;
+}
+
+/* The readout is monospaced and tabular so the digits do not jitter the block
+   leftwards as 100 replaces 99. */
+html.js-rail .rail-read {
+  position: absolute;
+  right: 14px;
+  bottom: 52px; /* clears .hud, which owns 14px + its own height */
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A page that fits one screen has nothing to report. */
+html.js-rail .rail.is-idle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  html.js-rail .rail {
+    width: 9px;
+  }
+
+  html.js-rail .rail-thumb {
+    right: 3px;
+    width: 2px;
+  }
+
+  html.js-rail .rail-read {
+    display: none;
+  }
+}

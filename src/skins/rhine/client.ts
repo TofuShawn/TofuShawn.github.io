@@ -29,6 +29,7 @@ import {
   settleEverything,
   throttled,
 } from '../../lib/motion';
+import { initRail } from '../../lib/rail';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const outCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -538,6 +539,10 @@ function boot() {
   initHud();
   initPaperSound();
   initToc();
+  // The rail is chrome, not an effect: it must mount even for a visitor who
+  // asked for reduced motion, or the native bar stays hidden with nothing in
+  // its place. `initRail` gates on `js-rail`, not on `.js-motion`.
+  initRail({ skin: 'rhine' });
 
   const sealed =
     !noSeal && !!document.getElementById('unseal') && document.body.classList.contains('locked');
