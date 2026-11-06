@@ -226,7 +226,12 @@ Adding a skin means copying one folder. Two things make that work:
 
 ## Licence
 
-The template is yours to fork. The Rhine skin is derived from
-`Rad-Weed/rhine-lab-motion`, which is MIT — keep that attribution if you keep the
-skin. Lone Trail is original to this template: its visual vocabulary was
-reconstructed from a design-system reference page, not copied from game assets.
+MIT — see [LICENSE](LICENSE). The template is yours to fork, sell, or strip for
+parts.
+
+The Rhine skin is derived from
+[`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion),
+which is MIT; that notice must stay with the skin and is reproduced in
+[THIRD-PARTY.md](THIRD-PARTY.md). Lone Trail is original to this template: its
+visual vocabulary was reconstructed from a design-system reference page, not
+copied from game assets.

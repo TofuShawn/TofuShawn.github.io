@@ -19,23 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-## Third-party attribution
-
-The `rhine` skin is a port of
-[`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion),
-which is MIT licensed:
-
-    MIT License
-
-    Copyright (c) 2026 Rad-Weed
-
-Its licence, reproduced above, applies to the visual system and code that skin
-derives from that project. If you remove the `rhine` skin, you may remove this
-attribution; if you keep it, the notice must stay.
-
-The `lone-trail` skin is original to this template. Its visual vocabulary was
-reconstructed from a design-system reference, not copied from game assets, and
-it ships no third-party artwork.
