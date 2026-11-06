@@ -163,17 +163,26 @@ try {
   }
 
   // Markdown must actually have been rendered, not left as raw text.
-  const article = [...pages.entries()].find(([r]) => /^\/posts\/[^/]+\/$/.test(r));
+  const articles = [...pages.entries()].filter(([r]) => /^\/posts\/[^/]+\/$/.test(r));
+  const article = articles[0];
   if (article) {
     const [route, body] = article;
     if (body.includes('---\ntitle:')) errors.push(`${route}: frontmatter leaked into the output`);
     if (!/<h2[\s>]/.test(body)) errors.push(`${route}: no rendered <h2> — headings missing`);
   }
 
-  // RSS must be valid-ish XML with at least one item.
+  // RSS must be valid-ish XML, with one item per published post.
+  //
+  // An archive with no posts is a legitimate state — `npm run new` starting
+  // from an empty `src/content/posts/` is the documented first move — and a
+  // channel with no items is a valid feed. Asserting an item unconditionally
+  // made every fresh checkout fail its own verification.
   const rss = pages.get('/rss.xml') ?? '';
   if (rss && !/<rss[\s>]/.test(rss)) errors.push('/rss.xml: not an RSS document');
-  if (rss && !/<item>/.test(rss)) errors.push('/rss.xml: no <item> entries');
+  if (rss && !/<channel[\s>]/.test(rss)) errors.push('/rss.xml: no <channel> element');
+  if (rss && articles.length > 0 && !/<item>/.test(rss)) {
+    errors.push(`/rss.xml: ${articles.length} post(s) built but no <item> entries`);
+  }
 
   // Sitemap must list URLs.
   const sm = pages.get('/sitemap.xml') ?? '';
