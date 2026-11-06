@@ -1315,6 +1315,14 @@ html.fx-off .crt-beam {
   animation: lt-marquee 42s linear infinite;
 }
 
+/* JS takes over the clock when it can (see initTicker). The CSS animation
+   stays as the no-JS baseline, but a scroll-driven band needs to own its own
+   transform — two things writing translateX fight each other. */
+html.js-marquee .ticker-track {
+  animation: none;
+  will-change: transform;
+}
+
 .ticker:hover .ticker-track {
   animation-play-state: paused;
 }
