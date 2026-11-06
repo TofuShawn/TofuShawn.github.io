@@ -29,17 +29,17 @@
 # project and *removes* the container that is absent from the new config.
 # Measured: renaming only `container_name` left `archive-blog` deleted and
 # `second-checkout` the sole survivor.
-name: ${BLOG_NAME:-archive-blog}
+name: ${BLOG_NAME:-tofushawn-site}
 
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ${BLOG_NAME:-archive-blog}:local
-    container_name: ${BLOG_NAME:-archive-blog}
+    image: ${BLOG_NAME:-tofushawn-site}:local
+    container_name: ${BLOG_NAME:-tofushawn-site}
     ports:
-      - "${BLOG_PORT:-4322}:80"
+      - "${BLOG_PORT:-4323}:80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]

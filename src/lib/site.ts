@@ -5,15 +5,15 @@ export const SITE = {
   /** Shown in the masthead next to the title. */
   subtitle: 'A field notebook',
   description:
-    'A personal blog built on paper: long-form notes, index cards, and figures, set in a dossier that behaves like print.',
-  author: 'Your Name',
+    'Long-form notes, index cards, and figures, set in a dossier that behaves like print.',
+  author: 'TofuShawn',
   /** Used for canonical URLs and RSS. Must match `site` in astro.config.mjs. */
-  url: 'https://example.com',
+  url: 'https://tofushawn.github.io',
   locale: 'en',
   /** Shown in the colophon. */
   colophon: {
-    published: 'Archive Press',
-    printed: 'Set in Helvetica Neue and Source Han Sans, with JetBrains Mono for data.',
+    published: 'TofuShawn',
+    printed: 'Set in a dossier that behaves like print.',
     type: 'Twelve columns on a 1180px measure, 8px baseline.',
     sound: 'Interface tones are synthesised at runtime. No audio files are shipped.',
   },

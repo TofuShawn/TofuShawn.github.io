@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+# The site is fully static, so Pages needs nothing but the built `dist/`.
+# `base` stays `/` because this repo is a user page (`<user>.github.io`), which
+# GitHub publishes at the domain root. A *project* page would need
+# `base: '/<repo>/'` in astro.config.mjs instead — see the template's README.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. `cancel-in-progress: false` because a half-deployed
+# site is worse than a slightly stale one, and Pages only serves the artifact
+# from a completed run anyway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # `npm run verify` builds *and* asserts the result: every route serves a
+      # real document, the skin contract holds, and the feed matches the content.
+      # Deploying on a failing build is the one failure mode worth blocking.
+      - name: Build and verify
+        run: npm run verify
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

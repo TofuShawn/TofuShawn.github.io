@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config';
 // Update `site` to your production origin: it is used for canonical URLs,
 // the sitemap, and absolute image paths in RSS.
 export default defineConfig({
-  site: 'https://example.com',
+  site: 'https://tofushawn.github.io',
   output: 'static',
   build: { format: 'directory' },
   markdown: {
