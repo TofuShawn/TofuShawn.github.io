@@ -524,19 +524,28 @@ function initTicker() {
 
   document.documentElement.classList.add('js-marquee');
 
-  const DRIFT = 26; // px/s when the page is idle
-  const MAX = 2200; // px/s ceiling, so a flung scroll cannot outrun the paint
-  const FRICTION = 0.9; // per-frame decay of injected velocity
+  // Idle drift is deliberately faster than the 42s marquee this replaced
+  // (~41px/s). Slower than the thing it replaced is not "alive", it is the
+  // wallpaper again with more code behind it.
+  const DRIFT = 62; // px/s when the page is idle
+  const MAX = 2400; // px/s ceiling, so a flung scroll cannot outrun the paint
+  const DECAY = 6.4; // 1/s; injected velocity halves in ~110ms
 
   let x = 0;
   let injected = 0;
   let lastY = window.scrollY;
   let last = performance.now();
   let paused = false;
+  let hidden = document.hidden;
   let width = track.scrollWidth / 2;
 
   band.addEventListener('pointerenter', () => (paused = true));
   band.addEventListener('pointerleave', () => (paused = false));
+
+  // A band that keeps painting in a background tab is just wasted battery.
+  document.addEventListener('visibilitychange', () => {
+    hidden = document.hidden;
+  });
 
   // Half the track is one run; recompute when the font or viewport changes it.
   const measure = () => {
@@ -556,10 +565,18 @@ function initTicker() {
   );
 
   const frame = (now: number) => {
+    requestAnimationFrame(frame);
+    if (hidden) {
+      last = now;
+      return;
+    }
+
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
-    injected *= FRICTION;
+    // Frame-rate independent decay: the old `*= 0.9` per frame made the same
+    // flick coast twice as long on a 60Hz screen as on a 120Hz one.
+    injected *= Math.exp(-DECAY * dt);
     if (Math.abs(injected) < 0.5) injected = 0;
 
     const speed = paused ? 0 : DRIFT + Math.max(-MAX, Math.min(MAX, injected));
@@ -574,7 +591,6 @@ function initTicker() {
     // translate3d keeps this on the compositor; translateX can be promoted too
     // but only when the property is not also being animated by CSS.
     track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
-    requestAnimationFrame(frame);
   };
 
   requestAnimationFrame(frame);
