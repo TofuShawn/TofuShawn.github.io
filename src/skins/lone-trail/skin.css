@@ -1316,8 +1316,13 @@ html.fx-off .crt-beam {
 }
 
 /* JS takes over the clock when it can (see initTicker). The CSS animation
-   stays as the no-JS baseline, but a scroll-driven band needs to own its own
-   transform — two things writing translateX fight each other. */
+   stays as the no-JS baseline, but the scripted band needs to own its own
+   transform — two things writing translateX fight each other.
+
+   The 42s above is only the fallback for JavaScript off. It is a duration, so
+   its real speed is `track width / 42` and drifts whenever the copy changes;
+   the scripted band works in px/s instead, which is what makes the crawl read
+   at a constant pace. */
 html.js-marquee .ticker-track {
   animation: none;
   will-change: transform;
@@ -1327,12 +1332,14 @@ html.js-marquee .ticker-track {
   animation-play-state: paused;
 }
 
+/* The fallback matches the scripted direction (rightward), so turning JS off
+   changes the pace but not which way the band travels. */
 @keyframes lt-marquee {
   from {
-    transform: translateX(0);
+    transform: translateX(-50%);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(0);
   }
 }
 
