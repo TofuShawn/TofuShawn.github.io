@@ -496,6 +496,90 @@ function initCrt() {
   });
 }
 
+/* -------------------------------------------------------------------------- */
+/* Scroll-driven telemetry band                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The marquee used to be a 42s CSS animation — a fixed speed that read as
+ * wallpaper. It now runs on its own clock and takes its speed from the page:
+ * scrolling spins the band up, scrolling back runs it in reverse, and when the
+ * page is still it drifts slowly enough to stay alive without pulling the eye.
+ *
+ * Two details that matter:
+ *   - the track holds two identical runs, so one full cycle is half its width.
+ *     Wrapping at `width / 2` makes the seam invisible; wrapping at the full
+ *     width leaves a visible gap.
+ *   - velocity is injected from the scroll delta, not from scroll position, so
+ *     the band keeps its own momentum and coasts instead of snapping to the
+ *     pointer. A position-driven band looks like a scrollbar, not telemetry.
+ */
+function initTicker() {
+  const track = document.querySelector<HTMLElement>('.ticker-track');
+  const band = track?.closest<HTMLElement>('.ticker');
+  if (!track || !band) return;
+
+  // Reduced motion, or the still switch: leave the static band alone.
+  if (reduceMotion() || document.documentElement.classList.contains('lt-still')) return;
+
+  document.documentElement.classList.add('js-marquee');
+
+  const DRIFT = 26; // px/s when the page is idle
+  const MAX = 2200; // px/s ceiling, so a flung scroll cannot outrun the paint
+  const FRICTION = 0.9; // per-frame decay of injected velocity
+
+  let x = 0;
+  let injected = 0;
+  let lastY = window.scrollY;
+  let last = performance.now();
+  let paused = false;
+  let width = track.scrollWidth / 2;
+
+  band.addEventListener('pointerenter', () => (paused = true));
+  band.addEventListener('pointerleave', () => (paused = false));
+
+  // Half the track is one run; recompute when the font or viewport changes it.
+  const measure = () => {
+    width = track.scrollWidth / 2;
+  };
+  addEventListener('resize', measure, { passive: true });
+  if (document.fonts) document.fonts.ready.then(measure).catch(() => {});
+
+  addEventListener(
+    'scroll',
+    () => {
+      const y = window.scrollY;
+      injected += (y - lastY) * 9;
+      lastY = y;
+    },
+    { passive: true },
+  );
+
+  const frame = (now: number) => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+
+    injected *= FRICTION;
+    if (Math.abs(injected) < 0.5) injected = 0;
+
+    const speed = paused ? 0 : DRIFT + Math.max(-MAX, Math.min(MAX, injected));
+    x -= speed * dt;
+
+    // Wrap in both directions so reverse scrolling does not run out of track.
+    if (width > 0) {
+      if (x <= -width) x += width;
+      else if (x > 0) x -= width;
+    }
+
+    // translate3d keeps this on the compositor; translateX can be promoted too
+    // but only when the property is not also being animated by CSS.
+    track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
+    requestAnimationFrame(frame);
+  };
+
+  requestAnimationFrame(frame);
+}
+
 function initGrid() {
   const overlay = document.getElementById('gridov');
   const cols = document.getElementById('gridcols');
@@ -742,6 +826,7 @@ function boot() {
   initToc();
   initHovers();
   initStagger();
+  initTicker();
 
   const sealed =
     !noSeal && !!document.getElementById('lt-launch') && document.body.classList.contains('locked');
