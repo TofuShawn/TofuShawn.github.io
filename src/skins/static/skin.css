@@ -1,0 +1,1396 @@
+/**
+ * Static — the fallback.
+ *
+ * This skin exists so the archive is readable when everything else fails: no
+ * `Chrome.astro`, so no ceremony overlay, no telemetry strip, no rail; no
+ * `client.ts`, so no canvas plates, no odometer, no scroll-spy, no scroll rail.
+ * What is left is markup and CSS, which is the part that cannot fail.
+ *
+ * That shapes three decisions that look like a downgrade and are not:
+ *
+ *   - The cover does not lock. `index.astro` asks for the ceremony, so `<body>`
+ *     carries `locked` until a script clears it — and this skin ships no script.
+ *     `body.locked { overflow: auto }` below is therefore load-bearing, not a
+ *     convenience: without it the page is unscrollable.
+ *   - Nothing is hidden behind an observer. `base.css` only hides `[data-rev]`
+ *     under `html.js-motion`, and no script adds that class here, so every
+ *     reveal is simply present.
+ *   - Colour is monochrome with one fill. There is no accent line and no accent
+ *     word: the only yellow on the page is a block with ink on top, which is
+ *     the one use the light theme allows. Read the tokens below for the ratios.
+ *
+ * The typographic register is the same as its two siblings — wide uppercase
+ * Latin over normal-width bold Chinese — because that is the template's
+ * identity, not an effect.
+ */
+
+@font-face {
+  font-family: 'Saira';
+  src: url('/fonts/Saira.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-stretch: 50% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* -------------------------------------------------------------------------- */
+/* tokens                                                                      */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] {
+  color-scheme: light;
+
+  /* `--fg` #161616 on the sheet is 16.4:1; `--fg-mute` #5c5c5c is 6.4:1, which
+     is what an 11px label needs. Nothing here is a tint of the accent. */
+  --bg: #f4f4f2;
+  --bg-sheet: #ffffff;
+  --bg-elev: #f7f7f7;
+  --fg: #161616;
+  --fg-soft: #3a3a3a;
+  --fg-mute: #5c5c5c;
+
+  /* `--rule` #b8b8b4 is 2.1:1 on white: a separator, never a control edge.
+     Everything that is a control (focus ring, the active tab) is `--fg`. */
+  --rule: #b8b8b4;
+  --rule-soft: #dcdcd8;
+
+  /* The accent is a fill. `--accent-text` is the ink used *on* it, which is
+     also the only colour this skin will put in a text run. */
+  --accent: #fffa00;
+  --accent-text: #161616;
+  --accent-soft: #fffa00;
+  --on-accent: #161616;
+
+  --font-display: 'Saira', 'Bahnschrift', 'DIN Alternate', 'Segoe UI Variable Display', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Consolas, 'Courier New', monospace;
+  --fs-cover: clamp(44px, 9vw, 132px);
+  --fs-display: clamp(30px, 4.2vw, 50px);
+  --fs-h1: 28px;
+  --fs-h2: 19px;
+  --fs-lead: 17px;
+  --fs-body: 16px;
+  --fs-cap: 12px;
+  --fs-micro: 11px;
+  --lh-body: 1.8;
+  --lh-display: 0.98;
+  --tracking-display: -0.025em;
+  --tracking-caps: 0.14em;
+
+  --measure: 1080px;
+  --margin: 36px;
+  --gutter: 20px;
+  --baseline: 8px;
+  --radius: 0;
+  --shadow-sheet: none;
+
+  --dur-fast: 100ms;
+  --dur-base: 240ms;
+  --dur-slow: 400ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* -------------------------------------------------------------------------- */
+/* nothing that needs a script                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* Every family below is emitted into every page by the union of skin features.
+   This skin brings no script to draw them, so they must not take up room. */
+:root[data-skin='static'] .ticker,
+:root[data-skin='static'] .rail,
+:root[data-skin='static'] .hud,
+:root[data-skin='static'] .crt-scanlines,
+:root[data-skin='static'] .crt-beam,
+:root[data-skin='static'] .fx-toggle,
+:root[data-skin='static'] .launch,
+:root[data-skin='static'] .term-seal,
+:root[data-skin='static'] .paper-seal,
+:root[data-skin='static'] .punch,
+:root[data-skin='static'] .morse-bar,
+:root[data-skin='static'] .destijl,
+:root[data-skin='static'] .cropmarks,
+:root[data-skin='static'] .fold,
+:root[data-skin='static'] .tape,
+:root[data-skin='static'] .sticker,
+:root[data-skin='static'] .binding,
+:root[data-skin='static'] .redact,
+:root[data-skin='static'] .footnote,
+:root[data-skin='static'] .lt-gridbtn,
+:root[data-skin='static'] .grid-overlay,
+:root[data-skin='static'] .barcode,
+:root[data-skin='static'] .progress,
+:root[data-skin='static'] .anno {
+  display: none;
+}
+
+/* The cover asks for the ceremony, so `<body>` arrives carrying `locked`. No
+   script here will ever clear it. This one rule is why the page scrolls. */
+:root[data-skin='static'] body.locked {
+  overflow: auto;
+}
+
+/* -------------------------------------------------------------------------- */
+/* shell                                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] body {
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+:root[data-skin='static'] .sheet {
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  margin: 22px auto 40px;
+}
+
+:root[data-skin='static'] .spread {
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule-soft);
+  border-top: 3px solid var(--fg);
+  padding: 34px var(--margin) 44px;
+  margin-bottom: 18px;
+  position: relative;
+}
+
+:root[data-skin='static'] .spread--bleed {
+  padding-inline: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* masthead                                                                    */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .masthead {
+  position: relative;
+  z-index: 3;
+  background: var(--bg-sheet);
+  border-bottom: 3px solid var(--fg);
+}
+
+:root[data-skin='static'] .masthead .inner {
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+}
+
+:root[data-skin='static'] .logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+:root[data-skin='static'] .mh-sub {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding-left: 16px;
+  border-left: 1px solid var(--rule);
+}
+
+:root[data-skin='static'] .mh-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* The active section is the one place a fill is warranted: a yellow block with
+   ink on it, plus weight, so the state survives greyscale and colour blindness
+   rather than relying on hue alone. */
+:root[data-skin='static'] .mh-nav a {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-cap);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  text-decoration: none;
+  padding: 7px 10px;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+:root[data-skin='static'] .mh-nav a:hover {
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .mh-nav a[aria-current='page'] {
+  color: var(--on-accent);
+  background: var(--accent);
+  font-weight: 700;
+}
+
+/* --- the shared skin switcher ---------------------------------------------- */
+
+:root[data-skin='static'] .skin-switch {
+  position: relative;
+  margin-left: 8px;
+}
+
+:root[data-skin='static'] .skin-switch summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  cursor: pointer;
+  padding: 7px 10px;
+  border: 1px solid var(--rule);
+  list-style: none;
+}
+
+:root[data-skin='static'] .skin-switch summary::-webkit-details-marker {
+  display: none;
+}
+
+:root[data-skin='static'] .skin-switch[open] summary,
+:root[data-skin='static'] .skin-switch summary:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+
+:root[data-skin='static'] .skin-switch .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border: 1px solid var(--fg);
+}
+
+:root[data-skin='static'] .skin-switch ul {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 220px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg-sheet);
+  border: 1px solid var(--fg);
+  z-index: 50;
+}
+
+:root[data-skin='static'] .skin-switch li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+:root[data-skin='static'] .skin-switch li button {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--fg);
+  font: inherit;
+}
+
+:root[data-skin='static'] .skin-switch li button:hover {
+  background: var(--bg-elev);
+}
+
+:root[data-skin='static'] .skin-switch .sw {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  margin-top: 3px;
+  border: 1px solid var(--fg);
+}
+
+:root[data-skin='static'] .skin-switch .nm {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: var(--fs-cap);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:root[data-skin='static'] .skin-switch .tg {
+  display: block;
+  font-size: 12px;
+  color: var(--fg-mute);
+  margin-top: 2px;
+}
+
+:root[data-skin='static'] .skin-switch .cur {
+  margin-left: 6px;
+  font-size: 9px;
+  padding: 1px 4px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-skin='static'] .skin-switch [aria-pressed='false'] .cur {
+  display: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* running head and folio                                                      */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .rh {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 10px;
+}
+
+:root[data-skin='static'] .rh .no {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: var(--fs-cap);
+  letter-spacing: 0.1em;
+  color: var(--fg);
+  background: var(--accent);
+  padding: 1px 6px;
+}
+
+:root[data-skin='static'] .rh .ti {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 125%;
+  font-size: var(--fs-cap);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .rh .en {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='static'] .folio {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+}
+
+/* -------------------------------------------------------------------------- */
+/* type                                                                        */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .t-cover {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-size: var(--fs-cover);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  color: var(--fg);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: var(--fs-display);
+  line-height: 1.06;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  color: var(--fg);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: var(--fs-h1);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-h2);
+  line-height: 1.5;
+  color: var(--fg);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-lead {
+  font-family: var(--font-body);
+  font-size: var(--fs-lead);
+  line-height: 1.7;
+  color: var(--fg-soft);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-soft);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-cap,
+:root[data-skin='static'] .t-micro {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin: 0;
+}
+
+:root[data-skin='static'] .t-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(40px, 6vw, 76px);
+  line-height: 1;
+  color: var(--fg);
+}
+
+/* No odometer script, so this stays a plain number in a heavy outline-ish
+   setting rather than pretending to animate. */
+:root[data-skin='static'] .t-outline {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-size: clamp(72px, 13vw, 150px);
+  line-height: 0.9;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='static'] .mono {
+  font-family: var(--font-mono);
+}
+
+:root[data-skin='static'] .accent {
+  color: var(--fg);
+  background: var(--accent);
+  padding: 0 3px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* cover                                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .micro-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 10px;
+  margin-bottom: 28px;
+}
+
+:root[data-skin='static'] .cover-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 44px;
+}
+
+:root[data-skin='static'] .cv-left {
+  min-width: 0;
+}
+
+:root[data-skin='static'] .cv-left > .t-micro:first-child {
+  display: inline-block;
+  border: 1px solid var(--rule);
+  padding: 3px 8px;
+  margin-bottom: 18px;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='static'] .cv-left .t-cover {
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+
+/* No script zeroes this to a hairline as a stand-in for the trace bar, so it is
+   drawn once at its final width. */
+:root[data-skin='static'] .cv-rule {
+  height: 3px;
+  background: var(--fg);
+  margin-bottom: 16px;
+}
+
+:root[data-skin='static'] .cv-lockup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0;
+  margin-bottom: 20px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-cap);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='static'] .cv-lockup span + span::before {
+  content: '/';
+  margin: 0 10px;
+  color: var(--rule);
+}
+
+:root[data-skin='static'] .cv-left > .t-lead {
+  max-width: 34ch;
+  margin-bottom: 14px;
+}
+
+:root[data-skin='static'] .cv-left > .t-body {
+  max-width: 42em;
+  margin-bottom: 20px;
+}
+
+:root[data-skin='static'] .cv-kw {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 16px;
+}
+
+:root[data-skin='static'] .cv-kw span {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border: 1px solid var(--rule);
+  color: var(--fg-soft);
+}
+
+:root[data-skin='static'] .cv-kw span:first-child {
+  background: var(--accent);
+  border-color: var(--fg);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+:root[data-skin='static'] .cv-right {
+  min-width: 0;
+  border-left: 1px solid var(--rule);
+  padding-left: 32px;
+}
+
+/* The plate is a canvas a script would draw. Without one it is a hatched panel
+   of the same size, so the cover keeps its proportion and its caption still
+   points at something real. */
+:root[data-skin='static'] .plate {
+  position: relative;
+  display: block;
+  margin: 0 0 20px;
+  background: var(--bg-elev);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgba(22, 22, 22, 0.1) 5px 6.5px
+  );
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+:root[data-skin='static'] .plate-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+}
+
+:root[data-skin='static'] .plate-cap {
+  display: block;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='static'] .meta-rows {
+  margin: 0;
+  border-top: 1px solid var(--rule);
+}
+
+:root[data-skin='static'] .meta-rows > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+:root[data-skin='static'] .meta-rows dt {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='static'] .meta-rows dd {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .cv-right > .t-micro {
+  margin-top: 10px;
+}
+
+:root[data-skin='static'] .cv-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  justify-content: space-between;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+  margin-top: 30px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* index rows                                                                  */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .g {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+:root[data-skin='static'] .g > * {
+  min-width: 0;
+}
+
+:root[data-skin='static'] .c1-7 {
+  grid-column: 1 / 8;
+}
+
+:root[data-skin='static'] .c9-12 {
+  grid-column: 9 / 13;
+}
+
+:root[data-skin='static'] .ix-list {
+  margin: 14px 0 0;
+  border-top: 1px solid var(--rule);
+}
+
+:root[data-skin='static'] .ix-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+/* A left marker on hover and focus only — a pressed-row affordance that costs
+   no layout and is invisible to a screen reader. */
+:root[data-skin='static'] .ix-row::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+:root[data-skin='static'] .ix-row:hover::before,
+:root[data-skin='static'] .ix-row:focus-visible::before {
+  opacity: 1;
+}
+
+:root[data-skin='static'] .ix-row .code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='static'] .ix-row .nm {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .ix-row .en {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-top: 3px;
+}
+
+:root[data-skin='static'] .ix-row .lead {
+  display: none;
+}
+
+:root[data-skin='static'] .ix-row .pg {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+  white-space: nowrap;
+}
+
+:root[data-skin='static'] .ix-year {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  color: var(--fg);
+  margin: 24px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* article                                                                     */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .article-head {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 22px;
+  margin-bottom: 28px;
+}
+
+:root[data-skin='static'] .kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: baseline;
+  margin-bottom: 14px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='static'] .kicker a {
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1px;
+}
+
+:root[data-skin='static'] .kicker a:hover {
+  background: var(--accent);
+  border-bottom-color: var(--fg);
+}
+
+:root[data-skin='static'] .article-head .t-display {
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+
+:root[data-skin='static'] .article-head .t-h2 {
+  margin-bottom: 12px;
+}
+
+:root[data-skin='static'] .article-head .t-lead {
+  max-width: 62ch;
+}
+
+:root[data-skin='static'] .article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- prose ----------------------------------------------------------------- */
+
+:root[data-skin='static'] .prose {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-soft);
+}
+
+:root[data-skin='static'] .prose > * + * {
+  margin-top: 1.05em;
+}
+
+:root[data-skin='static'] .prose h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin-top: 2.1em;
+  padding-top: 0.7em;
+  border-top: 1px solid var(--rule);
+}
+
+:root[data-skin='static'] .prose h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-h2);
+  color: var(--fg);
+  margin-top: 1.8em;
+}
+
+:root[data-skin='static'] .prose a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+}
+
+:root[data-skin='static'] .prose a:hover {
+  background: var(--accent);
+  text-decoration-color: var(--fg);
+}
+
+:root[data-skin='static'] .prose strong {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .prose blockquote {
+  border-left: 4px solid var(--fg);
+  padding-left: 18px;
+  color: var(--fg);
+  font-size: 17px;
+}
+
+:root[data-skin='static'] .prose hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 2em 0;
+}
+
+:root[data-skin='static'] .prose code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-soft);
+  padding: 1px 4px;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .prose pre {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--fg);
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+:root[data-skin='static'] .prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='static'] .prose th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--fg);
+}
+
+:root[data-skin='static'] .prose td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* --- margin column --------------------------------------------------------- */
+
+:root[data-skin='static'] .toc {
+  margin-bottom: 26px;
+}
+
+:root[data-skin='static'] .toc .t-micro {
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 7px;
+  margin-bottom: 10px;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--rule);
+}
+
+:root[data-skin='static'] .toc li {
+  padding-left: 12px;
+  margin: 0 0 8px;
+}
+
+:root[data-skin='static'] .toc a {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--fg-soft);
+  text-decoration: none;
+  display: block;
+  border-left: 2px solid transparent;
+  margin-left: -14px;
+  padding-left: 12px;
+}
+
+:root[data-skin='static'] .toc a:hover {
+  color: var(--fg);
+  border-left-color: var(--fg);
+}
+
+:root[data-skin='static'] .toc li.lvl3 a {
+  font-size: 12.5px;
+  color: var(--fg-mute);
+  padding-left: 24px;
+}
+
+:root[data-skin='static'] .sidenote {
+  border-left: 3px solid var(--fg);
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--fg-soft);
+  max-width: 42ch;
+}
+
+:root[data-skin='static'] .sidenote p + p {
+  margin-top: 8px;
+}
+
+:root[data-skin='static'] .sidenote b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin-right: 4px;
+}
+
+:root[data-skin='static'] .figcap {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 112%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-top: 8px;
+}
+
+/* --- post nav -------------------------------------------------------------- */
+
+:root[data-skin='static'] .figcap b {
+  color: var(--accent-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+:root[data-skin='static'] .post-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 40px;
+  border-top: 2px solid var(--fg);
+}
+
+:root[data-skin='static'] .post-nav > div {
+  padding-top: 16px;
+}
+
+:root[data-skin='static'] .post-nav > div.next {
+  border-left: 1px solid var(--rule);
+  padding-left: 22px;
+  text-align: right;
+}
+
+:root[data-skin='static'] .post-nav a {
+  text-decoration: none;
+  display: block;
+}
+
+:root[data-skin='static'] .post-nav .dir {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 125%;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 6px;
+}
+
+:root[data-skin='static'] .post-nav .ttl {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .post-nav a:hover .dir {
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .post-nav a:hover .ttl {
+  background: var(--accent);
+}
+
+/* -------------------------------------------------------------------------- */
+/* tags                                                                        */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* `--tag-size` is set inline per tag by `tags/index.astro`; without a rule
+   reading it, the count data in the markup would be invisible. */
+:root[data-skin='static'] .tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: var(--tag-size, var(--fs-micro));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg);
+  text-decoration: none;
+  padding: 5px 9px;
+  border: 1px solid var(--rule);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+:root[data-skin='static'] .tag:hover,
+:root[data-skin='static'] .tag:focus-visible {
+  border-color: var(--fg);
+  background: var(--accent);
+}
+
+:root[data-skin='static'] .tag .n {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='static'] .tag:hover .n {
+  color: var(--on-accent);
+}
+
+/* -------------------------------------------------------------------------- */
+/* colophon, 404                                                               */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='static'] .colo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 18px;
+}
+
+:root[data-skin='static'] .colo + .colo {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--rule);
+  padding-top: 20px;
+}
+
+:root[data-skin='static'] .colo p.t-micro {
+  border-bottom: 1px solid var(--rule-soft);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .colo p:not(.t-micro) {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--fg-soft);
+  margin: 0;
+}
+
+:root[data-skin='static'] .col strong {
+  color: var(--fg);
+}
+
+:root[data-skin='static'] .disc {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-mute);
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+  margin-top: 26px;
+  max-width: 78ch;
+}
+
+:root[data-skin='static'] .notfound {
+  text-align: center;
+}
+
+:root[data-skin='static'] .notfound > .code {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-size: clamp(90px, 20vw, 190px);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--fg);
+  margin: 6px 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='static'] .notfound .t-lead {
+  color: var(--fg-soft);
+}
+
+:root[data-skin='static'] .big-no {
+  border-left: 1px solid var(--rule);
+  padding-left: 26px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* breakpoints — last, because every scoped rule has equal specificity        */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  :root[data-skin='static'] .cover-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+  }
+
+  :root[data-skin='static'] .cv-right {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+    padding-left: 0;
+    padding-top: 22px;
+  }
+
+  :root[data-skin='static'] .big-no {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--rule);
+    padding-top: 22px;
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root[data-skin='static'] .g {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  :root[data-skin='static'] .g > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  :root[data-skin='static'] .g > * + * {
+    border-top: 1px solid var(--rule);
+    margin-top: 26px;
+    padding-top: 24px;
+  }
+
+  :root[data-skin='static'] .big-no {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  :root[data-skin='static'] .post-nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-skin='static'] .post-nav > div.next {
+    border-left: 0;
+    border-top: 1px solid var(--rule-soft);
+    padding-left: 0;
+    padding-top: 16px;
+    margin-top: 16px;
+    text-align: left;
+  }
+
+  :root[data-skin='static'] .colo,
+  :root[data-skin='static'] .colo + .colo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-skin='static'] .colo > div {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  :root[data-skin='static'] {
+    --margin: 18px;
+    --fs-body: 15.5px;
+  }
+
+  :root[data-skin='static'] .sheet {
+    max-width: calc(100% - 16px);
+    margin-top: 8px;
+  }
+
+  :root[data-skin='static'] .spread {
+    padding: 24px var(--margin) 34px;
+    margin-bottom: 10px;
+  }
+
+  :root[data-skin='static'] .masthead .inner {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 0;
+  }
+
+  :root[data-skin='static'] .mh-sub {
+    display: none;
+  }
+
+  :root[data-skin='static'] .mh-nav {
+    width: 100%;
+    margin-left: 0;
+    gap: 0;
+    justify-content: space-between;
+  }
+
+  :root[data-skin='static'] .mh-nav a {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  :root[data-skin='static'] .skin-switch {
+    margin-left: auto;
+  }
+
+  :root[data-skin='static'] .ix-row {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  :root[data-skin='static'] .ix-row .pg {
+    grid-column: 2;
+    font-size: 10px;
+  }
+
+  :root[data-skin='static'] .folio {
+    right: var(--margin);
+    bottom: 10px;
+  }
+
+  :root[data-skin='static'] .meta-rows > div {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+}

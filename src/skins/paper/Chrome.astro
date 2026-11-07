@@ -1,0 +1,108 @@
+---
+/**
+ * Paper chrome: the telemetry strip, the boot ceremony, the grid overlay,
+ * and the scroll rail.
+ *
+ * Same contract as the other skins — only this skin's own furniture, gated on
+ * its own flags, wrapped by the layout in `.skin-only[data-only]` so nothing
+ * here paints unless this skin is active.
+ *
+ * Element ids are namespaced (`#paper-seal`, not `#launch`): the layout emits
+ * every skin's chrome into every page, so two skins sharing an id would give
+ * `getElementById` two candidates.
+ */
+import { featuresOf } from '../registry';
+
+export interface Props {
+  /** Show the boot ceremony. Only the cover page passes true. */
+  seal?: boolean;
+}
+
+const { seal = false } = Astro.props;
+const f = featuresOf('paper');
+const showSeal = seal && f.unseal;
+
+const TICKER = [
+  'PAPER // READ',
+  'PRESS G — GRID',
+  'SKIN CONTRACT OK',
+  'REV 01',
+  'SIGNAL #18D1FF',
+  'INK #0F1720',
+  'GROUND #EAEEF1',
+];
+---
+
+{
+  f.marquee && (
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        {[0, 1].map(() => (
+          <span class="ticker-run">
+            {TICKER.map((t) => (
+              <span class="ticker-item">
+                <i />
+                {t}
+              </span>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+{
+  showSeal && (
+    <div class="paper-seal" id="paper-seal" data-ceremony role="dialog" aria-label="Open the archive">
+      <div class="paper-seal-panel">
+        <span class="paper-seal-strip" aria-hidden="true" />
+        <p class="paper-seal-kicker">Paper // Archive</p>
+        <p class="paper-seal-word">Read</p>
+        <p class="paper-seal-meta">Establishing link</p>
+        <div class="paper-seal-bar" aria-hidden="true">
+          <i />
+        </div>
+        <button class="paper-seal-btn" type="button" aria-label="Open the archive">
+          Enter
+        </button>
+        <p class="paper-seal-note">Press Enter or click · Skip with ?skip=1</p>
+      </div>
+    </div>
+  )
+}
+
+<div class="rail" data-rail aria-hidden="true">
+  <div class="rail-ticks"><i /><i /><i /><i /><i /><i /></div>
+  <div class="rail-thumb" data-rail-thumb>
+    <b class="rail-pct"><span data-rail-pct>000</span></b>
+  </div>
+</div>
+
+{
+  f.gridOverlay && (
+    <div class="grid-overlay" id="gridov" aria-hidden="true">
+      <div class="base" />
+      <div class="cols" id="gridcols" />
+    </div>
+  )
+}
+
+<script>
+  import './client';
+</script>
+
+{
+  showSeal && (
+    <script is:inline>
+      // If the client bundle never loads, the ceremony must not trap the page.
+      setTimeout(function () {
+        var o = document.getElementById('paper-seal');
+        if (o && !o.classList.contains('off')) {
+          o.classList.add('off');
+          document.body.classList.remove('locked');
+        }
+      }, 8000);
+    </script>
+  )
+}

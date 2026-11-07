@@ -5,10 +5,12 @@ import RunningHead from '../components/RunningHead.astro';
 import Folio from '../components/Folio.astro';
 import CropMarks from '../components/CropMarks.astro';
 import { SITE } from '../lib/site';
-import { SKINS } from '../skins/registry';
+import { SKINS, DEFAULT_SKIN_ID, getSkin } from '../skins/registry';
 import { POSTS } from '../lib/posts';
 
-const skin = SKINS[0];
+/* The visitor's skin is chosen in the browser, so the colophon cannot name it.
+   Name the default instead of guessing at SKINS[0], which is alphabetical. */
+const skin = getSkin(DEFAULT_SKIN_ID);
 const words = POSTS.reduce((n, p) => n + p.words, 0);
 ---
 
@@ -48,7 +50,8 @@ const words = POSTS.reduce((n, p) => n + p.words, 0);
             skin defines, so replacing one file restyles the whole site.
           </p>
           <p style="margin-top:10px">
-            Current skin: <strong>{skin.name}</strong> — {skin.tagline}.
+            Default skin: <strong>{skin.name}</strong> — {skin.tagline}. Switch with the
+            menu in the masthead, or <code>?skin=&lt;id&gt;</code>.
           </p>
         </div>
         <div style="grid-column:3/5">
@@ -64,9 +67,10 @@ const words = POSTS.reduce((n, p) => n + p.words, 0);
       </div>
 
       <p class="disc">
-        This is a template. The typography, grid and motion are adapted from the Rhine
-        Lab dossier system (MIT). Nothing here is affiliated with any real institution;
-        the archive fiction is a frame for the layout.
+        This is a template. The Rhine skin's typography, grid and motion are adapted
+        from the Rhine Lab dossier system (MIT); the other four skins are original and
+        set in Saira (SIL OFL 1.1). Nothing here is affiliated with any real
+        institution; the archive fiction is a frame for the layout.
       </p>
 
       <Folio page="P.42" note="COLOPHON" />

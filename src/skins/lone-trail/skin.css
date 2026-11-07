@@ -828,7 +828,7 @@ a.t-cap,
   padding: 70px 40px 90px;
 }
 
-.notfound .code {
+.notfound > .code {
   color: var(--fg);
   -webkit-text-stroke: 0;
   text-transform: uppercase;
