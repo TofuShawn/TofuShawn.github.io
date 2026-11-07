@@ -1,0 +1,1891 @@
+/**
+ * Terminal — the dark, industrial skin.
+ *
+ * Ground `#191919`, panel `#222222`, ink `#ededed`, one signal colour:
+ * Endfield yellow `#fffa00`. Read `meta.ts` for why.
+ *
+ * Two rules govern this file and are worth stating once, because they are what
+ * keeps it from turning into the "dark theme with neon" it is meant not to be:
+ *
+ *   - Yellow is a FILL. It becomes a tab indicator, a cut-corner button bitten
+ *     out of the ground, a 4px trace bar that says "you are here", a tag on a
+ *     plate. It is never a large area and never a word of body copy. Text on
+ *     yellow is `--on-accent` (16.3:1).
+ *   - Rules carry the structure. There are no shadows, no glows, no rounded
+ *     corners anywhere: `--radius` is 0 and `--shadow-sheet` is none, so the
+ *     panel edge is a hairline and the separation is a hairline.
+ *
+ * A hairline on `#191919` cannot reach WCAG 1.4.11's 3:1 — `#3a3a3a` is 1.55:1
+ * — but 1.4.11 governs controls and meaningful graphics, not panel separators.
+ * So separators stay quiet grey and everything that *is* a control or a state
+ * (focus ring, active tab, progress, the trace bar) uses the accent instead.
+ */
+
+@font-face {
+  font-family: 'Saira';
+  src: url('/fonts/Saira.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-stretch: 50% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* -------------------------------------------------------------------------- */
+/* tokens                                                                      */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] {
+  color-scheme: dark;
+
+  /* surface — ground, panel, and one step up for inset blocks */
+  --bg: #191919;
+  --bg-sheet: #222222;
+  --bg-elev: #2a2a2a;
+  --fg: #ededed;
+  --fg-soft: #c9c9c4;
+  --fg-mute: #a3a3a3;
+  --rule: #3a3a3a;
+  --rule-soft: #2e2e2e;
+
+  /* signal — the accent is a fill; `--accent-text` clears 4.5:1 as type */
+  --accent: #fffa00;
+  --accent-text: #fffa00;
+  --accent-soft: rgba(255, 250, 0, 0.14);
+  --on-accent: #161616;
+
+  /* type — Saira is the industrial voice, Noto Sans SC the reading voice */
+  --font-display: 'Saira', 'Bahnschrift', 'DIN Alternate', 'Segoe UI Variable Display', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Consolas, 'Courier New', monospace;
+  --fs-cover: clamp(48px, 10vw, 176px);
+  --fs-display: clamp(34px, 4.6vw, 56px);
+  --fs-h1: 30px;
+  --fs-h2: 20px;
+  --fs-lead: 17px;
+  --fs-body: 16px;
+  --fs-cap: 12px;
+  --fs-micro: 11px;
+  --lh-body: 1.85;
+  --lh-display: 0.95;
+  --tracking-display: -0.03em;
+  --tracking-caps: 0.14em;
+
+  /* layout — no radius, no shadow; the panel edge is a hairline */
+  --measure: 1200px;
+  --margin: 40px;
+  --gutter: 20px;
+  --baseline: 8px;
+  --radius: 0;
+  --shadow-sheet: none;
+
+  /* motion — short, hard, mechanical */
+  --dur-fast: 100ms;
+  --dur-base: 320ms;
+  --dur-slow: 620ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-mech: cubic-bezier(0.7, 0, 0.2, 1);
+
+  /* extras — command bar, the three-band marker, hatch, cut geometry */
+  --command-bar: #161616;
+  --command-bar-text: #ededed;
+  --tri-a: #ff00f0;
+  --tri-b: #fffa00;
+  --tri-c: #00ffa2;
+  --cut: 8px;
+  --cut-panel: 26px;
+  --hatch: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(237, 237, 237, 0.14) 5px 6.5px);
+}
+
+/* -------------------------------------------------------------------------- */
+/* furniture this skin does not use                                            */
+/* -------------------------------------------------------------------------- */
+
+/* `featuresAny()` ships the union of every skin's furniture, so a skin must
+    hide what it does not style. These belong to rhine and lone-trail. */
+:root[data-skin='terminal'] .hud,
+:root[data-skin='terminal'] .crt-scanlines,
+:root[data-skin='terminal'] .crt-beam,
+:root[data-skin='terminal'] .fx-toggle,
+:root[data-skin='terminal'] .launch,
+:root[data-skin='terminal'] .punch,
+:root[data-skin='terminal'] .morse-bar,
+:root[data-skin='terminal'] .destijl,
+:root[data-skin='terminal'] .cropmarks,
+:root[data-skin='terminal'] .fold,
+:root[data-skin='terminal'] .tape,
+:root[data-skin='terminal'] .sticker,
+:root[data-skin='terminal'] .binding,
+:root[data-skin='terminal'] .redact,
+:root[data-skin='terminal'] .footnote,
+:root[data-skin='terminal'] .lt-gridbtn {
+  display: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* shell                                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] body {
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+:root[data-skin='terminal'] .sheet {
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  margin: 26px auto 40px;
+}
+
+:root[data-skin='terminal'] .spread {
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 36px var(--margin) 52px;
+  margin-bottom: 18px;
+}
+
+:root[data-skin='terminal'] .spread--bleed {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* masthead — the command bar                                                  */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .masthead {
+  position: relative;
+  z-index: 3;
+  background: var(--command-bar);
+  border-bottom: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .masthead .inner {
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 15px 0;
+}
+
+:root[data-skin='terminal'] .logo {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  font-stretch: 125%;
+  font-variation-settings: 'wdth' 125;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--command-bar-text);
+  text-decoration: none;
+}
+
+:root[data-skin='terminal'] .mh-sub {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding-left: 14px;
+  border-left: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .mh-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+:root[data-skin='terminal'] .mh-nav a {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  text-decoration: none;
+  padding: 7px 10px 6px;
+  border-bottom: 3px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+:root[data-skin='terminal'] .mh-nav a:hover {
+  color: var(--fg);
+  border-bottom-color: var(--rule);
+}
+
+:root[data-skin='terminal'] .mh-nav a[aria-current='page'] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+/* skin switch — a dark dropdown over the command bar */
+
+:root[data-skin='terminal'] .skin-switch {
+  position: relative;
+  margin-left: 10px;
+}
+
+:root[data-skin='terminal'] .skin-switch summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+:root[data-skin='terminal'] .skin-switch summary::-webkit-details-marker {
+  display: none;
+}
+
+:root[data-skin='terminal'] .skin-switch summary:hover,
+:root[data-skin='terminal'] .skin-switch[open] summary {
+  color: var(--fg);
+  border-color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .skin-switch .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 0;
+  background: var(--accent);
+}
+
+:root[data-skin='terminal'] .skin-switch ul {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 1px);
+  min-width: 250px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule);
+  z-index: 50;
+}
+
+:root[data-skin='terminal'] .skin-switch li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+:root[data-skin='terminal'] .skin-switch li a,
+:root[data-skin='terminal'] .skin-switch li button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) linear;
+}
+
+:root[data-skin='terminal'] .skin-switch li a:hover,
+:root[data-skin='terminal'] .skin-switch li button:hover {
+  background: var(--bg-elev);
+}
+
+:root[data-skin='terminal'] .skin-switch .sw {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .skin-switch .nm {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  font-stretch: 112%;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .skin-switch .tg {
+  display: block;
+  font-size: 12px;
+  color: var(--fg-mute);
+  margin-top: 2px;
+}
+
+:root[data-skin='terminal'] .skin-switch .cur {
+  display: none;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-skin='terminal'] .skin-switch [aria-pressed='true'] .cur {
+  display: inline-block;
+}
+
+/* -------------------------------------------------------------------------- */
+/* telemetry strip                                                             */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .ticker {
+  background: var(--command-bar);
+  border-bottom: 1px solid var(--rule-soft);
+  overflow: hidden;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+:root[data-skin='terminal'] .ticker-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: term-marquee 52s linear infinite;
+}
+
+@keyframes term-marquee {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+:root[data-skin='terminal'] .ticker-run {
+  display: flex;
+  flex: none;
+}
+
+:root[data-skin='terminal'] .ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 20px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  white-space: nowrap;
+}
+
+:root[data-skin='terminal'] .ticker-item i {
+  width: 3px;
+  height: 11px;
+  background: var(--accent);
+  flex: none;
+}
+
+:root[data-skin='terminal'].fx-off .ticker-track {
+  animation: none;
+  transform: none;
+}
+
+:root[data-skin='terminal'] .ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+/* -------------------------------------------------------------------------- */
+/* progress                                                                    */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 4px;
+  background: var(--accent);
+  z-index: 70;
+  transition: width 90ms linear;
+}
+
+/* -------------------------------------------------------------------------- */
+/* running head and folio                                                      */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .rh {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 0 0 12px 12px;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+
+:root[data-skin='terminal'] .rh::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  bottom: 12px;
+  width: 4px;
+  background: var(--accent);
+}
+
+:root[data-skin='terminal'] .rh .no {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  font-stretch: 112%;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+}
+
+:root[data-skin='terminal'] .rh .ti {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  font-stretch: 125%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .rh .en {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .folio {
+  position: absolute;
+  right: var(--margin);
+  bottom: 16px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------- */
+/* type                                                                        */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .t-cover,
+:root[data-skin='terminal'] .t-display,
+:root[data-skin='terminal'] .t-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-variation-settings: 'wdth' 125;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .t-cover {
+  font-size: var(--fs-cover);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-display);
+}
+
+:root[data-skin='terminal'] .t-display {
+  font-size: var(--fs-display);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+:root[data-skin='terminal'] .t-h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+:root[data-skin='terminal'] .t-h2 {
+  font-family: var(--font-body);
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--fg-soft);
+}
+
+:root[data-skin='terminal'] .t-lead {
+  font-family: var(--font-body);
+  font-size: var(--fs-lead);
+  line-height: 1.75;
+  color: var(--fg-soft);
+  max-width: 46ch;
+}
+
+:root[data-skin='terminal'] .t-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-soft);
+}
+
+:root[data-skin='terminal'] .t-cap,
+:root[data-skin='terminal'] .t-micro {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .t-cap {
+  font-size: var(--fs-cap);
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.12em;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .t-micro {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .t-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+:root[data-skin='terminal'] .t-outline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--rule);
+}
+
+:root[data-skin='terminal'] .mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .accent {
+  color: var(--accent-text);
+}
+
+/* -------------------------------------------------------------------------- */
+/* cover                                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .micro-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 30px;
+}
+
+:root[data-skin='terminal'] .cover-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 38px;
+  align-items: start;
+}
+
+:root[data-skin='terminal'] .cv-left > .t-micro:first-child {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1px solid var(--rule);
+  color: var(--fg-mute);
+  margin-bottom: 18px;
+}
+
+:root[data-skin='terminal'] .cv-left .t-cover {
+  margin: 0 0 20px;
+}
+
+:root[data-skin='terminal'] .cv-rule {
+  height: 3px;
+  margin: 0 0 20px;
+  background: linear-gradient(
+    90deg,
+    var(--tri-a) 0 33.333%,
+    var(--tri-b) 33.333% 66.666%,
+    var(--tri-c) 66.666% 100%
+  );
+}
+
+:root[data-skin='terminal'] .cv-lockup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 14px;
+  margin-bottom: 22px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .cv-lockup span + span {
+  padding-left: 14px;
+  border-left: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .cv-left > .t-lead {
+  margin: 0 0 14px;
+}
+
+:root[data-skin='terminal'] .cv-left > .t-body {
+  max-width: 42em;
+  margin: 0 0 22px;
+}
+
+:root[data-skin='terminal'] .cv-kw {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+:root[data-skin='terminal'] .cv-kw span {
+  padding: 5px 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+
+:root[data-skin='terminal'] .cv-kw span:first-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  padding-right: 14px;
+}
+
+:root[data-skin='terminal'] .cv-right {
+  border-left: 1px solid var(--rule);
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+:root[data-skin='terminal'] .plate {
+  position: relative;
+  border: 1px solid var(--rule);
+  background: var(--bg-elev);
+  margin: 0;
+}
+
+:root[data-skin='terminal'] .plate canvas,
+:root[data-skin='terminal'] .plate img,
+:root[data-skin='terminal'] .plate > div {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+:root[data-skin='terminal'] .plate-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 3px 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+:root[data-skin='terminal'] .plate-cap {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 3px 8px;
+  background: var(--bg-sheet);
+  border-top: 1px solid var(--rule);
+  border-left: 1px solid var(--rule);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .meta-rows {
+  margin: 0;
+  border-top: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .meta-rows > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+:root[data-skin='terminal'] .meta-rows dt {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .meta-rows dd {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--fg-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .barcode {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  background: var(--bg-elev);
+}
+
+:root[data-skin='terminal'] .cv-right > .t-micro {
+  margin: -8px 0 0;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .stamp {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1px solid var(--rule);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .cv-marks {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 26px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+:root[data-skin='terminal'] .cv-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  margin-top: 30px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .cv-foot .t-micro {
+  font-size: 10px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* grid and column rules                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .g {
+  gap: 0;
+  align-items: start;
+}
+
+/* The column rule is the separator: with gap 0 the child that follows another
+   child carries the hairline, so `.c1-7 + .c9-12` reads as two bays and a
+   single `.c1-12` reads as one. */
+:root[data-skin='terminal'] .g > * + * {
+  border-left: 1px solid var(--rule-soft);
+  padding-left: 24px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* index rows                                                                  */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .ix-list {
+  margin: 0;
+  padding: 0;
+}
+
+:root[data-skin='terminal'] .ix-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: baseline;
+  padding: 13px 12px 13px 14px;
+  border-bottom: 1px solid var(--rule-soft);
+  text-decoration: none;
+  position: relative;
+  transition: background var(--dur-fast) linear, transform var(--dur-fast) var(--ease-out);
+}
+
+:root[data-skin='terminal'] .ix-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--dur-fast) var(--ease-mech);
+}
+
+:root[data-skin='terminal'] .ix-row:hover,
+:root[data-skin='terminal'] .ix-row:focus-visible {
+  background: var(--bg-elev);
+  transform: translateX(6px);
+}
+
+:root[data-skin='terminal'] .ix-row:hover::before,
+:root[data-skin='terminal'] .ix-row:focus-visible::before {
+  transform: scaleY(1);
+}
+
+:root[data-skin='terminal'] .ix-row .code {
+  grid-column: 1;
+  grid-row: 1;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .ix-row .nm {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--fg);
+  line-height: 1.4;
+}
+
+:root[data-skin='terminal'] .ix-row .en {
+  grid-column: 2;
+  grid-row: 2;
+  margin-top: 3px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .ix-row .lead {
+  display: none;
+}
+
+:root[data-skin='terminal'] .ix-row .pg {
+  grid-column: 3;
+  grid-row: 1;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+:root[data-skin='terminal'] .ix-row:hover .nm,
+:root[data-skin='terminal'] .ix-row:focus-visible .nm {
+  color: var(--accent-text);
+}
+
+:root[data-skin='terminal'] .ix-year {
+  margin: 26px 0 0;
+  padding: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  font-stretch: 125%;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  border-bottom: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------- */
+/* article                                                                     */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .article-head {
+  margin-top: 24px;
+}
+
+:root[data-skin='terminal'] .kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--accent);
+}
+
+:root[data-skin='terminal'] .kicker span,
+:root[data-skin='terminal'] .kicker a {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .kicker a {
+  color: var(--accent-text);
+}
+
+:root[data-skin='terminal'] .kicker a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+:root[data-skin='terminal'] .article-head .t-display {
+  margin: 0 0 12px;
+}
+
+:root[data-skin='terminal'] .article-head .t-h2 {
+  margin: 0 0 14px;
+}
+
+:root[data-skin='terminal'] .article-head .t-lead {
+  margin: 0 0 18px;
+  max-width: 54ch;
+}
+
+:root[data-skin='terminal'] .article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------- */
+/* prose                                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .prose {
+  margin-top: 34px;
+}
+
+:root[data-skin='terminal'] .prose > * + * {
+  margin-top: 1.2em;
+}
+
+:root[data-skin='terminal'] .prose p,
+:root[data-skin='terminal'] .prose li {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-soft);
+}
+
+:root[data-skin='terminal'] .prose h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  font-stretch: 125%;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--fg);
+  padding: 6px 0 6px 14px;
+  border-left: 4px solid var(--accent);
+  margin-top: 2.1em;
+}
+
+:root[data-skin='terminal'] .prose h3 {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-top: 1.8em;
+}
+
+:root[data-skin='terminal'] .prose h2 + *,
+:root[data-skin='terminal'] .prose h3 + * {
+  margin-top: 0.7em;
+}
+
+:root[data-skin='terminal'] .prose a {
+  color: var(--accent-text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+}
+
+:root[data-skin='terminal'] .prose a:hover {
+  background: var(--accent-soft);
+}
+
+:root[data-skin='terminal'] .prose strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+:root[data-skin='terminal'] .prose blockquote {
+  border-left: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 14px 18px;
+  background: var(--bg-elev);
+}
+
+:root[data-skin='terminal'] .prose blockquote p {
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--rule);
+  margin: 2.2em 0;
+}
+
+:root[data-skin='terminal'] .prose code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-soft);
+  padding: 1px 5px;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .prose pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--command-bar);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--accent);
+  padding: 16px 18px;
+  overflow-x: auto;
+}
+
+:root[data-skin='terminal'] .prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+:root[data-skin='terminal'] .prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+:root[data-skin='terminal'] .prose th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--fg);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .prose td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--fg-soft);
+}
+
+/* -------------------------------------------------------------------------- */
+/* toc, sidenote, post navigation                                              */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .toc {
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+}
+
+:root[data-skin='terminal'] .toc .t-micro {
+  display: block;
+  margin-bottom: 10px;
+}
+
+:root[data-skin='terminal'] .toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:root[data-skin='terminal'] .toc li {
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+:root[data-skin='terminal'] .toc a {
+  display: block;
+  padding: 7px 8px 7px 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--fg-mute);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  transition: color var(--dur-fast) linear, border-color var(--dur-fast) linear;
+}
+
+:root[data-skin='terminal'] .toc li.lvl3 a {
+  padding-left: 22px;
+  font-size: 12px;
+}
+
+:root[data-skin='terminal'] .toc a:hover,
+:root[data-skin='terminal'] .toc a.on {
+  color: var(--fg);
+  border-left-color: var(--accent);
+}
+
+:root[data-skin='terminal'] .sidenote {
+  background: var(--bg-elev);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-soft);
+}
+
+:root[data-skin='terminal'] .sidenote p + p {
+  margin-top: 8px;
+}
+
+:root[data-skin='terminal'] .sidenote b {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+:root[data-skin='terminal'] .figcap {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .figcap b {
+  color: var(--accent-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+:root[data-skin='terminal'] .post-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 40px;
+  border-top: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .post-nav > div {
+  padding: 18px 20px 18px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+:root[data-skin='terminal'] .post-nav > div.next {
+  border-left: 1px solid var(--rule);
+  padding: 18px 0 18px 20px;
+  text-align: right;
+}
+
+:root[data-skin='terminal'] .post-nav a {
+  display: block;
+  text-decoration: none;
+}
+
+:root[data-skin='terminal'] .post-nav .dir {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 6px;
+}
+
+:root[data-skin='terminal'] .post-nav .ttl {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--fg);
+  line-height: 1.4;
+}
+
+:root[data-skin='terminal'] .post-nav a:hover .ttl {
+  color: var(--accent-text);
+}
+
+:root[data-skin='terminal'] .post-nav a:hover .dir {
+  color: var(--fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* tags                                                                        */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+:root[data-skin='terminal'] .tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 16px 8px 11px;
+  font-family: var(--font-display);
+  font-size: var(--tag-size, 12px);
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+  transition: color var(--dur-fast) linear, border-color var(--dur-fast) linear,
+    background var(--dur-fast) linear;
+}
+
+:root[data-skin='terminal'] .tag:hover,
+:root[data-skin='terminal'] .tag:focus-visible {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+:root[data-skin='terminal'] .tag .n {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .tag:hover .n,
+:root[data-skin='terminal'] .tag:focus-visible .n {
+  color: var(--on-accent);
+}
+
+/* -------------------------------------------------------------------------- */
+/* colophon, 404                                                               */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .colo {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px 24px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+}
+
+:root[data-skin='terminal'] .colo + .colo {
+  margin-top: 22px;
+}
+
+:root[data-skin='terminal'] .colo p:not(.t-micro) {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-soft);
+}
+
+:root[data-skin='terminal'] .colo p.t-micro {
+  margin-bottom: 6px;
+}
+
+:root[data-skin='terminal'] .colo strong {
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .disc {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule-soft);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--fg-mute);
+  max-width: 70ch;
+}
+
+:root[data-skin='terminal'] .notfound {
+  text-align: center;
+}
+
+:root[data-skin='terminal'] .notfound > .code {
+  font-family: var(--font-display);
+  font-size: clamp(84px, 20vw, 190px);
+  font-weight: 800;
+  font-stretch: 125%;
+  line-height: 0.85;
+  margin: 6px 0 0;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .notfound .t-lead {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+:root[data-skin='terminal'] .anno {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  padding-bottom: 8px;
+}
+
+:root[data-skin='terminal'] .big-no {
+  border-left: 1px solid var(--rule-soft);
+  padding-left: 26px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the seal — the cover ceremony                                               */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .term-seal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: #0f0f0f;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    rgba(255, 250, 0, 0.045) 6px 7.5px
+  );
+  padding: 24px;
+  transition: opacity var(--dur-slow) var(--ease-mech), visibility var(--dur-slow) var(--ease-mech);
+}
+
+:root[data-skin='terminal'] .term-seal.off {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+:root[data-skin='terminal'] .term-seal-panel {
+  width: min(560px, 100%);
+  background: var(--bg-sheet);
+  border: 1px solid var(--rule);
+  padding: 34px 34px 28px;
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
+}
+
+:root[data-skin='terminal'] .term-seal-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--tri-a) 0 33.333%,
+    var(--tri-b) 33.333% 66.666%,
+    var(--tri-c) 66.666% 100%
+  );
+}
+
+:root[data-skin='terminal'] .term-seal-kicker {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin: 0 0 20px;
+}
+
+:root[data-skin='terminal'] .term-seal-word {
+  font-family: var(--font-display);
+  font-size: clamp(34px, 7vw, 58px);
+  font-weight: 800;
+  font-stretch: 125%;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin: 0 0 6px;
+}
+
+:root[data-skin='terminal'] .term-seal-meta {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin: 0 0 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .term-seal-bar {
+  height: 3px;
+  background: var(--bg-elev);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+:root[data-skin='terminal'] .term-seal-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  animation: term-seal-fill 3.4s linear forwards;
+}
+
+@keyframes term-seal-fill {
+  to {
+    width: 100%;
+  }
+}
+
+:root[data-skin='terminal'] .term-seal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 26px 13px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  font-stretch: 125%;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--command-bar);
+  color: var(--fg);
+  border: 1px solid var(--fg-mute);
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  transition: color var(--dur-fast) linear, background var(--dur-fast) linear,
+    border-color var(--dur-fast) linear;
+}
+
+:root[data-skin='terminal'] .term-seal-btn:hover,
+:root[data-skin='terminal'] .term-seal-btn:focus-visible {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-skin='terminal'] .term-seal-note {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 500;
+  font-stretch: 112%;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+/* -------------------------------------------------------------------------- */
+/* grid overlay                                                                */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) linear;
+}
+
+:root[data-skin='terminal'] body.grid-on .grid-overlay {
+  opacity: 1;
+}
+
+:root[data-skin='terminal'] .grid-overlay .cols {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gutter);
+  width: var(--measure);
+  max-width: calc(100% - 32px);
+  height: 100%;
+  margin: 0 auto;
+}
+
+:root[data-skin='terminal'] .grid-overlay .cols i {
+  background: rgba(255, 250, 0, 0.05);
+  border-left: 1px solid rgba(255, 250, 0, 0.25);
+}
+
+:root[data-skin='terminal'] .grid-overlay .base {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 250, 0, 0.12) 0 1px,
+    transparent 1px 8px
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* scroll rail                                                                 */
+/* -------------------------------------------------------------------------- */
+
+:root[data-skin='terminal'] .rail {
+  display: none;
+}
+
+:root[data-skin='terminal'].js-rail .rail {
+  position: fixed;
+  top: var(--rail-top, 0px);
+  right: 0;
+  bottom: 0;
+  z-index: 65;
+  display: block;
+  width: 15px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+:root[data-skin='terminal'].js-rail .rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  background: var(--rule);
+}
+
+:root[data-skin='terminal'] .rail-ticks i {
+  position: absolute;
+  right: 0;
+  width: 6px;
+  height: 1px;
+  background: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .rail-ticks i:nth-child(1) {
+  top: 0;
+}
+
+:root[data-skin='terminal'] .rail-ticks i:nth-child(2) {
+  top: 20%;
+}
+
+:root[data-skin='terminal'] .rail-ticks i:nth-child(3) {
+  top: 40%;
+}
+
+:root[data-skin='terminal'] .rail-ticks i:nth-child(4) {
+  top: 60%;
+}
+
+:root[data-skin='terminal'] .rail-ticks i:nth-child(5) {
+  top: 80%;
+}
+
+:root[data-skin='terminal'] .rail-ticks i:nth-child(6) {
+  top: calc(100% - 1px);
+}
+
+:root[data-skin='terminal'] .rail-thumb {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  height: calc(var(--rail-h, 0.25) * 100%);
+  min-height: 36px;
+  background: var(--fg);
+  transform: translateY(calc(var(--rail-p, 0) * var(--rail-travel, 0px)));
+  transition: transform 90ms linear, background var(--dur-fast) linear;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+:root[data-skin='terminal'] .rail.is-drag .rail-thumb {
+  transition: none;
+}
+
+:root[data-skin='terminal'] .rail:hover .rail-thumb,
+:root[data-skin='terminal'] .rail.is-drag .rail-thumb {
+  background: var(--accent);
+}
+
+:root[data-skin='terminal'] .rail-pct {
+  position: absolute;
+  right: 13px;
+  top: 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+  background: var(--bg);
+  padding: 1px 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-skin='terminal'] .rail.is-idle {
+  display: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* motion                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/* Staggered entrance for list groups. `client.ts` sets `data-stag` and `--i`,
+   then removes both on release so a later restyle is not fighting inline vars. */
+:root[data-skin='terminal'].js-motion [data-stag] > * {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 260ms var(--ease-out), transform 320ms var(--ease-mech);
+  transition-delay: calc(var(--i, 0) * 38ms);
+}
+
+:root[data-skin='terminal'].js-motion [data-stag].in > * {
+  opacity: 1;
+  transform: none;
+}
+
+:root[data-skin='terminal'] .rh::before {
+  transform-origin: top;
+}
+
+:root[data-skin='terminal'].js-motion .rh::before {
+  transform: scaleY(0);
+  transition: transform 320ms var(--ease-mech) 60ms;
+}
+
+:root[data-skin='terminal'].js-motion .spread.in .rh::before {
+  transform: scaleY(1);
+}
+
+:root[data-skin='terminal'].js-motion .cv-rule {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms var(--ease-mech) 120ms;
+}
+
+:root[data-skin='terminal'].js-motion .cv-rule.in {
+  transform: scaleX(1);
+}
+
+/* -------------------------------------------------------------------------- */
+/* breakpoints — always last: every rule above has equal specificity, so order */
+/* is the only thing deciding a conflict.                                      */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  :root[data-skin='terminal'] .cover-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+  }
+
+  :root[data-skin='terminal'] .cv-right {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+    padding-left: 0;
+    padding-top: 22px;
+  }
+
+  :root[data-skin='terminal'] .big-no {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--rule-soft);
+    padding-top: 22px;
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root[data-skin='terminal'] .g > * + * {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--rule-soft);
+    padding-top: 24px;
+    margin-top: 24px;
+  }
+
+  :root[data-skin='terminal'] .post-nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-skin='terminal'] .post-nav > div.next {
+    border-left: 0;
+    border-top: 1px solid var(--rule-soft);
+    padding-left: 0;
+    text-align: left;
+  }
+}
+
+@media (max-width: 760px) {
+  :root[data-skin='terminal'] {
+    --margin: 18px;
+    --fs-body: 15.5px;
+  }
+
+  :root[data-skin='terminal'] .sheet {
+    max-width: calc(100% - 16px);
+    margin-top: 8px;
+  }
+
+  :root[data-skin='terminal'] .spread {
+    padding: 24px var(--margin) 40px;
+    margin-bottom: 10px;
+  }
+
+  :root[data-skin='terminal'] .masthead .inner {
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+  }
+
+  :root[data-skin='terminal'] .mh-sub {
+    display: none;
+  }
+
+  :root[data-skin='terminal'] .mh-nav {
+    gap: 0;
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  :root[data-skin='terminal'] .mh-nav a {
+    padding: 6px 4px 5px;
+    font-size: 11px;
+  }
+
+  :root[data-skin='terminal'] .skin-switch {
+    margin-left: auto;
+  }
+
+  :root[data-skin='terminal'] .colo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-skin='terminal'] .colo > div {
+    grid-column: 1 / -1 !important;
+  }
+
+  :root[data-skin='terminal'] .folio {
+    right: var(--margin);
+    bottom: 12px;
+  }
+
+  :root[data-skin='terminal'] .rail {
+    width: 11px;
+  }
+
+  :root[data-skin='terminal'] .rail-thumb {
+    width: 5px;
+  }
+
+  :root[data-skin='terminal'] .rail-pct {
+    display: none;
+  }
+
+  :root[data-skin='terminal'] .term-seal-panel {
+    padding: 26px 22px 22px;
+  }
+}

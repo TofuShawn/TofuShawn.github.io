@@ -1301,7 +1301,7 @@ body.grid-on .grid-overlay {
   padding: 80px 0 100px;
 }
 
-.notfound .code {
+.notfound > .code {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(96px, 22vw, 260px);

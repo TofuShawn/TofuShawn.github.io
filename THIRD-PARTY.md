@@ -36,6 +36,17 @@ The `lone-trail` skin is original to this template. Its visual vocabulary was
 reconstructed from a design-system reference, and it ships no third-party
 artwork.
 
-Nothing else here is vendored: there are no bundled fonts, images, or scripts.
-The three runtime dependencies (`astro`, `@astrojs/rss`, `zod`) are consumed as
-packages, not copied.
+The `terminal`, `paper` and `static` skins are original to this template as well.
+They are set in **Saira**, a variable font by Omnibus-Type, under the SIL Open
+Font License 1.1. The subset that ships is
+[`public/fonts/Saira.woff2`](public/fonts/Saira.woff2) — 86 kB, Latin plus the
+punctuation the skins use, with both the `wght` (100–900) and `wdth` (50–125)
+axes preserved, because the design depends on setting wide Latin above
+normal-width Chinese. The licence text is vendored beside it at
+[`public/fonts/Saira-OFL.txt`](public/fonts/Saira-OFL.txt) and must stay with the
+font. Saira is not derived from, and does not reproduce, any Hypergryph asset;
+the skins' type is a licensed open font used in a similar spirit.
+
+Nothing else here is vendored: there are no other bundled fonts, images, or
+scripts. The three runtime dependencies (`astro`, `@astrojs/rss`, `zod`) are
+consumed as packages, not copied.

@@ -2,7 +2,7 @@
 
 A blog template built on the idea that a website can behave like a printed
 object: numbered spreads, crop marks, a registration target, a fold line, a
-colophon. Two skins ship, and they are deliberately far apart.
+colophon. Five skins ship, and they are deliberately far apart.
 
 - **Rhine Lab** — a bound dossier on a desk. Faithful port of
   [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion) (MIT).
@@ -13,10 +13,24 @@ colophon. Two skins ship, and they are deliberately far apart.
   beam, a live ticker, a punch card you can type into, a morse readout, De Stijl
   bars. Every page opens under a solid ink running head; `/tags/` is a ruled
   register rather than a cloud.
+- **Terminal** — an industrial console, dark. Endfield yellow (`#FFFA00`) on
+  `#191919`, Saira at 800 with a 112%/125% width axis, cut corners on anything
+  pressable, square panels everywhere else, a magenta→yellow→mint tri-colour
+  rule, a telemetry strip, hatched halftone plates.
+- **Paper** — the same system printed. The cyan slot (`#18D1FF`) is fill only —
+  it is 1.81:1 on white and can never carry text; `#0A6C8F` is the readable
+  variant. The command bar stays dark in both schemes, the one surface that does
+  not invert.
+- **Static** — the fallback. No `Chrome.astro`, no `client.ts`, no script at
+  all: no ceremony, no ticker, no rail, no canvas plates. It exists to prove the
+  template degrades — with the script layer gone the cover must still scroll
+  (`body.locked { overflow: auto }` is load-bearing, because the layout locks the
+  body for a ceremony this skin never opens) and every reveal must simply be
+  visible.
 
-Same skeleton, same palette family, opposite medium. The point of shipping two is
-that a skin system you have only ever tested with one skin is a skin system you
-have not tested.
+Same skeleton, same palette family, three different mediums. The point of
+shipping five is that a skin system you have only ever tested with one skin is a
+skin system you have not tested.
 
 ```
 src/
@@ -25,6 +39,9 @@ src/
     registry.ts        filesystem discovery; throws on a broken skin
     rhine/             skin 1 (meta, tokens, chrome, behaviour)
     lone-trail/        skin 2
+    terminal/          skin 3 — dark industrial console
+    paper/             skin 4 — the same system, printed
+    static/            skin 5 — no chrome, no client, no script
     _template/         copy-me starter; ignored by the registry
     .generated/        build output of scripts/scope-skins.mjs — do not edit
   lib/motion.ts        shared easing, scramble, odometer, reveal, DPR
@@ -186,8 +203,9 @@ author, canonical URL, locale, navigation, and the colophon text. Change
 
 ## Skins
 
-Two ship: `rhine` (default) and `lone-trail`. See [SKINS.md](SKINS.md) to add a
-third, and [DESIGN.md](DESIGN.md) for the editorial system both are built on.
+Five ship: `rhine` (default), `lone-trail`, `terminal`, `paper` and `static`. See
+[SKINS.md](SKINS.md) to add a sixth, and [DESIGN.md](DESIGN.md) for the editorial
+system every one of them is built on.
 
 Skins are selectable at runtime with `?skin=<id>`, and the choice persists in
 `localStorage`. Switching is an attribute change on `<html>` — the CSS is already
@@ -208,8 +226,19 @@ Adding a skin means copying one folder. Two things make that work:
   ink is 16.49:1 and 17.05:1. Accent-coloured *text* uses `--accent-text`, a
   darkened variant that clears 4.5:1 in both skins — the raw accent is used only
   for rules, dots and fills, where the 3:1 graphic threshold applies.
+- Paper follows the same rule across a much wider gap: cyan `#18D1FF` is 1.81:1
+  on white and is **never** used for text or for a meaningful line, only as a
+  fill under dark ink (9.97:1). Its `--accent-text` is `#0A6C8F` (5.91:1).
+- Terminal is the first dark skin, and on `#191919` no grey reaches the 3:1
+  graphic threshold — `#5A5A5A` tops out at 2.55:1. Panel hairlines are accepted
+  as decoration at `#3A3A3A`, but every line that *carries meaning* (focus ring,
+  active tab, progress, the current TOC entry) is drawn in the yellow accent
+  (15.85:1) instead of grey.
 - Lone Trail's De Stijl yellow (`#e3a724`, 1.86:1) never carries text; it exists
   as a stripe.
+- Static removes the script layer entirely, so nothing intercepts `Enter`,
+  nothing paints a canvas, and nothing needs to: the fallback is the page a
+  visitor gets when JavaScript does not run at all.
 - `prefers-reduced-motion: reduce` skips the opening ceremony and every
   transition, renders halftone plates at their final state, and stops the scan
   beam and ticker.
