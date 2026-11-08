@@ -69,8 +69,6 @@ export type SkinFeatures = {
   halftone: boolean;
   /** Plates are painted as a scanline sphere on canvas. */
   scanline: boolean;
-  /** Press `G` to overlay the layout grid. */
-  gridOverlay: boolean;
   /** Fixed coordinate readout in the corner. */
   hud: boolean;
   /** Print-shop artifacts: crop marks, registration targets, fold lines, binding. */
@@ -111,7 +109,6 @@ export const DEFAULT_FEATURES: SkinFeatures = {
   unseal: false,
   halftone: false,
   scanline: false,
-  gridOverlay: false,
   hud: false,
   printArtifacts: false,
   barcode: false,

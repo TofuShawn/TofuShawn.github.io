@@ -57,7 +57,7 @@ const words = POSTS.reduce((n, p) => n + p.words, 0);
         <div style="grid-column:3/5">
           <p class="t-micro">Registry</p>
           <p>
-            {POSTS.length} entries · {words.toLocaleString('en-US')} words ·
+            {POSTS.length} entries · {words.toLocaleString('en-US')} words ·{' '}
             {SKINS.length} skin{SKINS.length === 1 ? '' : 's'} installed
           </p>
           <p style="margin-top:10px">
@@ -67,9 +67,9 @@ const words = POSTS.reduce((n, p) => n + p.words, 0);
       </div>
 
       <p class="disc">
-        This is a template. The Rhine skin's typography, grid and motion are adapted
+        This is a template. The Press skin's typography, grid and motion are adapted
         from the Rhine Lab dossier system (MIT); the other four skins are original and
-        set in Saira (SIL OFL 1.1). Nothing here is affiliated with any real
+        each sets its own type stack. Nothing here is affiliated with any real
         institution; the archive fiction is a frame for the layout.
       </p>
 

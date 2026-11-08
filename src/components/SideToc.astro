@@ -1,0 +1,52 @@
+---
+/**
+ * Side section rail — the locator for a long article.
+ *
+ * The in-flow `.toc` in the margin of the article scrolls away with the sheet,
+ * which is exactly what you do not want in a piece that runs four screens. This
+ * one is pinned to the right edge of the viewport, outside the paper: a column
+ * of ticks at rest with the name of the section you are reading running up
+ * beside it, and the whole list when you hover or focus it.
+ *
+ * It is a real <nav> of real anchors, so without JavaScript it still reads as a
+ * table of contents and every target still works. The script only adds the
+ * "you are here" marker (`src/lib/sidetoc.ts`).
+ *
+ * Rendered by the article page only: the cover, the index and the colophon have
+ * no headings to locate.
+ */
+import type { Heading } from '../lib/posts';
+
+export interface Props {
+  items: Heading[];
+  label?: string;
+}
+
+const { items, label = 'Sections' } = Astro.props;
+
+// Two-digit counters, the same convention the running heads and folios use.
+const no = (i: number) => String(i + 1).padStart(2, '0');
+---
+
+{
+  items.length > 1 && (
+    <nav class="sidetoc" data-sidetoc aria-label={label}>
+      <span class="sd-now" data-sd-now aria-hidden="true">
+        {items[0].text}
+      </span>
+      <ol class="sd-list">
+        {items.map((h, i) => (
+          <li class={h.depth === 3 ? 'sd-sub' : undefined}>
+            <a class="sd-item" href={`#${h.slug}`} data-sd-id={h.slug}>
+              <span class="sd-label">
+                <span class="sd-no">{no(i)}</span>
+                <span class="sd-txt">{h.text}</span>
+              </span>
+              <i class="sd-tick" aria-hidden="true" />
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}

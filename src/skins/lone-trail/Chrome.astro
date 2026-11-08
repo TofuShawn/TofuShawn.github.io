@@ -3,7 +3,7 @@
  * Lone Trail chrome: CRT layer, telemetry marquee, the launch overlay, the grid
  * overlay.
  *
- * Same contract as rhine's Chrome — only this skin's own furniture, gated on
+ * Same contract as press's Chrome — only this skin's own furniture, gated on
  * its own feature flags. The layout wraps this in `.skin-only[data-only]`, so
  * nothing here is painted unless this skin is the active one.
  */
@@ -77,7 +77,7 @@ const TICKER = [
         <span />
       </div>
       <div class="launch-body">
-        <p class="launch-kicker">Rhine Lab // Control Room</p>
+        <p class="launch-kicker">Control room // Pre-flight</p>
         <p class="launch-count" aria-hidden="true">
           T-<span id="lt-count">00:00:04</span>
         </p>
@@ -96,15 +96,6 @@ const TICKER = [
     <b class="rail-pct"><span data-rail-pct>000</span></b>
   </div>
 </div>
-
-{
-  f.gridOverlay && (
-    <div class="grid-overlay" id="gridov" aria-hidden="true">
-      <div class="base" />
-      <div class="cols" id="gridcols" />
-    </div>
-  )
-}
 
 <script>
   import './client';

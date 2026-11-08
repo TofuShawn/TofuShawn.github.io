@@ -47,7 +47,7 @@ if (SKINS.length === 0) {
  * decision, so it is written down. If the named skin is missing the build fails
  * loudly instead of falling back.
  */
-export const DEFAULT_SKIN_ID = 'rhine';
+export const DEFAULT_SKIN_ID = 'press';
 
 if (!SKINS.some((s) => s.id === DEFAULT_SKIN_ID)) {
   throw new Error(

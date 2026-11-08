@@ -3,9 +3,9 @@ import type { SkinMeta } from '../contract';
 /**
  * Lone Trail — a control room printed on paper.
  *
- * Same foundation as the Rhine skin (Swiss 12-column grid, warm off-white
+ * Same foundation as the Press skin (Swiss 12-column grid, warm off-white
  * paper, near-black ink, exactly one saturated accent, mono micro-labels) and a
- * deliberately different medium: Rhine pretends to be a print dossier, this one
+ * deliberately different medium: Press pretends to be a print proof, this one
  * pretends to be a CRT console.
  *
  * What that changes, concretely:
@@ -32,7 +32,6 @@ const loneTrail: SkinMeta = {
     unseal: true,
     halftone: false,
     scanline: true,
-    gridOverlay: true,
     hud: false,
     printArtifacts: false,
     barcode: false,

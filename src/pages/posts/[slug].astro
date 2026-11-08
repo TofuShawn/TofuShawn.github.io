@@ -5,6 +5,7 @@ import RunningHead from '../../components/RunningHead.astro';
 import Folio from '../../components/Folio.astro';
 import CropMarks from '../../components/CropMarks.astro';
 import Plate from '../../components/Plate.astro';
+import SideToc from '../../components/SideToc.astro';
 import { ALL_POSTS, getAdjacent, getPost, postUrl, tagSlug } from '../../lib/posts';
 import { longDate, isoDate, stampDate } from '../../lib/format';
 import { featuresAny } from '../../skins/registry';
@@ -137,5 +138,7 @@ const toc = post.headings;
 
       <Folio page="P.04" note={post.displayCode} />
     </article>
+
+    <SideToc items={toc} />
   </div>
 </BaseLayout>

@@ -32,7 +32,6 @@ const terminal: SkinMeta = {
     unseal: true,
     halftone: true,
     scanline: false,
-    gridOverlay: true,
     hud: false,
     printArtifacts: false,
     barcode: true,

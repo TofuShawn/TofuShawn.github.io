@@ -30,6 +30,30 @@
   font-display: swap;
 }
 
+/* The stamp is the one piece of Terminal that wants a neutral grotesque
+   rather than the stretched industrial face: two dense capitals in a small
+   block need even counters and a straight-sided N, not a 125% width axis. */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The stamp's two lines have to read as one width. In a proportional face the
+   capital I is a thin stem, so INFO over two lines can never fill the plate the
+   way the reference's AN/CR does — measured 1.27 caps wide against 1.8. Applied
+   to the skin rather than to the stamp alone: this face is only ever used at
+   display size, where the equal advance is the point, not a compromise. */
+@font-face {
+  font-family: 'JetBrains Mono Stamp';
+  src: url('/fonts/JetBrainsMono.ttf') format('truetype-variations');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* -------------------------------------------------------------------------- */
 /* tokens                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -100,35 +124,7 @@
 /* furniture this skin does not use                                            */
 /* -------------------------------------------------------------------------- */
 
-/* `featuresAny()` ships the union of every skin's furniture, so a skin must
-    hide what it does not style. These belong to rhine and lone-trail. */
-:root[data-skin='terminal'] .hud,
-:root[data-skin='terminal'] .crt-scanlines,
-:root[data-skin='terminal'] .crt-beam,
-:root[data-skin='terminal'] .fx-toggle,
-:root[data-skin='terminal'] .launch,
-:root[data-skin='terminal'] .punch,
-:root[data-skin='terminal'] .morse-bar,
-:root[data-skin='terminal'] .destijl,
-:root[data-skin='terminal'] .cropmarks,
-:root[data-skin='terminal'] .fold,
-:root[data-skin='terminal'] .tape,
-:root[data-skin='terminal'] .sticker,
-:root[data-skin='terminal'] .binding,
-:root[data-skin='terminal'] .redact,
-:root[data-skin='terminal'] .footnote,
-:root[data-skin='terminal'] .lt-gridbtn {
-  display: none;
-}
 
-/* -------------------------------------------------------------------------- */
-/* shell                                                                       */
-/* -------------------------------------------------------------------------- */
-
-:root[data-skin='terminal'] body {
-  background: var(--bg);
-  -webkit-font-smoothing: antialiased;
-}
 
 :root[data-skin='terminal'] .sheet {
   width: var(--measure);
@@ -1440,23 +1436,29 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* the seal — the cover ceremony                                               */
+/* the seal — the readout                                                     */
 /* -------------------------------------------------------------------------- */
+
+/* The cover ceremony is a full-bleed instrument reading, not a card: there is no
+   panel, no header bar and no border, because the reference is a readout screen
+   filling the frame edge to edge. The left column states what the volume is; the
+   right is that same volume drawn as one measured object. Everything on it is a
+   hairline, a token, or a true number from this site. */
 
 :root[data-skin='terminal'] .term-seal {
   position: fixed;
   inset: 0;
   z-index: 200;
   display: grid;
-  place-items: center;
-  background: #0f0f0f;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent 0 6px,
-    rgba(255, 250, 0, 0.045) 6px 7.5px
-  );
-  padding: 24px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: 26px 40px 22px;
+  background-color: #0a0a0a;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 52px 52px;
   transition: opacity var(--dur-slow) var(--ease-mech), visibility var(--dur-slow) var(--ease-mech);
+  overflow: auto;
 }
 
 :root[data-skin='terminal'] .term-seal.off {
@@ -1465,103 +1467,331 @@
   pointer-events: none;
 }
 
-:root[data-skin='terminal'] .term-seal-panel {
-  width: min(560px, 100%);
-  background: var(--bg-sheet);
-  border: 1px solid var(--rule);
-  padding: 34px 34px 28px;
-  position: relative;
-  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
+/* --- the two top corners: both are metadata, neither is a title ----------- */
+
+:root[data-skin='terminal'] .ts-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 14px;
 }
 
-:root[data-skin='terminal'] .term-seal-strip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 3px;
-  width: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--tri-a) 0 33.333%,
-    var(--tri-b) 33.333% 66.666%,
-    var(--tri-c) 66.666% 100%
-  );
-}
-
-:root[data-skin='terminal'] .term-seal-kicker {
-  font-family: var(--font-display);
+:root[data-skin='terminal'] .ts-top-l {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  font-stretch: 112%;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--fg-mute);
-  margin: 0 0 20px;
 }
 
-:root[data-skin='terminal'] .term-seal-word {
+:root[data-skin='terminal'] .ts-top-l b {
   font-family: var(--font-display);
-  font-size: clamp(34px, 7vw, 58px);
+  font-size: 15px;
   font-weight: 800;
-  font-stretch: 125%;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--fg);
-  margin: 0 0 6px;
-}
-
-:root[data-skin='terminal'] .term-seal-meta {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 600;
-  font-stretch: 112%;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-mute);
-  margin: 0 0 24px;
   font-variant-numeric: tabular-nums;
 }
 
-:root[data-skin='terminal'] .term-seal-bar {
-  height: 3px;
-  background: var(--bg-elev);
-  overflow: hidden;
-  margin-bottom: 24px;
+:root[data-skin='terminal'] .ts-top-r {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  text-align: right;
 }
 
-:root[data-skin='terminal'] .term-seal-bar i {
+:root[data-skin='terminal'] .ts-top-r b {
+  color: var(--fg-soft);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.14em;
+}
+
+:root[data-skin='terminal'] .ts-top-r i {
+  padding: 0 6px;
+  font-style: normal;
+  color: var(--rule);
+}
+
+/* --- body: the record on the left, the reading on the right --------------- */
+
+:root[data-skin='terminal'] .ts-main {
+  display: grid;
+  grid-template-columns: minmax(0, 0.32fr) minmax(0, 1fr);
+  gap: 56px;
+  min-height: 0;
+  align-items: center;
+}
+
+:root[data-skin='terminal'] .ts-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  align-self: center;
+}
+
+/* the mark: the one light surface on the whole screen, because a stamp is.
+   It carries the section name at the weight a rubber stamp is cut at — the
+   letterforms are the object, so they get the box, not the padding. */
+:root[data-skin='terminal'] .ts-mark {
+  /* Measured off the reference card (291px plate, 184px here): a square,
+     caps at 34% of the plate height, type flush left on a 7% margin, and a
+     line pitch of cap + 7% so the two lines sit close but never touch. The
+     right side stays empty — that emptiness is the figure/ground of a stamp,
+     and centring it was what made this read as a label instead. */
+  position: relative;
+  width: 184px;
+  aspect-ratio: 1 / 1;
+  background: #d9d7d2;
+  color: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 8px 8px 9px;
+  text-align: left;
+  /* Monospace, and that is the whole reason the lines align: IN and FO are both
+     two glyphs, so they are the same width by construction instead of by a
+     hacked letter-spacing. Reference measures 1.8 cap-widths per line; Inter
+     gives 1.27 for IN and 1.6 for FO — no setting reconciles that, which is
+     what kept this looking wrong. 800, not 900: at 900 the counters close. */
+  font-family: 'JetBrains Mono Stamp', var(--font-mono);
+  font-weight: 800;
+  font-size: 88px;
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* IN and FO are two letters each but not two equal widths: at the same
+   weight I and N together are much narrower than F and O, so the block reads
+   as two ragged lines rather than one stamp. Saira carries a width axis, so
+   the narrow line is set wide and the wide line set narrow until both occupy
+   the same measure: matched left, matched right, cap height untouched, and
+   the pair centred in the box the way a stamp is cut. */
+:root[data-skin='terminal'] .ts-mark span {
   display: block;
-  height: 100%;
-  width: 0;
-  background: var(--accent);
-  animation: term-seal-fill 3.4s linear forwards;
 }
 
-@keyframes term-seal-fill {
-  to {
-    width: 100%;
-  }
+/* No width correction on either line: the reference lets AN sit wider than
+   CR (251 vs 174 of a 291 plate) and the ragged right edge is part of the
+   mark. Forcing the two lines equal was what made the block look drawn
+   rather than set. */
+
+:root[data-skin='terminal'] .ts-mark i {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 12px;
+  height: 12px;
+  background: #002fa7;
+}
+
+:root[data-skin='terminal'] .ts-section {
+  margin: 15px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .ts-section i,
+:root[data-skin='terminal'] .ts-analogy i {
+  padding: 0 4px;
+  font-style: normal;
+  color: var(--rule);
+}
+
+:root[data-skin='terminal'] .ts-section b {
+  font-weight: 400;
+  color: var(--fg);
+}
+
+/* field rows: label above value, one hairline between — the card's own logic,
+   without the card */
+:root[data-skin='terminal'] .ts-rows {
+  margin: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-skin='terminal'] .ts-rows > div {
+  padding: 6px 0 8px;
+  border-top: 1px solid rgba(237, 237, 237, 0.16);
+}
+
+:root[data-skin='terminal'] .ts-rows > div:last-child {
+  border-bottom: 1px solid rgba(237, 237, 237, 0.16);
+}
+
+/* The label is a footnote to the value, not a heading over it: one weight down,
+   two steps dimmer, wide tracking. The value takes the weight back. */
+:root[data-skin='terminal'] .ts-rows dt {
+  margin-bottom: 3px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 300;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(237, 237, 237, 0.42);
+}
+
+:root[data-skin='terminal'] .ts-rows dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  font-stretch: 100%;
+  letter-spacing: 0.012em;
+  color: #f2f2ef;
+}
+
+:root[data-skin='terminal'] .ts-analogy {
+  margin: 16px 0 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #8a8a86;
+}
+
+/* --- the reading: two wire bodies, one orbit, three leaders ---------------- */
+
+:root[data-skin='terminal'] .ts-figure {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  height: min(64vh, 560px);
+}
+
+:root[data-skin='terminal'] .ts-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The leaders are drawn by the same script that draws the bodies, in the same
+   pixel space, so the type never scales with the figure. */
+:root[data-skin='terminal'] .ts-figure .ts-lead {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The two bodies are drawn in two temperatures, not one hue at two opacities:
+   that is the only thing on the screen that is not a token, and it is what makes
+   the pair read as two objects passing through each other. The colours live in
+   the script because the wires are painted per-segment in depth order. */
+
+:root[data-skin='terminal'] .ts-figure .ts-lead-line {
+  fill: none;
+  stroke: rgba(237, 237, 237, 0.3);
+  stroke-width: 1;
+}
+
+:root[data-skin='terminal'] .ts-throat-dot {
+  fill: rgba(237, 237, 237, 0.85);
+  stroke: none;
+}
+
+:root[data-skin='terminal'] .ts-figure .ts-lead text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  fill: rgba(237, 237, 237, 0.62);
+}
+
+:root[data-skin='terminal'] .ts-throat-label {
+  /* The label names the point where the two wires meet, so it has to sit on
+     top of them. Stroking the glyphs in the ground colour first knocks the
+     wires out from behind the letters instead of crossing through them. */
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: rgba(237, 237, 237, 0.72);
+  paint-order: stroke fill;
+  stroke: #0a0a0a;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* --- foot: the one line of human text on the whole screen ----------------- */
+
+:root[data-skin='terminal'] .ts-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 6px 40px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(237, 237, 237, 0.16);
+}
+
+:root[data-skin='terminal'] .ts-foot blockquote {
+  grid-column: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.5vw, 23px);
+  font-weight: 700;
+  font-stretch: 100%;
+  line-height: 1.28;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .ts-cite {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .ts-cite i {
+  width: 26px;
+  height: 1px;
+  flex: none;
+  background: rgba(237, 237, 237, 0.4);
 }
 
 :root[data-skin='terminal'] .term-seal-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 26px 13px;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  font-stretch: 125%;
-  letter-spacing: 0.16em;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: end;
+  padding: 9px 18px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  background: var(--command-bar);
+  background: transparent;
   color: var(--fg);
-  border: 1px solid var(--fg-mute);
+  border: 1px solid rgba(237, 237, 237, 0.32);
   cursor: pointer;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-  transition: color var(--dur-fast) linear, background var(--dur-fast) linear,
-    border-color var(--dur-fast) linear;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  transition: none;
 }
 
 :root[data-skin='terminal'] .term-seal-btn:hover,
@@ -1569,61 +1799,144 @@
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
+  transition: background var(--dur-fast) step-end, color var(--dur-fast) step-end;
 }
 
-:root[data-skin='terminal'] .term-seal-note {
-  margin: 18px 0 0;
-  font-family: var(--font-display);
-  font-size: 10.5px;
-  font-weight: 500;
-  font-stretch: 112%;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-mute);
+:root[data-skin='terminal'] .term-seal-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* A log line, not a caption: it never wraps, it never reflows the footer when it
+   changes, and the retrieving state is dimmer than the settled one. */
+:root[data-skin='terminal'] .ts-tail {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  margin: 0;
+  min-height: 14px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(237, 237, 237, 0.28);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 46ch;
+  text-align: right;
+}
+
+/* --- narrow: the drawing is the first thing to go ------------------------- */
+
+@media (max-width: 1080px) {
+  :root[data-skin='terminal'] .term-seal {
+    padding: 22px 24px 20px;
+  }
+
+  :root[data-skin='terminal'] .ts-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    align-content: start;
+  }
+
+  /* Below the drawing's own aspect the record is what the screen exists to
+     state, and the rows plus the quote already fill a laptop window. */
+  :root[data-skin='terminal'] .ts-figure {
+    display: none;
+  }
+
+  :root[data-skin='terminal'] .ts-mark {
+    width: 148px;
+    font-size: 74px;
+    padding: 7px 6px 8px;
+  }
+
+  :root[data-skin='terminal'] .ts-mark i {
+    top: 11px;
+    right: 11px;
+    width: 11px;
+    height: 11px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows {
+    margin-top: 22px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows > div {
+    padding: 8px 0 9px;
+  }
+
+  :root[data-skin='terminal'] .ts-foot {
+    gap: 12px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root[data-skin='terminal'] .term-seal {
+    padding: 16px 16px 16px;
+  }
+
+  :root[data-skin='terminal'] .ts-top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  :root[data-skin='terminal'] .ts-top-r {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  :root[data-skin='terminal'] .ts-mark {
+    /* The stamp keeps the same 184:252 proportion at every size; at phone
+       widths that proportion is what pushes the last row into the footer,
+       so it is the stamp that gives way first, not the record. */
+    width: 106px;
+    font-size: 53px;
+    padding: 5px 4px 6px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows > div {
+    /* One column already spent the drawing; the row pitch pays for the rest
+       so the record still ends inside a phone window without a scroll. */
+    padding: 3px 0 4px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dt {
+    margin-bottom: 2px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dd {
+    font-size: 13.5px;
+  }
+
+  :root[data-skin='terminal'] .ts-foot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-skin='terminal'] .term-seal-btn {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    margin-top: 6px;
+  }
+
+  :root[data-skin='terminal'] .ts-tail {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
+    margin-top: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin='terminal'] .term-seal {
+    transition: none;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 /* grid overlay                                                                */
-/* -------------------------------------------------------------------------- */
-
-:root[data-skin='terminal'] .grid-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--dur-base) linear;
-}
-
-:root[data-skin='terminal'] body.grid-on .grid-overlay {
-  opacity: 1;
-}
-
-:root[data-skin='terminal'] .grid-overlay .cols {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--gutter);
-  width: var(--measure);
-  max-width: calc(100% - 32px);
-  height: 100%;
-  margin: 0 auto;
-}
-
-:root[data-skin='terminal'] .grid-overlay .cols i {
-  background: rgba(255, 250, 0, 0.05);
-  border-left: 1px solid rgba(255, 250, 0, 0.25);
-}
-
-:root[data-skin='terminal'] .grid-overlay .base {
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 250, 0, 0.12) 0 1px,
-    transparent 1px 8px
-  );
-}
-
 /* -------------------------------------------------------------------------- */
 /* scroll rail                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -1885,7 +2198,264 @@
     display: none;
   }
 
-  :root[data-skin='terminal'] .term-seal-panel {
-    padding: 26px 22px 22px;
+}
+
+/* --- side section rail -----------------------------------------------------
+   A readout strip, not an index: square ticks, a yellow bar for the section you
+   are in, and a label in mono caps that only appears on demand. The open state
+   is a panel bitten out of the ground with the same cut corner as every other
+   control in this skin. */
+:root[data-skin='terminal'] .sidetoc {
+  right: 16px;
+  padding: 14px 10px;
+  --sd-tick: 9px;
+  --sd-tick-on: 22px;
+  --sd-gap: 12px;
+  --sd-open: 200px;
+  --sd-dur: var(--dur-fast);
+}
+
+:root[data-skin='terminal'] .sd-now {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--accent-text);
+  opacity: 1;
+}
+
+:root[data-skin='terminal'] .sd-no {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--fg-mute);
+}
+
+:root[data-skin='terminal'] .sd-txt {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+:root[data-skin='terminal'] .sd-sub .sd-txt {
+  color: var(--fg-mute);
+  font-weight: 400;
+}
+
+:root[data-skin='terminal'] .sd-tick {
+  height: 2px;
+  background: var(--rule);
+}
+
+:root[data-skin='terminal'] .sd-item.on .sd-tick {
+  height: 4px;
+  background: var(--accent);
+}
+
+:root[data-skin='terminal'] .sd-item.on .sd-txt {
+  color: var(--accent-text);
+}
+
+:root[data-skin='terminal'] .sidetoc:hover,
+:root[data-skin='terminal'] .sidetoc:focus-within {
+  background: var(--bg-elev);
+  border-color: var(--rule);
+  box-shadow: none;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    0 100%
+  );
+}
+
+/* --- height tiers --------------------------------------------------------- */
+/* Every short window loses furniture in the same order: the stamp first (it is
+   the largest single object and the least load-bearing), then the row pitch,
+   then the quote. Width is not the constraint here — a 1440px-wide window 700px
+   tall has plenty of room sideways and none vertically. */
+
+@media (max-height: 800px) {
+  :root[data-skin='terminal'] .term-seal {
+    padding: 18px 30px 16px;
+  }
+
+  :root[data-skin='terminal'] .ts-figure {
+    height: min(56vh, 430px);
+  }
+
+  :root[data-skin='terminal'] .ts-mark {
+    width: 140px;
+    font-size: 70px;
+    padding: 6px 6px 8px;
+  }
+
+  :root[data-skin='terminal'] .ts-mark i {
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+  }
+
+  :root[data-skin='terminal'] .ts-section {
+    margin-top: 12px;
+    font-size: 9.5px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows {
+    margin-top: 14px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows > div {
+    padding: 5px 0 6px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dt {
+    margin-bottom: 3px;
+    font-size: 8px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dd {
+    font-size: 12.5px;
+  }
+
+  :root[data-skin='terminal'] .ts-analogy {
+    margin-top: 12px;
+    font-size: 8.5px;
+  }
+
+  :root[data-skin='terminal'] .ts-foot {
+    padding-top: 10px;
+    gap: 4px 32px;
+  }
+
+  :root[data-skin='terminal'] .ts-foot blockquote {
+    font-size: clamp(14px, 1.35vw, 20px);
+  }
+
+  :root[data-skin='terminal'] .ts-cite {
+    margin-top: 6px;
+    font-size: 9px;
+  }
+
+  :root[data-skin='terminal'] .term-seal-btn {
+    padding: 8px 16px 9px;
+    font-size: 9.5px;
+  }
+}
+
+@media (max-height: 700px) {
+  :root[data-skin='terminal'] .term-seal {
+    padding: 12px 24px 12px;
+  }
+
+  :root[data-skin='terminal'] .ts-figure {
+    height: min(50vh, 360px);
+  }
+
+  :root[data-skin='terminal'] .ts-mark {
+    width: 116px;
+    font-size: 58px;
+    padding: 5px 5px 6px;
+  }
+
+  :root[data-skin='terminal'] .ts-section {
+    margin-top: 9px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows {
+    margin-top: 10px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows > div {
+    padding: 4px 0 5px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dd {
+    font-size: 12px;
+  }
+
+  :root[data-skin='terminal'] .ts-analogy {
+    margin-top: 9px;
+  }
+
+  :root[data-skin='terminal'] .ts-foot blockquote {
+    font-size: clamp(13px, 1.2vw, 17px);
+    line-height: 1.24;
+  }
+
+  :root[data-skin='terminal'] .ts-cite {
+    margin-top: 5px;
+    font-size: 8.5px;
+  }
+
+  :root[data-skin='terminal'] .term-seal-btn {
+    padding: 7px 14px 8px;
+    font-size: 9px;
+  }
+
+  :root[data-skin='terminal'] .ts-tail {
+    font-size: 8.5px;
+  }
+}
+
+@media (max-height: 660px) {
+  :root[data-skin='terminal'] .term-seal {
+    padding: 6px 14px 7px;
+  }
+
+  :root[data-skin='terminal'] .ts-figure {
+    height: min(44vh, 300px);
+  }
+
+  :root[data-skin='terminal'] .ts-mark {
+    /* Last window standing: below this the record itself has to shorten, and
+       a stamp shorter than this stops reading as a stamp, so it gives way to
+       the row pitch instead. */
+    width: 84px;
+    font-size: 42px;
+    padding: 4px 4px 5px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows {
+    margin-top: 8px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows > div {
+    padding: 2px 0 3px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dt {
+    margin-bottom: 2px;
+    font-size: 7.5px;
+  }
+
+  :root[data-skin='terminal'] .ts-rows dd {
+    font-size: 11.5px;
+  }
+
+  :root[data-skin='terminal'] .ts-analogy {
+    display: none;
+  }
+
+  :root[data-skin='terminal'] .ts-foot {
+    padding-top: 6px;
+    gap: 3px 24px;
+  }
+
+  :root[data-skin='terminal'] .ts-foot blockquote {
+    font-size: 13px;
+  }
+
+  :root[data-skin='terminal'] .ts-cite {
+    margin-top: 4px;
+    font-size: 8px;
+  }
+
+  :root[data-skin='terminal'] .term-seal-btn {
+    padding: 6px 12px 7px;
+    font-size: 8.5px;
   }
 }

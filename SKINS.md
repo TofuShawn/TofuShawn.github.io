@@ -10,12 +10,20 @@ cp -r src/skins/_template src/skins/my-skin
 
 Then change the id. Three files, in the order you should write them.
 
-Five skins ship: **Rhine Lab** (a printed dossier), **Lone Trail** (a CRT
-console), **Terminal** (a dark industrial console), **Paper** (the same system
-printed, cyan) and **Static** (no chrome, no client, no script). They are
-deliberately far apart — same skeleton, four mediums — because that is the only
-honest test of whether the seam works. Read whichever one is closer to what you
-want and steal from it.
+Five skins ship: **Press** (a press proof), **Lone Trail** (a CRT
+console), **Terminal** (a dark industrial console), **Paper** (a printed ledger,
+set in serif) and **Static** (a controlled document — numbered clauses, no
+chrome, no client). They are deliberately far apart — same skeleton, five
+mediums — because that is the only honest test of whether the seam works. Read
+whichever one is closer to what you want and steal from it.
+
+Paper and Static are the two that stopped being colourways. Paper answers with
+typography: serif display, hairline rules, drop capitals, marginalia and page
+numbers, on cream stock with a single navy. Static answers with bureaucracy: a
+fixed left gutter of clause numbers driven by CSS counters, a control table
+instead of a printed lockup, ruled figure fields, a 12/13/15px type scale and one
+grey-blue hairline doing all the dividing. Neither changes colour without
+changing structure, which is the point.
 
 Static is worth reading last and first: it is the proof that a skin can decline
 the whole feature layer. It has no `Chrome.astro` and no `client.ts`, so it never
@@ -39,7 +47,6 @@ const meta: SkinMeta = {
     unseal: false,
     halftone: false,
     scanline: false,
-    gridOverlay: false,
     hud: false,
     printArtifacts: false,
     barcode: false,
@@ -81,7 +88,7 @@ Two consequences:
   .sticker, .tape, .stamp, .redact, .footnote, .figcap, .barcode { display: none; }
   ```
 
-  Lone Trail's is at the bottom of `src/skins/lone-trail/skin.css`; Rhine's is
+  Lone Trail's is at the bottom of `src/skins/lone-trail/skin.css`; Press's is
   the mirror image, hiding the console furniture.
 
 The rule of thumb: a flag is a promise that your skin has styles for those
@@ -100,7 +107,7 @@ The two tokens people get wrong:
   `--bg-sheet`. Use it for accent-coloured text at 8–13px. The raw `--accent` is
   for rules, dots, borders and fills, where 3:1 is the threshold. If you skip this
   and use `--accent` for small text, the page will look right and fail contrast.
-  Rhine: `#e9521c` → `#bf3d0d`. Lone Trail: `#e9521c` → `#a8380a`.
+  Press: `#e9521c` → `#bf3d0d`. Lone Trail: `#e9521c` → `#a8380a`.
 - **`--font-mono`** — every numeral in the design is monospaced and
   `tabular-nums`, because the odometer animates digit by digit and columns have to
   align. A proportional mono stack makes numbers jitter mid-animation.
@@ -171,7 +178,7 @@ that exists.
 
 ## 3. `Chrome.astro` — optional furniture
 
-The seal, the coordinate HUD, the grid overlay. This component is only mounted if
+The seal, the coordinate HUD. This component is only mounted if
 the folder contains it, and each block inside is gated on its own flag:
 
 ```astro
@@ -191,14 +198,14 @@ than copying, so a skin stays deletable without breaking another.
 Three rules for skin scripts:
 
 - **Never run before first paint.** Set state from the inline boot script in
-  `BaseLayout.astro` (which already handles `?skin=` and `?skip=1`) or accept a
-  flash.
+  `BaseLayout.astro` (which already handles `?skin=`, `?skip=1`, `?seal=1` and
+  the once-per-tab `seal-seen` flag) or accept a flash.
 - **Guard on your own skin.** Every skin's bundle loads on every page. Start
   `boot()` with `if (document.documentElement.dataset.skin !== 'my-skin') return;`
   or two skins' scripts will fight over the same elements. Static is the control
   case: it has no `client.ts` at all, so nothing guards or fights.
 - **Always have an escape hatch.** Every overlay that locks scrolling must be
-  able to unlock itself without JS. Rhine's seal, Lone Trail's launch,
+  able to unlock itself without JS. Press's seal, Lone Trail's launch,
   Terminal's and Paper's seals all force-release after 8 seconds if their script
   never runs. Static has no overlay to release, but it still has to undo the
   layout's `body.locked` class in CSS, because nothing else will.
@@ -208,7 +215,7 @@ Three rules for skin scripts:
 Element ids are the one place the superset bites. If two skins each want an
 `#unseal` overlay, the document ends up with two elements carrying that id and
 `getElementById` returns whichever came first. Namespace per-skin furniture:
-Rhine's overlay is `#unseal`, Lone Trail's is `#lt-launch`, Terminal's is
+Press's overlay is `#unseal`, Lone Trail's is `#lt-launch`, Terminal's is
 `#term-seal`, Paper's is `#paper-seal`.
 
 ## Anything the layout renders for you, you must style

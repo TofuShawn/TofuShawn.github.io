@@ -4,13 +4,13 @@ Notes on the design these skins implement, and on which of their rules are
 load-bearing rather than decorative. Read this before changing a skin; most of
 these constraints are invisible until you break them.
 
-Two skins ship. **Rhine Lab** is a printed dossier on a desk. **Lone Trail** is a
+Two skins ship. **Press** is a press proof on the bed. **Lone Trail** is a
 control room printed on paper. They share one skeleton and one palette family,
 and differ in medium — which turns out to be the only variable that matters.
 
 ## The two skins
 
-|  | Rhine Lab | Lone Trail |
+|  | Press | Lone Trail |
 | --- | --- | --- |
 | Fiction | a bound, trimmed, stamped archive | a CRT console, still on paper |
 | Columns separated by | whitespace (20px gutter) | rules (0 gutter, 1px hairlines) |
@@ -36,7 +36,7 @@ are recognisably one family.
 
 ## Tokens
 
-Rhine (`src/skins/rhine/skin.css`):
+Press (`src/skins/press/skin.css`):
 
 ```
 paper    #e4e0d5   the desk, outside the sheet
@@ -58,20 +58,20 @@ primaries as skin-local tokens: `--ds-red #d6382b`, `--ds-blue #1d569e`,
 it exists to be a stripe.
 
 One accent per skin, used sparingly: rules, dots, folio marks, the active state.
-Accent is **never** a large fill. The measured accent share of the Rhine cover is
+Accent is **never** a large fill. The measured accent share of the Press cover is
 0.00% of pixels at 1440 (0.01% at 390) — the marks are few enough and small
 enough to fall below a tenth of a percent, which is exactly what makes the accent
 read as a mark rather than a colour scheme. Lone Trail measures 0.03%, and that
 difference is the whole temperament gap between the two skins.
 
 `--accent-text` exists because the raw accent cannot carry small text: `#e9521c`
-is 3.33:1 on Rhine's sheet and 3.22:1 on Lone Trail's. Each skin darkens it —
+is 3.33:1 on Press's sheet and 3.22:1 on Lone Trail's. Each skin darkens it —
 `#bf3d0d` (4.87:1) and `#a8380a` (5.66:1) — and uses that for any text in the
 accent hue. The raw accent stays for graphics, where 3:1 is the threshold.
 
 ## Grid
 
-Rhine: 1180px measure, 56px margins, 12 columns, 20px gutter.
+Press: 1180px measure, 56px margins, 12 columns, 20px gutter.
 
 ```
 (1180 − 2×56 − 11×20) / 12 = 70.666…px per column
@@ -120,7 +120,7 @@ The ramp is unusually small for body copy — 13px. That is the reference's
 decision and it is what makes the page read as a printed sheet rather than a
 webpage. If you raise it, raise `--lh-body` with it or the measure gets too long.
 
-The display face is the loudest single difference between the skins: Rhine uses
+The display face is the loudest single difference between the skins: Press uses
 Helvetica Neue (Swiss, neutral, 1960s), Lone Trail uses Jost (a Futura revival —
 geometric, 1920s, and the face the reference page was reaching for). Both stack a
 CJK face behind it and both use a mono for every number.
@@ -131,7 +131,7 @@ frame.
 
 ## Print artifacts
 
-Thirteen devices in Rhine, each with a job:
+Thirteen devices in Press, each with a job:
 
 | Artifact | Job |
 | --- | --- |
@@ -199,7 +199,7 @@ Two consequences worth keeping:
 
 ## Halftone
 
-Rhine draws figures as halftone dots on canvas, not as images:
+Press draws figures as halftone dots on canvas, not as images:
 
 ```
 r = min(cell × 0.63, √density × cell × (isAccent ? 0.34 : 0.63))
@@ -238,7 +238,7 @@ columns are ruled rather than spaced: a machine settles faster than paper.
 
 | Event | Duration |
 | --- | --- |
-| Entrance | 720ms (Rhine) / 620ms (Lone Trail) |
+| Entrance | 720ms (Press) / 620ms (Lone Trail) |
 | Cover stagger | 70ms per item |
 | Halftone develop | 780ms |
 | Odometer | 1500ms, outExpo |
@@ -259,7 +259,7 @@ other, producing a stutter.
 
 ## The seal and the launch
 
-Rhine's cover opens with a full-screen seal that must be clicked; Lone Trail
+Press's cover opens with a full-screen seal that must be clicked; Lone Trail
 opens with a launch sequence that counts down and can be dismissed. Both are
 overlays that lock the page, and both obey the same three rules:
 
@@ -278,7 +278,7 @@ overlays that lock the page, and both obey the same three rules:
   (`:root[data-skin=…] .launch`) outranks anything `base.css` can write without
   naming that skin, and an overlay that survives `?skip=1` is worse than an
   ugly selector. Measured: both skins report `display: none` for their ceremony
-  under `?skip=1`, and `grid / visible` without it.
+  under `?skip=1`, and `visible` without it.
 
 One measured caveat: `body.locked { overflow: hidden }` does **not** actually
 stop the viewport in this document, because `html` is `overflow: visible` and the
@@ -296,7 +296,7 @@ Three numbers, taken from 1440-wide captures with the sheet region isolated and
 the CRT layer off (`?fx=off`), because the scanlines are a fixed overlay and
 would otherwise count as ink on every pixel:
 
-| | Rhine | Lone Trail (before) |
+| | Press | Lone Trail (before) |
 | --- | --- | --- |
 | modal paper luma | 238 (`#f6f3eb`) | **248** (`#faf8f5`) |
 | pixels within 6 levels of paper | 88% | 63% |
@@ -305,7 +305,7 @@ would otherwise count as ink on every pixel:
 Lone Trail's sheet is the brightest surface in the project, and it had almost no
 middle: ink, paper, and nothing between. That reads as empty no matter how much
 you hang on it, because decoration adds *small* dark marks to a large bright
-field, which is exactly what the eye already discounts. Rhine reads furnished
+field, which is exactly what the eye already discounts. Press reads furnished
 because a third of its sheet is mid-tone — tinted panels, halftone, sheet-on-sheet
 layering.
 
@@ -350,7 +350,7 @@ something in it.)
 
 **The transferable rule: plainness is a coverage problem before it is a
 decoration problem.** Ask which regions of the sheet have nothing in them — a
-12×8 occupancy grid over the sheet is enough — before adding an ornament. Rhine
+12×8 occupancy grid over the sheet is enough — before adding an ornament. Press
 reads furnished because 69 of 96 cells carry ink, not because it has more
 furniture: Lone Trail had *more* furniture and 63. And furniture has to survive a
 still frame: ambient effects (scanlines, marquees, beams) are atmosphere, not
@@ -384,8 +384,8 @@ decision lives in a skin. `npm run check` enforces this with a regex over every
 That rule is only half of what a second skin needs. The other half is that two
 skins' stylesheets ship together in one bundle, so **an unscoped selector is a
 global override**. This was not a theory: a throwaway probe skin containing
-`.masthead { background: red }` repainted the masthead for Rhine visitors too,
-because the emitted bundle put that rule after Rhine's own.
+`.masthead { background: red }` repainted the masthead for Press visitors too,
+because the emitted bundle put that rule after Press's own.
 
 The fix is `scripts/scope-skins.mjs`, which runs before every build and rewrites
 each rule in each skin file to `:root[data-skin='<id>'] <selector>` before

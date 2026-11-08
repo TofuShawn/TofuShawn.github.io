@@ -4,10 +4,14 @@ A blog template built on the idea that a website can behave like a printed
 object: numbered spreads, crop marks, a registration target, a fold line, a
 colophon. Five skins ship, and they are deliberately far apart.
 
-- **Rhine Lab** — a bound dossier on a desk. Faithful port of
-  [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion) (MIT).
-  Crop marks, fold line, binding holes, tape, stamp, redacted lines, halftone
-  plates.
+- **Press** — a press proof, still on the bed. A sheet pulled for approval, not
+  a finished book: crop marks at the corners, a CMYK colour bar and registration
+  target, a fold line, binding holes, tape, a stamp, redacted lines, halftone
+  plates, a coordinate HUD. The palette, type ramp and motion are a faithful
+  port of
+  [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion)
+  (MIT); the name says what the page *is*, the attribution says where the
+  vocabulary came from.
 - **Lone Trail** — a control room printed on paper. Ruled 12-column grid with no
   gutters, CRT scanlines (toneable, and switchable off with `S`), an 11s scan
   beam, a live ticker, a punch card you can type into, a morse readout, De Stijl
@@ -17,31 +21,36 @@ colophon. Five skins ship, and they are deliberately far apart.
   `#191919`, Saira at 800 with a 112%/125% width axis, cut corners on anything
   pressable, square panels everywhere else, a magenta→yellow→mint tri-colour
   rule, a telemetry strip, hatched halftone plates.
-- **Paper** — the same system printed. The cyan slot (`#18D1FF`) is fill only —
-  it is 1.81:1 on white and can never carry text; `#0A6C8F` is the readable
-  variant. The command bar stays dark in both schemes, the one surface that does
-  not invert.
-- **Static** — the fallback. No `Chrome.astro`, no `client.ts`, no script at
-  all: no ceremony, no ticker, no rail, no canvas plates. It exists to prove the
-  template degrades — with the script layer gone the cover must still scroll
-  (`body.locked { overflow: auto }` is load-bearing, because the layout locks the
-  body for a ceremony this skin never opens) and every reveal must simply be
-  visible.
+- **Paper** — a printed ledger, set in type. Serif throughout (Iowan Old Style /
+  Palatino / Source Han Serif), cream stock `#E6E1D6`, paper `#FBF9F4`, ink
+  `#1C1A17`, one navy `#1B3F7A` for anything the reader should land on. Hairline
+  rules, drop capitals, marginalia, page numbers; no ticker, no panels.
+- **Static** — a controlled document: `--bg #EEF0F2` page, white sheet, ink
+  `#14181B`, one grey-blue hairline `#B9C4CC`, accent `#24445C` reserved for the
+  revision field and current clause. Numbered clauses in a fixed left gutter
+  (CSS counters, 1 / 1.1), a control table in place of a printed lockup, ruled
+  figure fields, footnotes filed at the foot of the sheet. No `Chrome.astro`, no
+  `client.ts`, no script at all: no ceremony, no ticker, no rail, no canvas
+  plates. It exists to prove the template degrades — with the script layer gone
+  the cover must still scroll (`body.locked { overflow: auto }` is load-bearing,
+  because the layout locks the body for a ceremony this skin never opens) and
+  every reveal must simply be visible.
 
-Same skeleton, same palette family, three different mediums. The point of
-shipping five is that a skin system you have only ever tested with one skin is a
-skin system you have not tested.
+Not colourways of one another: each sets its own type stack, its own page
+structure and its own way of identifying a page (a plate number, a page folio, a
+clause number). The point of shipping five is that a skin system you have only
+ever tested with one skin is a skin system you have not tested.
 
 ```
 src/
   skins/
     contract.ts        the token list and feature flags every skin must satisfy
     registry.ts        filesystem discovery; throws on a broken skin
-    rhine/             skin 1 (meta, tokens, chrome, behaviour)
+    press/             skin 1 (meta, tokens, chrome, behaviour)
     lone-trail/        skin 2
     terminal/          skin 3 — dark industrial console
-    paper/             skin 4 — the same system, printed
-    static/            skin 5 — no chrome, no client, no script
+    paper/             skin 4 — a printed ledger, set in type
+    static/            skin 5 — a controlled document; no chrome, no client
     _template/         copy-me starter; ignored by the registry
     .generated/        build output of scripts/scope-skins.mjs — do not edit
   lib/motion.ts        shared easing, scramble, odometer, reveal, DPR
@@ -203,7 +212,7 @@ author, canonical URL, locale, navigation, and the colophon text. Change
 
 ## Skins
 
-Five ship: `rhine` (default), `lone-trail`, `terminal`, `paper` and `static`. See
+Five ship: `press` (default), `lone-trail`, `terminal`, `paper` and `static`. See
 [SKINS.md](SKINS.md) to add a sixth, and [DESIGN.md](DESIGN.md) for the editorial
 system every one of them is built on.
 
@@ -222,13 +231,19 @@ Adding a skin means copying one folder. Two things make that work:
 
 ## Accessibility notes
 
-- Body text measures 5.09:1 (Rhine) and 12.84:1 (Lone Trail) against the sheet;
+- Body text measures 5.09:1 (Press) and 12.84:1 (Lone Trail) against the sheet;
   ink is 16.49:1 and 17.05:1. Accent-coloured *text* uses `--accent-text`, a
   darkened variant that clears 4.5:1 in both skins — the raw accent is used only
   for rules, dots and fills, where the 3:1 graphic threshold applies.
-- Paper follows the same rule across a much wider gap: cyan `#18D1FF` is 1.81:1
-  on white and is **never** used for text or for a meaningful line, only as a
-  fill under dark ink (9.97:1). Its `--accent-text` is `#0A6C8F` (5.91:1).
+- Paper is no longer the light twin of Terminal: it is a printed ledger in serif,
+  so its contrast story is a book's. Ink `#1C1A17` is 16.50:1 on paper
+  `#FBF9F4`, body `#3A352E` is 11.55:1, the navy `#1B3F7A` used for text is
+  `#17356A` (11.38:1), and captions `#6C6459` are 5.54:1.
+- Static is a controlled document: ink `#14181B` is 17.85:1 on white, body
+  `#303840` is 11.90:1, field labels `#5D6A73` are 5.56:1, and the single
+  hairline `#B9C4CC` is 1.78:1 — a separator, never a control edge or a carrier
+  of meaning. Its accent `#24445C` is 10.21:1 and its accent text `#1E3A4F` is
+  11.84:1; both appear only on the revision value and the clause number.
 - Terminal is the first dark skin, and on `#191919` no grey reaches the 3:1
   graphic threshold — `#5A5A5A` tops out at 2.55:1. Panel hairlines are accepted
   as decoration at `#3A3A3A`, but every line that *carries meaning* (focus ring,
@@ -242,14 +257,18 @@ Adding a skin means copying one folder. Two things make that work:
 - `prefers-reduced-motion: reduce` skips the opening ceremony and every
   transition, renders halftone plates at their final state, and stops the scan
   beam and ticker.
+- The opening ceremony plays once per tab. Returning to the cover later in the
+  same tab shows the page, not the boot — `sessionStorage.seal-seen` is what
+  remembers. `?seal=1` asks for it again on purpose, `?skip=1` bypasses it
+  entirely for screenshots, and `prefers-reduced-motion: reduce` wins over both.
 - `?skip=1` bypasses the ceremony for screenshots and for anyone who wants in
   immediately.
 - Lone Trail's CRT overlay is opt-out: the tab in the bottom-left corner, the
   `S` key, or `?fx=off`. The choice persists in `localStorage.fx` and is applied
   before first paint.
 - Every interactive element is reachable by keyboard; the seal responds to
-  `Enter`/`Space`, the grid overlay to `G`, and the CRT overlay to `S`. The
-  punch-card input is an ordinary form control.
+  `Enter`/`Space` and the CRT overlay to `S`. The punch-card input is an
+  ordinary form control.
 - Silent by design. Neither skin makes a noise — no hover ticks, no interface
   tones, no audio files.
 
@@ -258,7 +277,7 @@ Adding a skin means copying one folder. Two things make that work:
 MIT — see [LICENSE](LICENSE). The template is yours to fork, sell, or strip for
 parts.
 
-The Rhine skin is derived from
+The Press skin is derived from
 [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion),
 which is MIT; that notice must stay with the skin and is reproduced in
 [THIRD-PARTY.md](THIRD-PARTY.md). Lone Trail is original to this template: its

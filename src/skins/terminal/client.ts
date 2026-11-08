@@ -239,25 +239,6 @@ function initBarcodes() {
 /* grid overlay                                                                */
 /* -------------------------------------------------------------------------- */
 
-function initGrid() {
-  const cols = document.getElementById('gridcols');
-  if (!cols) return;
-
-  if (!cols.childElementCount) {
-    for (let i = 0; i < 12; i++) cols.appendChild(document.createElement('i'));
-  }
-
-  const toggle = () => document.body.classList.toggle('grid-on');
-
-  addEventListener('keydown', (e) => {
-    if (e.key !== 'g' && e.key !== 'G') return;
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    toggle();
-  });
-}
-
 /* -------------------------------------------------------------------------- */
 /* table of contents                                                           */
 /* -------------------------------------------------------------------------- */
@@ -316,7 +297,11 @@ function initSeal() {
 
   // The strip is decorative and cheap; the bar is a CSS animation so it costs
   // nothing per frame. What JS owns is the dismissal.
-  if (btn) btn.focus({ preventScroll: true });
+  // Focus the overlay itself, not the button: the button is the only control on
+  // screen and a focus ring on it reads as "pressed" before the visitor has done
+  // anything. The overlay is a dialog with tabindex="-1", so focus still lands
+  // inside it and the keydown handler below still gets the keys.
+  seal.focus({ preventScroll: true });
 
   const release = () => {
     if (!open) return;
@@ -450,7 +435,6 @@ function boot() {
   const motion = enableMotion();
 
   initBarcodes();
-  initGrid();
   initToc();
   initRail({ skin: 'terminal' });
 

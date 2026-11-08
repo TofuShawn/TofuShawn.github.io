@@ -4,7 +4,7 @@
  * Skin authors write plain CSS: `.masthead { background: var(--bg-sheet) }`.
  * If two skins both ship that rule unscoped, the one bundled last wins for
  * everyone — the second skin silently repaints the first. (Verified: a probe
- * skin's `.masthead{background:red}` shipped after rhine's and won.)
+ * skin's `.masthead{background:red}` shipped after press's and won.)
  *
  * So every rule a skin declares is rewritten as
  *   :root[data-skin='<id>'] <selector>
