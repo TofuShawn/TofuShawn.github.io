@@ -235,7 +235,7 @@ async function main() {
         // Both skins ship in one file, minified, and the minifier strips the
         // quotes from the attribute selector (`[data-skin=lone-trail]`) — so
         // match the *scoped* selector, quote-agnostic. Searching for a bare
-        // `.rh{` finds Rhine's rule first and reports a false negative.
+        // `.rh{` finds Press's rule first and reports a false negative.
         const probes = [
           ['\\.rh', 'background', 'ink running head'],
           ['\\.tag', 'grid-template-columns', 'ruled tag register'],

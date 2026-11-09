@@ -1,5 +1,5 @@
 /**
- * Rhine skin — the client layer.
+ * Press skin — the client layer.
  *
  * Everything here is progressive: with JavaScript disabled the site is a
  * complete, readable document. This file adds the press-room behaviour —
@@ -246,30 +246,6 @@ function initBarcodes() {
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-barcode]').forEach(barcode);
 }
 
-function initGrid() {
-  const overlay = document.getElementById('gridov');
-  const cols = document.getElementById('gridcols');
-  if (!overlay || !cols) return;
-
-  if (!cols.childElementCount) {
-    for (let i = 0; i < 12; i++) cols.appendChild(document.createElement('i'));
-  }
-
-  const toggle = () => {
-    document.body.classList.toggle('grid-on');
-  };
-
-  document.getElementById('gridbtn')?.addEventListener('click', toggle);
-
-  addEventListener('keydown', (e) => {
-    if (e.key !== 'g' && e.key !== 'G') return;
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    toggle();
-  });
-}
-
 function initHud() {
   const hx = document.getElementById('hx');
   const hy = document.getElementById('hy');
@@ -370,7 +346,7 @@ function boot() {
   // This script is bundled once for the whole site, but it must only run when
   // *this* skin is the one the document is wearing. Otherwise both skins'
   // boot functions fight over the same elements.
-  if (document.documentElement.dataset.skin !== 'rhine') return;
+  if (document.documentElement.dataset.skin !== 'press') return;
 
   // The inline boot script sets `.no-seal` before first paint for `?skip=1` and
   // for reduced-motion visitors, so the overlay was never shown. Treat that as
@@ -379,13 +355,12 @@ function boot() {
   const motion = enableMotion();
 
   initBarcodes();
-  initGrid();
   initHud();
   initToc();
   // The rail is chrome, not an effect: it must mount even for a visitor who
   // asked for reduced motion, or the native bar stays hidden with nothing in
   // its place. `initRail` gates on `js-rail`, not on `.js-motion`.
-  initRail({ skin: 'rhine' });
+  initRail({ skin: 'press' });
 
 
   const sealed =

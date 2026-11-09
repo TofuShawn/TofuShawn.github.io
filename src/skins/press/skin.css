@@ -1,10 +1,15 @@
 /* ==========================================================================
-   rhine — "Archive dossier on paper"
+   press — "A press proof, still on the bed"
 
    Everything visual about this skin lives here: token values, the paper
    texture, the print-shop artifacts, the plate figures, the seal, the HUD.
    `src/styles/base.css` carries only structure, so swapping this file for
    another skin's file restyles the whole site.
+
+   The name says what the page is, not who inspired it: a proof pulled off the
+   press before the run is signed off. Crop marks, colour bars, registration
+   targets and a halftone plate are not decoration here — they are the marks a
+   printer reads to decide whether the sheet is fit to run.
 
    Palette, type ramp and motion values are taken from the Rhine Lab motion
    dossier (MIT). Two rules from that source are load-bearing:
@@ -13,7 +18,7 @@
      2. Every vertical gap is a multiple of 8px (--baseline).
    ========================================================================== */
 
-:root[data-skin='rhine'] {
+:root[data-skin='press'] {
   color-scheme: light;
 
   /* --- surface ----------------------------------------------------------- */
@@ -74,7 +79,7 @@
   --dur-slow: 1500ms;
   --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
 
-  /* --- rhine-only extras (not part of the contract) ---------------------- */
+  /* --- press-only extras (not part of the contract) ---------------------- */
   --ink-plate: #121211;
   --lime: #b9e432;
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
@@ -84,7 +89,7 @@
 
 /* A faint vignette so the sheet reads as paper lying on a surface, not a
    floating div. Fixed, so it does not scroll with content. */
-:root[data-skin='rhine'] body::before {
+:root[data-skin='press'] body::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -98,7 +103,7 @@
 }
 
 /* Paper grain on each spread. Very low opacity: this is a texture, not a filter. */
-:root[data-skin='rhine'] .spread::after {
+:root[data-skin='press'] .spread::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -108,7 +113,7 @@
   mix-blend-mode: multiply;
 }
 
-:root[data-skin='rhine'] .spread--invert::after {
+:root[data-skin='press'] .spread--invert::after {
   mix-blend-mode: screen;
   opacity: 0.12;
 }
@@ -218,19 +223,59 @@
 
 /* --- fold line ------------------------------------------------------------ */
 
+/* A fold runs down a gutter, not across the type. The cover body is
+   `1fr 262px` with a 38px gap, so the gutter centre sits at
+   `100% - margin - 262 - 19`; measuring the sheet confirmed it (gutter
+   x960..992, the only vertical channel on the cover that cuts no glyph).
+   The old value was a flat 63% of the sheet, which ran the dashed line
+   straight through the lead paragraph and the body copy. */
+/* A fold is marked, not drawn. A dashed line down the full height of the sheet
+   puts ink exactly where the paper is about to bend, and it crosses every rule
+   it passes — the cover's foot rule and the sheet's own border both read as a
+   plus sign. A proof marks a fold the way it marks a trim: two short ticks at
+   the edges, one axis over from the crop marks. */
 .fold {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 1px;
+  pointer-events: none;
+}
+
+.fold::before,
+.fold::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 0;
+  height: 17px;
   border-left: 1px dashed var(--rule);
   opacity: 0.8;
-  pointer-events: none;
+}
+
+.fold::before { top: 11px; }
+.fold::after { bottom: 11px; }
+
+/* The gutter is where the two columns stop and start, which is not a fixed
+   distance from the right edge: the right column is 262px but the left one is
+   whatever is left over, and the sheet itself shrinks below --measure. The
+   fold therefore tracks the sheet's own right edge minus the right column and
+   half the gap, and the markup only carries the hook. */
+.cover .fold {
+  left: calc(100% - var(--margin) - 262px - 19px);
+}
+
+/* Below this the cover body is one column and there is no gutter left to
+   fold along. A fold through the middle of a text block is not a fold. */
+@media (max-width: 860px) {
+  .cover .fold {
+    display: none;
+  }
 }
 
 .fold em {
   position: absolute;
-  top: 50%;
+  bottom: 40px;
   left: 0;
   font-family: var(--font-mono);
   font-style: normal;
@@ -242,7 +287,7 @@
   color: var(--fg-mute);
   white-space: nowrap;
   transform: rotate(90deg);
-  transform-origin: left center;
+  transform-origin: left bottom;
 }
 
 /* --- binding holes -------------------------------------------------------- */
@@ -709,50 +754,6 @@
   pointer-events: none;
 }
 
-/* --- grid overlay --------------------------------------------------------- */
-
-.grid-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.25s;
-}
-
-body.grid-on .grid-overlay {
-  opacity: 1;
-}
-
-.grid-overlay .cols {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: var(--gutter);
-  width: var(--measure);
-  max-width: calc(100% - 32px);
-  margin: 0 auto;
-  left: 0;
-  right: 0;
-}
-
-.grid-overlay .cols i {
-  border-left: 1px solid rgba(233, 82, 28, 0.28);
-  border-right: 1px solid rgba(233, 82, 28, 0.28);
-}
-
-.grid-overlay .base {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(0, 120, 200, 0.1) 0 1px,
-    transparent 1px var(--baseline)
-  );
-  mix-blend-mode: multiply;
-}
-
 /* --- masthead ------------------------------------------------------------- */
 
 .masthead {
@@ -931,9 +932,14 @@ body.grid-on .grid-overlay {
   transform: rotate(-3.5deg);
 }
 
+/* A sticker may hang off the edge, but it may not sit on a data row. Measured
+   at `top: 300px` it covered the ARCHIVE and EDITOR values of the meta table
+   (9x11 and 9x12 of glyph). The rail has one empty band — between the table,
+   which ends at y669, and the foot rule at y815 — so the sticker goes there and
+   overhangs the edge where there is nothing underneath it. */
 .cv-sticker {
-  top: 268px;
-  right: -78px;
+  top: 560px;
+  right: -96px;
 }
 
 @media (max-width: 860px) {
@@ -1449,4 +1455,62 @@ html.js-rail .rail.is-idle {
   html.js-rail .rail-read {
     display: none;
   }
+}
+
+/* --- side section rail -----------------------------------------------------
+   The dossier's own index tab: hairlines in the margin, one vermilion rule for
+   where you are, mono caps for the label. The open state uses the sheet, not a
+   floating card, so the rail stays part of the printed page. */
+.sidetoc {
+  right: 18px;
+  --sd-tick: 10px;
+  --sd-tick-on: 20px;
+  --sd-gap: 12px;
+  --sd-open: 200px;
+  --sd-dur: 200ms;
+}
+
+.sd-now {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  color: var(--fg);
+  opacity: 1;
+}
+
+.sd-no,
+.sd-txt {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sd-no {
+  color: var(--fg-mute);
+}
+
+.sd-txt {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.sd-sub .sd-txt {
+  color: var(--fg-mute);
+  font-weight: 400;
+}
+
+.sd-item.on .sd-tick {
+  height: 2px;
+  background: var(--accent);
+}
+
+.sd-item.on .sd-txt {
+  color: var(--accent-text);
+}
+
+.sidetoc:hover,
+.sidetoc:focus-within {
+  background: var(--bg-sheet);
+  border-color: var(--rule);
+  box-shadow: none;
 }

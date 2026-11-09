@@ -1,6 +1,6 @@
 ---
 /**
- * Rhine skin chrome: the seal, the coordinate HUD, the grid overlay.
+ * Press skin chrome: the seal, the coordinate HUD, the grid overlay.
  *
  * These are the skin's own furniture, so they live with the skin rather than in
  * the shared layout. A skin that does not want them simply does not render this
@@ -15,7 +15,7 @@ export interface Props {
 }
 
 const { seal = false } = Astro.props;
-const f = featuresOf('rhine');
+const f = featuresOf('press');
 const showSeal = seal && f.unseal;
 ---
 
@@ -32,13 +32,6 @@ const showSeal = seal && f.unseal;
   <div class="hud" aria-hidden="true">
     <span>X <span id="hx">0000</span></span>
     <span>Y <span id="hy">0000</span></span>
-  </div>
-)}
-
-{f.gridOverlay && (
-  <div class="grid-overlay" id="gridov" aria-hidden="true">
-    <div class="base"></div>
-    <div class="cols" id="gridcols"></div>
   </div>
 )}
 

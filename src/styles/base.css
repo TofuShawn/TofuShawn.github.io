@@ -607,6 +607,189 @@ body.locked {
   transform: none;
 }
 
+/* --- side section rail ---------------------------------------------------- */
+
+/* Structure only: a column of ticks pinned to the right edge, outside the
+   sheet, with the current section running vertically beside it. Hovering or
+   focusing it slides the labels out over the paper on a panel, because the
+   gutter is narrower than the labels and unreadable text on top of a page is
+   worse than a panel on top of one.
+
+   The whole rail disappears below 1080px, where the gutter is gone and the
+   in-flow .toc inside the article margin is the locator again.
+
+   Every number here is a default, not a decision — each skin restyles this in
+   its own skin.css. Colours come from tokens only, so this file stays free of
+   colour literals. */
+.sidetoc {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 10px;
+  transform: translateY(-50%);
+  border: 1px solid transparent;
+  --sd-tick: 12px;
+  --sd-tick-on: 22px;
+  --sd-gap: 11px;
+  --sd-open: 190px;
+  --sd-dur: 200ms;
+}
+
+/* The current section, read top-to-bottom along the tick column. */
+.sd-now {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  max-height: 26vh;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  opacity: 0.8;
+  transition: opacity calc(var(--sd-dur) / 2) var(--ease-out);
+}
+
+.sd-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sd-gap);
+}
+
+/* The tick is a hairline, so the link needs its own height and width to stay a
+   real target: at rest the reachable area is the tick plus its padding. */
+.sd-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 24px;
+  min-height: 24px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* At rest the label is closed: zero width, clipped, transparent. It must not
+   shrink once it opens, otherwise the longest section title gets cut against
+   the panel edge instead of widening the panel. */
+.sd-label {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  white-space: nowrap;
+  transition:
+    max-width var(--sd-dur) var(--ease-out),
+    opacity calc(var(--sd-dur) / 2) var(--ease-out);
+}
+
+.sd-no {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+}
+
+.sd-txt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--fg-soft);
+}
+
+.sd-sub .sd-txt {
+  color: var(--fg-mute);
+}
+
+.sd-tick {
+  flex: none;
+  display: block;
+  width: var(--sd-tick);
+  height: 1px;
+  background: var(--rule);
+  transition:
+    width var(--sd-dur) var(--ease-out),
+    background var(--sd-dur) var(--ease-out);
+}
+
+.sd-item.on .sd-tick {
+  width: var(--sd-tick-on);
+  background: var(--accent);
+}
+
+.sd-item.on .sd-txt {
+  color: var(--accent-text);
+}
+
+.sd-item:hover .sd-tick,
+.sd-item:focus-visible .sd-tick {
+  width: var(--sd-tick-on);
+}
+
+.sd-item:hover .sd-txt {
+  color: var(--fg);
+}
+
+/* Open: the labels slide out onto a panel, and the read-along label steps
+   aside so the two do not compete. */
+.sidetoc:hover,
+.sidetoc:focus-within {
+  background: var(--bg-sheet);
+  border-color: var(--rule-soft);
+  box-shadow: var(--shadow-sheet);
+}
+
+.sidetoc:hover .sd-label,
+.sidetoc:focus-within .sd-label {
+  max-width: var(--sd-open);
+  opacity: 1;
+}
+
+.sidetoc:hover .sd-now,
+.sidetoc:focus-within .sd-now {
+  max-width: 0;
+  opacity: 0;
+}
+
+.sd-item:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1080px) {
+  .sidetoc {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-label,
+  .sd-tick,
+  .sd-now {
+    transition: none;
+  }
+}
+
+/* Anchor jumps must clear the pinned chrome, whichever skin is on. */
+.prose h2,
+.prose h3 {
+  scroll-margin-top: 96px;
+}
+
 /* --- reveal --------------------------------------------------------------- */
 
 /* Content is visible by default. Motion is added only when a skin opts in and

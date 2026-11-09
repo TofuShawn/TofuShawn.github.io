@@ -428,30 +428,6 @@ function initTicker() {
   requestAnimationFrame(frame);
 }
 
-function initGrid() {
-  const overlay = document.getElementById('gridov');
-  const cols = document.getElementById('gridcols');
-  if (!overlay || !cols) return;
-
-  if (!cols.childElementCount) {
-    for (let i = 0; i < 12; i++) cols.appendChild(document.createElement('i'));
-  }
-
-  const toggle = () => {
-    document.body.classList.toggle('grid-on');
-  };
-
-  document.getElementById('gridbtn')?.addEventListener('click', toggle);
-
-  addEventListener('keydown', (e) => {
-    if (e.key !== 'g' && e.key !== 'G') return;
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    toggle();
-  });
-}
-
 /* -------------------------------------------------------------------------- */
 /* launch ceremony                                                            */
 /* -------------------------------------------------------------------------- */
@@ -659,7 +635,6 @@ function boot() {
   const motion = enableMotion();
 
   initCrt();
-  initGrid();
   initMorse();
   initPunch();
   initToc();

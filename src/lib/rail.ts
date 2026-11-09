@@ -28,7 +28,7 @@
 
 /**
  * Chrome that can sit on top of the page. Measured rather than assumed: the
- * skins differ — Lone Trail stacks a ticker band above a sticky masthead, rhine
+ * skins differ — Lone Trail stacks a ticker band above a sticky masthead, press
  * has only a masthead and it scrolls away.
  */
 const CHROME = ['.ticker', '.masthead'];
@@ -69,7 +69,7 @@ export function initRail(opts: RailOptions): void {
   // it starts below whatever is currently pinned to the top of the viewport.
   // The chrome is not uniform across skins: Lone Trail stacks a ticker band
   // above a sticky masthead (only the masthead is still there once you scroll),
-  // rhine's masthead scrolls away completely. So this measures the contiguous
+  // press's masthead scrolls away completely. So this measures the contiguous
   // stack that touches the top edge, in document order, and lets it dissolve as
   // the reader scrolls past it.
   const chromeTop = () => {

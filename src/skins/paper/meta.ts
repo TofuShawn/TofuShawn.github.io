@@ -1,40 +1,41 @@
 /**
- * Paper — the light half of the industrial pair.
+ * Paper — a printed ledger.
  *
- * Same report language as `terminal`, printed rather than projected: white
- * paper on a cold ground, one signal colour used as fill only.
+ * This is NOT a colourway of another skin. It is a different document:
+ * a serif title page, a ruled particulars table, a marginal figure, and
+ * footnote apparatus. No telemetry band, no command bar, no cut corners,
+ * no wide automotive Latin. Where `terminal` is a console, this is a book
+ * that happens to have been set on a machine.
  *
  * The three rules this skin keeps (also written at the top of `skin.css`):
  *
- *   - The accent is a FILL, never a line or a word. `#18d1ff` is 1.81:1 on
- *     white; it only works as a block of colour with ink on top. Type in the
- *     signal family is `--accent-text` `#0a6c8f`.
- *   - A cut corner means "pressable". Body copy, images and display panels
- *     stay square, so shape alone separates a control from a container.
- *   - Wide uppercase Latin sits above normal-width bold Chinese. That pairing
- *     is the whole industrial register; lose it and this is just a greyscale
- *     blog with a cyan highlighter.
+ *   - Rules carry the structure. A single hairline separates every block;
+ *     a doubled rule opens and closes the page. There is no card, no shadow
+ *     and no filled panel anywhere except the spot colour in small doses.
+ *   - The spot colour is ink, not paint. `#1b3f7a` appears as a rule, a
+ *     small-caps label, a marginal figure tint — never as a filled banner.
+ *   - Type does the talking: a serif for everything read, a mono for
+ *     everything counted. No uppercase display type, no stretched widths.
  */
 import type { SkinMeta } from '../contract';
 
 const meta: SkinMeta = {
   id: 'paper',
   name: 'Paper',
-  tagline: 'Industrial report, printed',
+  tagline: 'Printed ledger, set in type',
   scheme: 'light',
-  themeColor: '#eaeef1',
-  swatch: '#18d1ff',
+  themeColor: '#fbf9f4',
+  swatch: '#1b3f7a',
   features: {
     unseal: true,
     halftone: true,
     scanline: false,
-    gridOverlay: true,
     hud: false,
     printArtifacts: false,
-    barcode: true,
-    columnRules: true,
+    barcode: false,
+    columnRules: false,
     crt: false,
-    marquee: true,
+    marquee: false,
     destijl: false,
     punchcard: false,
     morse: false,

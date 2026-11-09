@@ -48,6 +48,32 @@ const serial = `AR-${String(ALL.length).padStart(3, '0')}-${latest ? latest.year
 
           <div class="cv-rule"></div>
 
+          <!--
+            The specification sheet replaces the printed lockup with its control
+            table: what the document is, which revision, when issued, how much is
+            on file. This is the whole identification strategy of that skin — a
+            numbered document announces itself with a table, not with a running
+            head and a colour bar.
+          -->
+          <div class="skin-only" data-only="static">
+            <dl class="spec">
+              <div><dt>Document</dt><dd>{SITE.title} — {SITE.subtitle}</dd></div>
+              <div><dt>Revision</dt><dd class="rev">{serial}</dd></div>
+              <div>
+                <dt>Issued</dt>
+                <dd>{latest ? stampDate(latest.dateObj) : '—'}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>Current · {SITE.author}</dd>
+              </div>
+              <div>
+                <dt>Pages</dt>
+                <dd>{String(ALL.length).padStart(3, '0')} entries · {totalWords.toLocaleString('en-US')} words</dd>
+              </div>
+            </dl>
+          </div>
+
           <div class="cv-lockup">
             <span data-scramble>{SITE.author}</span>
             <span>Est. 2026</span>
@@ -98,7 +124,7 @@ const serial = `AR-${String(ALL.length).padStart(3, '0')}-${latest ? latest.year
                   />
                   <div class="punch-presets">
                     <button type="button" data-punch-preset="LONE TRAIL">Lone Trail</button>
-                    <button type="button" data-punch-preset="RHINE LAB">Rhine Lab</button>
+                    <button type="button" data-punch-preset="PRESS PROOF">Press Proof</button>
                     <button type="button" data-punch-preset="SECTOR 04">Sector 04</button>
                   </div>
                 </div>
@@ -180,17 +206,11 @@ const serial = `AR-${String(ALL.length).padStart(3, '0')}-${latest ? latest.year
 
       <div class="cv-foot">
         <span class="t-micro">{SITE.colophon.type}</span>
-        <span class="t-micro">Press G for grid</span>
-        {f.gridOverlay && (
-          <span class="skin-only" data-only="lone-trail">
-            <button class="t-micro lt-gridbtn" id="gridbtn" type="button">Grid</button>
-          </span>
-        )}
         <span class="t-micro">P.00</span>
       </div>
 
       {f.printArtifacts && (
-        <div class="fold" style="left:63%" aria-hidden="true">
+        <div class="fold" aria-hidden="true">
           <em>fold</em>
         </div>
       )}

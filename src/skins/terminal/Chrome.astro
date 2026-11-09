@@ -12,6 +12,7 @@
  * `getElementById` two candidates.
  */
 import { featuresOf } from '../registry';
+import { SITE } from '../../lib/site';
 
 export interface Props {
   /** Show the boot ceremony. Only the cover page passes true. */
@@ -30,6 +31,20 @@ const TICKER = [
   'SIGNAL #FFFA00',
   'INK #EDEDED',
   'GROUND #191919',
+];
+
+/**
+ * The boot screen is a readout, not a splash: the left column is the volume's
+ * own record, the right is that volume drawn as one instrument reading. Every
+ * line on it is true of this site — the entry count, the word count, the stack —
+ * so the ceremony is a summary rather than theatre.
+ */
+const RECORD: [string, string][] = [
+  ['KEY', 'AR-005 · VOL 05'],
+  ['CLASS', 'FIELD NOTES · 非虛構卷宗'],
+  ['ISSUE', '2026.03.01 · 5 ENTRIES'],
+  ['INDEX', 'DESIGN · ARCHIVES · GRIDS'],
+  ['SOURCE', 'MDX · ASTRO 7 · STATIC'],
 ];
 ---
 
@@ -54,20 +69,83 @@ const TICKER = [
 
 {
   showSeal && (
-    <div class="term-seal" id="term-seal" data-ceremony role="dialog" aria-label="Open the terminal">
-      <div class="term-seal-panel">
-        <span class="term-seal-strip" aria-hidden="true" />
-        <p class="term-seal-kicker">Terminal // Archive</p>
-        <p class="term-seal-word">Read</p>
-        <p class="term-seal-meta">Establishing link</p>
-        <div class="term-seal-bar" aria-hidden="true">
-          <i />
+    <div
+      class="term-seal"
+      id="term-seal"
+      data-ceremony
+      role="dialog"
+      aria-label="Open the archive"
+      tabindex="-1"
+    >
+      <header class="ts-top">
+        <p class="ts-top-l">
+          <b>00</b>
+          <span>open</span>
+        </p>
+        <p class="ts-top-r">
+          <span>{SITE.title} · {SITE.subtitle}</span>
+          <span>
+            session <b data-ts-session>0000 0000</b>
+            <i aria-hidden="true">·</i>
+            <b data-ts-clock>00:00:00</b>
+          </span>
+        </p>
+      </header>
+
+      <div class="ts-main">
+        <div class="ts-col">
+          <div class="ts-mark" aria-hidden="true">
+            <span>IN</span>
+            <span>FO</span>
+            <i />
+          </div>
+
+          <p class="ts-section">
+            section <i>·</i> <b>open</b>
+          </p>
+
+          <dl class="ts-rows">
+            {RECORD.map(([k, v]) => (
+              <div>
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <p class="ts-analogy">
+            analogy <i>·</i> 意象，非設定
+          </p>
         </div>
-        <button class="term-seal-btn" type="button" aria-label="Open the archive">
-          Enter
-        </button>
-        <p class="term-seal-note">Press Enter or click · Skip with ?skip=1</p>
+
+        <figure
+          class="ts-figure"
+          role="img"
+          aria-label="The volume drawn as two wireframe bodies passing through one another"
+        >
+          <canvas class="ts-canvas" data-ts-canvas aria-hidden="true" />
+          <svg class="ts-lead" viewBox="0 0 1100 620" preserveAspectRatio="none" aria-hidden="true">
+            <path class="ts-lead-line" data-lead-a d="" />
+            <path class="ts-lead-line" data-lead-b d="" />
+            <text data-lead-a-text>A₁ entry mass · 2 229 words</text>
+            <text data-lead-b-text>B₁ skin mass · 5 sets</text>
+            <circle class="ts-throat-dot" data-throat cx="0" cy="0" r="2.4" />
+            <text class="ts-throat-label" data-throat-label x="0" y="0" text-anchor="middle">
+              L₁ · shared throat
+            </text>
+          </svg>
+        </figure>
       </div>
+
+      <footer class="ts-foot">
+        <blockquote>「檔案不是記憶的容器，是記憶還能夠被翻閱的支架。」</blockquote>
+        <p class="ts-cite">
+          <i aria-hidden="true" />
+          卷首語 · 第 00 頁 · 編譯於 2026.03
+        </p>
+        <button class="term-seal-btn" type="button">Enter the archive</button>
+        <p class="ts-tail" data-ts-tail>E index array[]: 5 of 5 entries resolved</p>
+      </footer>
     </div>
   )
 }
@@ -78,15 +156,6 @@ const TICKER = [
     <b class="rail-pct"><span data-rail-pct>000</span></b>
   </div>
 </div>
-
-{
-  f.gridOverlay && (
-    <div class="grid-overlay" id="gridov" aria-hidden="true">
-      <div class="base" />
-      <div class="cols" id="gridcols" />
-    </div>
-  )
-}
 
 <script>
   import './client';
@@ -103,6 +172,414 @@ const TICKER = [
           document.body.classList.remove('locked');
         }
       }, 8000);
+    </script>
+  )
+}
+
+{
+  showSeal && (
+    <script is:inline>
+      // Session id and elapsed clock. Twenty lines of plain script beats pulling
+      // the whole skin bundle in early just to make two fields move; if it never
+      // runs, the zeros and 00:00:00 are still true statements.
+      (function () {
+        var pad = function (n, w) {
+          var s = String(n);
+          while (s.length < w) s = '0' + s;
+          return s;
+        };
+        var seed = '';
+        for (var i = 0; i < 8; i++) seed += Math.floor(Math.random() * 10);
+        var sess = document.querySelector('[data-ts-session]');
+        if (sess) sess.textContent = seed.slice(0, 4) + ' ' + seed.slice(4);
+
+        var clock = document.querySelector('[data-ts-clock]');
+        if (!clock) return;
+        var t0 = Date.now();
+        var tick = function () {
+          var s = Math.floor((Date.now() - t0) / 1000);
+          clock.textContent =
+            pad(Math.floor(s / 3600), 2) +
+            ':' +
+            pad(Math.floor(s / 60) % 60, 2) +
+            ':' +
+            pad(s % 60, 2);
+        };
+        tick();
+        setInterval(tick, 1000);
+      })();
+    </script>
+  )
+}
+
+{
+  showSeal && (
+    <script is:inline>
+      /*
+       * The reading: an overcontact pair, drawn as two wireframe bodies orbiting
+       * a shared centre and turning on their own axes. No library — a pinhole
+       * projection of a lat/long grid is about forty lines and gives real depth,
+       * which is the only reason the wires can pass in front of one another at
+       * the throat.
+       *
+       * Everything below is deterministic from elapsed time, so the drawing is a
+       * still frame with time in it rather than a video: reduced motion asks for
+       * the same geometry at t = 0 and gets it.
+       */
+      (function () {
+        var canvas = document.querySelector('[data-ts-canvas]');
+        var figure = canvas && canvas.parentNode;
+        if (!canvas || !figure) return;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        var leadA = document.querySelector('[data-lead-a]');
+        var leadB = document.querySelector('[data-lead-b]');
+        var textA = document.querySelector('[data-lead-a-text]');
+        var textB = document.querySelector('[data-lead-b-text]');
+        var throat = document.querySelector('[data-throat]');
+        var throatLabel = document.querySelector('[data-throat-label]');
+        var svg = figure.querySelector('.ts-lead');
+        var tail = document.querySelector('[data-ts-tail]');
+
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* --- geometry, in world units where the separation is 1 --------------- */
+        /* Centre distance in body radii. Below R_A + R_B, so the two surfaces
+           genuinely overlap and share a throat — the reference sheet is a contact
+           pair, not two circles that happen to sit near each other. */
+        var SEP = 0.95;
+        var R_A = 0.45;
+        var R_B = 0.56;
+        var ORB_A = (SEP * R_B) / (R_A + R_B); /* barycentre split by mass */
+        var ORB_B = SEP - ORB_A;
+        var TILT_ORBIT = -1.02; /* radians: the orbit is seen at a shallow angle */
+        /* The bodies keep their own, much smaller tilt: a pole aimed at the viewer
+           collapses every meridian onto one bright point and the sphere reads as a
+           starburst. Poles upright, latitudes shallow, silhouette legible. */
+        var TILT_BODY = -0.26;
+        var YAW = 0.14;
+
+        /* one revolution of the pair, and one turn of each body on its axis */
+        var ORBIT_MS = 96000;
+        var SPIN_A_MS = 24000;
+        var SPIN_B_MS = 31000;
+
+        var MERIDIANS = 18;
+        var PARALLELS = 11;
+        var SEG = 44;
+
+        var cosY = Math.cos(YAW);
+        var sinY = Math.sin(YAW);
+
+        function rotY(p, a) {
+          var c = Math.cos(a);
+          var s = Math.sin(a);
+          return [p[0] * c + p[2] * s, p[1], -p[0] * s + p[2] * c];
+        }
+
+        function makeTilt(ang) {
+          var c = Math.cos(ang);
+          var s = Math.sin(ang);
+          return function (p) {
+            var y = p[1] * c - p[2] * s;
+            var z = p[1] * s + p[2] * c;
+            var x = p[0] * cosY + z * sinY;
+            var zz = -p[0] * sinY + z * cosY;
+            return [x, y, zz];
+          };
+        }
+
+        var tilt = makeTilt(TILT_ORBIT);
+        var tiltBody = makeTilt(TILT_BODY);
+
+        var view = { w: 0, h: 0, dpr: 1, cx: 0, cy: 0, k: 0, cam: 5.2 };
+
+        function resize() {
+          var rect = figure.getBoundingClientRect();
+          if (!rect.width || !rect.height) return false;
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          view.w = rect.width;
+          view.h = rect.height;
+          view.dpr = dpr;
+          canvas.width = Math.round(rect.width * dpr);
+          canvas.height = Math.round(rect.height * dpr);
+          canvas.style.width = rect.width + 'px';
+          canvas.style.height = rect.height + 'px';
+          view.cx = rect.width / 2;
+          view.cy = rect.height / 2;
+          /* fit the pair (separation + the larger radius on each side) with margin */
+          view.k = Math.min(rect.width / 2.72, rect.height / 1.46);
+          /* the overlay draws in the same pixel space as the canvas, so leader
+             coordinates need no unit conversion and the type stays 1:1 */
+          if (svg) svg.setAttribute('viewBox', '0 0 ' + Math.round(rect.width) + ' ' + Math.round(rect.height));
+          return true;
+        }
+
+        function project(p) {
+          var z = p[2];
+          var f = view.cam / (view.cam - z);
+          return [view.cx + p[0] * view.k * f, view.cy - p[1] * view.k * f, z];
+        }
+
+        /* unit-sphere lat/long grid, spun about its own Y axis, then placed */
+        function body(cx, r, spin, t) {
+          var out = [];
+          var i, j, a, b;
+          for (i = 0; i < MERIDIANS; i++) {
+            a = (i / MERIDIANS) * Math.PI * 2;
+            var mer = [];
+            for (j = 0; j <= SEG; j++) {
+              b = (j / SEG) * Math.PI * 2;
+              mer.push([Math.cos(b) * Math.cos(a), Math.sin(b), Math.cos(b) * Math.sin(a)]);
+            }
+            out.push(mer);
+          }
+          for (i = 1; i < PARALLELS; i++) {
+            var lat = (i / PARALLELS) * Math.PI - Math.PI / 2;
+            var par = [];
+            var rl = Math.cos(lat);
+            var yl = Math.sin(lat);
+            for (j = 0; j <= SEG; j++) {
+              b = (j / SEG) * Math.PI * 2;
+              par.push([rl * Math.cos(b), yl, rl * Math.sin(b)]);
+            }
+            out.push(par);
+          }
+          /* spin in the sphere's own frame, then scale, lift and tilt */
+          for (i = 0; i < out.length; i++) {
+            for (j = 0; j < out[i].length; j++) {
+              var q = rotY(out[i][j], spin);
+              out[i][j] = tiltBody([cx[0] + q[0] * r, cx[1] + q[1] * r, cx[2] + q[2] * r]);
+            }
+          }
+          return out;
+        }
+
+        function strokeSets(sets, base, span, width) {
+          var i, j, p, prev, alpha;
+          for (i = 0; i < sets.length; i++) {
+            var line = sets[i];
+            ctx.beginPath();
+            ctx.lineWidth = width;
+            for (j = 0; j < line.length; j++) {
+              p = project(line[j]);
+              if (j === 0) ctx.moveTo(p[0], p[1]);
+              else ctx.lineTo(p[0], p[1]);
+            }
+            /* a wire's brightness follows its own depth: the near side of the
+               body reads solid, the far side nearly disappears */
+            var mid = line[Math.floor(line.length / 2)];
+            alpha = base + span * (0.5 + mid[2] / (R_A + R_B));
+            ctx.strokeStyle = 'rgba(' + rgb + ',' + alpha.toFixed(3) + ')';
+            ctx.stroke();
+          }
+        }
+
+        var rgb = '178,210,232';
+
+        function draw(now) {
+          var t = reduce ? 0 : now % 1e7;
+          var th = reduce ? 0.9 : (t / ORBIT_MS) * Math.PI * 2;
+          var spinA = reduce ? 0.4 : (t / SPIN_A_MS) * Math.PI * 2;
+          var spinB = reduce ? 0.9 : (t / SPIN_B_MS) * Math.PI * 2;
+
+          ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+          ctx.clearRect(0, 0, view.w, view.h);
+
+          /* centres, opposite each other about the barycentre */
+          var ax = Math.cos(th) * ORB_A * SEP;
+          var ay = Math.sin(th) * ORB_A * SEP;
+          var bx = -Math.cos(th) * ORB_B * SEP;
+          var by = -Math.sin(th) * ORB_B * SEP;
+          var cA = tilt([ax, ay, 0]);
+          var cB = tilt([bx, by, 0]);
+
+          /* the orbit: each body rides its own path about the barycentre, sampled in
+             the orbital plane and projected — a real orbit seen at an angle, not a
+             drawn ellipse. Dashed, because a solid ring reads as another wire. */
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 6]);
+          ctx.strokeStyle = 'rgba(237,237,237,0.26)';
+          [ORB_A * SEP, ORB_B * SEP].forEach(function (rad) {
+            ctx.beginPath();
+            for (var s = 0; s <= 180; s++) {
+              var a2 = (s / 180) * Math.PI * 2;
+              var o = project(tilt([Math.cos(a2) * rad, Math.sin(a2) * rad, 0]));
+              if (s === 0) ctx.moveTo(o[0], o[1]);
+              else ctx.lineTo(o[0], o[1]);
+            }
+            ctx.stroke();
+          });
+          ctx.setLineDash([]);
+
+          /* painter's order: whichever body is further back is drawn first */
+          var first = cA[2] <= cB[2] ? { c: cA, r: R_A, spin: spinA, rgbc: '178,210,232' } : { c: cB, r: R_B, spin: spinB, rgbc: '226,96,122' };
+          var second = first.c === cA ? { c: cB, r: R_B, spin: spinB, rgbc: '226,96,122' } : { c: cA, r: R_A, spin: spinA, rgbc: '178,210,232' };
+
+          [first, second].forEach(function (b) {
+            rgb = b.rgbc;
+            strokeSets(body(b.c, b.r, b.spin, t), 0.1, 0.44, 1);
+          });
+
+          /* the throat: where the two surfaces meet on the line of centres */
+          var frac = R_A / (R_A + R_B);
+          var tp = tilt([ax + (bx - ax) * frac, ay + (by - ay) * frac, 0]);
+          var pT = project(tp);
+          var pulse = reduce ? 0.75 : 0.55 + 0.45 * Math.sin((t / 1800) * Math.PI * 2);
+
+          /* Labels sit in fixed corners, the way the reference sheet places them:
+             a moving label is unreadable, and it collides with the wires. The
+             leader is what moves — it runs from the fixed text to the nearest
+             point on its body's rim. */
+          var pA = project(cA);
+          var pB = project(cB);
+          var rApx = view.k * R_A * (view.cam / (view.cam - cA[2]));
+          var rBpx = view.k * R_B * (view.cam / (view.cam - cB[2]));
+
+          var axT = 14;
+          var ayT = 20;
+          var bxT = view.w - 14;
+          var byT = view.h - 14;
+
+          function rim(cx, cy, rpx, tx, ty, pad) {
+            var dx = tx - cx;
+            var dy = ty - cy;
+            var len = Math.sqrt(dx * dx + dy * dy) || 1;
+            var rr = Math.max(0, len - pad) / len;
+            return [cx + dx * rr, cy + dy * rr];
+          }
+
+          var rimA = rim(pA[0], pA[1], rApx, axT, ayT, 10);
+          var rimB = rim(pB[0], pB[1], rBpx, bxT, byT, 10);
+
+          if (textA) {
+            textA.setAttribute('x', axT);
+            textA.setAttribute('y', ayT + 4);
+            textA.setAttribute('text-anchor', 'start');
+          }
+          if (textB) {
+            textB.setAttribute('x', bxT);
+            textB.setAttribute('y', byT);
+            textB.setAttribute('text-anchor', 'end');
+          }
+          /* The horizontal run has to head towards its body, not always right:
+             when the rim point sat behind the label the fixed +132 run made the
+             leader double back on itself and read as a stray zigzag. */
+          function elbow(x, y, rx, ry, run) {
+            var dir = rx >= x ? 1 : -1;
+            var hx = x + dir * Math.min(run, Math.abs(rx - x) * 0.72);
+            return 'M' + x + ' ' + y + ' H' + hx.toFixed(1) + ' L' + rx.toFixed(1) + ' ' + ry.toFixed(1);
+          }
+          if (leadA) {
+            leadA.setAttribute('d', elbow(axT, ayT + 22, rimA[0], rimA[1], 132));
+          }
+          if (leadB) {
+            leadB.setAttribute('d', elbow(bxT, byT - 20, rimB[0], rimB[1], 132));
+          }
+          if (throat) {
+            throat.setAttribute('cx', pT[0].toFixed(1));
+            throat.setAttribute('cy', pT[1].toFixed(1));
+            throat.setAttribute('r', (2 + 1.6 * pulse).toFixed(2));
+            throat.style.opacity = (0.45 + 0.5 * pulse).toFixed(2);
+          }
+          if (throatLabel) {
+            /* the throat is always mid-screen; the label hangs a fixed distance
+               under it and never lands on a rim */
+            throatLabel.setAttribute('x', pT[0].toFixed(1));
+            throatLabel.setAttribute('y', Math.min(view.h - 6, pT[1] + 30).toFixed(1));
+          }
+        }
+
+        /* --- the status line: it is a log, so let it act like one -------------- */
+        var messages = [
+          'E index array[]: 5 of 5 entries resolved',
+          'E route manifest[]: 7 of 7 routes sealed',
+          'E type stack[]: 3 families resident',
+          'E plate buffer[]: 5 of 5 figures drawn',
+        ];
+        var mi = 0;
+        var tailTimer = null;
+        function cycleTail() {
+          if (!tail) return;
+          if (reduce) {
+            tail.textContent = messages[0];
+            return;
+          }
+          mi = (mi + 1) % messages.length;
+          tail.textContent = 'retrieving …';
+          setTimeout(function () {
+            if (tail) tail.textContent = messages[mi];
+          }, 620);
+          tailTimer = setTimeout(cycleTail, 5200);
+        }
+
+        /* --- loop -------------------------------------------------------------- */
+        var raf = null;
+        var last = 0;
+        var hidden = false;
+
+        function frame(now) {
+          raf = requestAnimationFrame(frame);
+          if (hidden) return;
+          if (now - last < 33) return; /* 30fps is plenty for this */
+          last = now;
+          draw(now);
+        }
+
+        function start() {
+          if (!resize()) return;
+          draw(performance.now ? performance.now() : Date.now());
+          if (!reduce) {
+            raf = requestAnimationFrame(frame);
+            cycleTail();
+          }
+        }
+
+        /* Any resize is also a chance to paint: at load the figure can still be
+           0x0 (fonts, layout, a lazily-sized column), and if the window happens
+           to be in the background the loop below never runs — the canvas would
+           then stay blank until something else forced a frame. So every path
+           that learns the real size paints once, right there. */
+        if (window.ResizeObserver) {
+          var ro = new ResizeObserver(function () {
+            if (!resize()) return;
+            draw(reduce ? 0 : (window.performance ? performance.now() : Date.now()));
+          });
+          ro.observe(figure);
+        } else {
+          window.addEventListener('resize', function () {
+            if (!resize()) return;
+            draw(reduce ? 0 : (window.performance ? performance.now() : Date.now()));
+          });
+        }
+
+        document.addEventListener('visibilitychange', function () {
+          hidden = document.hidden;
+          if (!hidden) draw(reduce ? 0 : (window.performance ? performance.now() : Date.now()));
+        });
+
+        /* stop the loop once the overlay is gone — a hidden canvas that keeps
+           drawing is a battery bug, not an animation */
+        var sealEl = document.getElementById('term-seal');
+        if (sealEl && window.MutationObserver) {
+          var mo = new MutationObserver(function () {
+            if (sealEl.classList.contains('off')) {
+              if (raf) cancelAnimationFrame(raf);
+              raf = null;
+              if (tailTimer) clearTimeout(tailTimer);
+            }
+          });
+          mo.observe(sealEl, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', start);
+        } else {
+          start();
+        }
+      })();
     </script>
   )
 }

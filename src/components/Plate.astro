@@ -43,7 +43,7 @@ const {
 const anyPaint = featuresAny().halftone || featuresAny().scanline;
 ---
 
-<figure class="plate" style={`aspect-ratio:${ratio}`}>
+<figure class="plate" style={`aspect-ratio:${ratio}`} data-figure-label={tag}>
   {
     anyPaint ? (
       <canvas

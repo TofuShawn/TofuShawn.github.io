@@ -1,8 +1,8 @@
 /* ==========================================================================
    lone-trail — "Control room on paper"
 
-   A second skin, deliberately unlike rhine: the same Swiss foundation, a
-   different medium. Rhine is a printed dossier; this is a CRT console.
+   A second skin, deliberately unlike press: the same Swiss foundation, a
+   different medium. Press is a print proof; this is a CRT console.
 
    Rule for this file: it may use plain selectors (`.masthead { … }`). The build
    wraps every rule in `:root[data-skin='lone-trail']` (scripts/scope-skins.mjs),
@@ -118,7 +118,7 @@
 
 /* Every direct child of a spread carries the inner gutter, so the outer frame
    stays flush with the grid — the border is the outermost column. */
-.spread > *:not(.skin-only):not(.grid-overlay):not(.progress) {
+.spread > *:not(.skin-only):not(.progress) {
   padding-left: 40px;
   padding-right: 40px;
 }
@@ -130,7 +130,7 @@
 
 /* --- grid: rules instead of whitespace ------------------------------------ */
 
-/* This is the single biggest structural difference from rhine. There, columns
+/* This is the single biggest structural difference from press. There, columns
    are separated by 20px of air. Here they are separated by a 1px rule, and the
    gap is zero — the grid is drawn, not implied. */
 .g {
@@ -160,7 +160,7 @@
 
 /* --- type ----------------------------------------------------------------- */
 
-/* Geometric, uppercase, tightly tracked. Where rhine sets a sentence case
+/* Geometric, uppercase, tightly tracked. Where press sets a sentence case
    headline, this sets a stencil. */
 .t-cover {
   text-transform: uppercase;
@@ -462,25 +462,7 @@
   display: none; /* print-shop furniture, not used by this skin */
 }
 
-/* The grid toggle lives in the cover foot, where the print skin says
-   "Press G for grid". Same instruction, an actual control. */
-.lt-gridbtn {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--fg-mute);
-  border: 1px solid var(--rule);
-  padding: 5px 9px;
-  transition:
-    background var(--dur-fast),
-    color var(--dur-fast);
-}
 
-.lt-gridbtn:hover {
-  background: var(--fg);
-  color: var(--bg-sheet);
-}
 
 /* --- plates --------------------------------------------------------------- */
 
@@ -749,7 +731,7 @@ a.t-cap,
 /* --- tags ----------------------------------------------------------------- */
 
 /* The cloud is structural (it is in a component, not in this skin), but its
-   wrapping is a skin decision — rhine's version sets it, and a skin that does
+   wrapping is a skin decision — press's version sets it, and a skin that does
    not would inherit `display:block` and run every tag onto one line.
 
    This skin does not want a cloud. Nine chips in a corner leave a 550px void
@@ -1139,7 +1121,7 @@ html.js-motion .rh.in::after {
     --margin: 0px;
   }
 
-  .spread > *:not(.skin-only):not(.grid-overlay):not(.progress) {
+  .spread > *:not(.skin-only):not(.progress) {
     padding-left: 20px;
     padding-right: 20px;
   }
@@ -1785,54 +1767,6 @@ html.lt-still .ticker-track {
 }
 
 /* ==========================================================================
-   grid overlay
-   ========================================================================== */
-
-.grid-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-body.grid-on .grid-overlay {
-  opacity: 1;
-}
-
-.grid-overlay .cols {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 0;
-  width: var(--measure);
-  max-width: 100%;
-  margin: 0 auto;
-  left: 0;
-  right: 0;
-}
-
-.grid-overlay .cols i {
-  border-left: 1px solid rgba(233, 82, 28, 0.35);
-}
-
-.grid-overlay .cols i:last-child {
-  border-right: 1px solid rgba(233, 82, 28, 0.35);
-}
-
-.grid-overlay .base {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(29, 86, 158, 0.08) 0 1px,
-    transparent 1px var(--baseline)
-  );
-}
-
-/* ==========================================================================
    furniture this skin does not use
    ========================================================================== */
 
@@ -1909,7 +1843,7 @@ body.grid-on .grid-overlay {
     height: 24px;
   }
 
-  .spread > .cover-body:not(.skin-only):not(.grid-overlay):not(.progress) {
+  .spread > .cover-body:not(.skin-only):not(.progress) {
     padding-left: 0;
     padding-right: 0;
   }
@@ -2112,3 +2046,61 @@ html.js-rail .rail.is-idle {
     display: none;
   }
 }
+
+/* --- side section rail -----------------------------------------------------
+   The control room's channel strip: short track marks, one lit channel for the
+   section in view, and a label that reads like a designation rather than a
+   heading. Open state is a dark panel with a single hairline, matching the
+   consoles this skin borrows from. */
+.sidetoc {
+  right: 22px;
+  --sd-tick: 18px;
+  --sd-tick-on: 30px;
+  --sd-gap: 10px;
+  --sd-open: 210px;
+  --sd-dur: 160ms;
+}
+
+.sd-now {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: var(--accent-text);
+  opacity: 1;
+}
+
+.sd-no {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+}
+
+.sd-txt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.sd-sub .sd-txt {
+  color: var(--fg-mute);
+}
+
+.sd-item.on .sd-tick {
+  height: 2px;
+  background: var(--accent);
+}
+
+.sd-item.on .sd-txt {
+  color: var(--accent-text);
+}
+
+.sidetoc:hover,
+.sidetoc:focus-within {
+  background: var(--bg-sheet);
+  border-color: var(--rule-soft);
+  box-shadow: none;
+}
+

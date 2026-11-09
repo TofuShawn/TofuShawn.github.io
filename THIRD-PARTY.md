@@ -1,6 +1,6 @@
 # Third-party attribution
 
-The `rhine` skin is a port of
+The `press` skin is a port of
 [`Rad-Weed/rhine-lab-motion`](https://github.com/Rad-Weed/rhine-lab-motion),
 which is MIT licensed:
 
@@ -28,7 +28,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-That licence applies to the visual system and code `src/skins/rhine/` derives
+That licence applies to the visual system and code `src/skins/press/` derives
 from it. If you remove the skin, you may remove this file; if you keep it, the
 notice must stay with it.
 
@@ -46,6 +46,23 @@ normal-width Chinese. The licence text is vendored beside it at
 [`public/fonts/Saira-OFL.txt`](public/fonts/Saira-OFL.txt) and must stay with the
 font. Saira is not derived from, and does not reproduce, any Hypergryph asset;
 the skins' type is a licensed open font used in a similar spirit.
+
+The `terminal` skin also vendors **Inter**, a variable font by Rasmus Andersson,
+under the SIL Open Font License 1.1, at
+[`public/fonts/Inter.woff2`](public/fonts/Inter.woff2) (134 kB, `wght` axis
+100–900). The stamp and the console's headings are set in it because Saira's
+width axis distorts the counters at display size.
+
+The `terminal` launch screen additionally vendors **JetBrains Mono**, a
+monospace by JetBrains, under the SIL Open Font License 1.1, at
+[`public/fonts/JetBrainsMono.ttf`](public/fonts/JetBrainsMono.ttf) (303 kB,
+`wght` axis 100–800). Its only use is the two-line `INFO` stamp: the plate is
+exactly as wide as the longer glyph run, and a monospace is what makes the two
+lines the same width without letter-spacing tricks.
+
+Both are SIL Open Font License 1.1, and one licence file covers them:
+[`public/fonts/OFL.txt`](public/fonts/OFL.txt) reproduces the OFL text with the
+JetBrains Mono, Inter and Noto copyright lines. It must stay with the fonts.
 
 Nothing else here is vendored: there are no other bundled fonts, images, or
 scripts. The three runtime dependencies (`astro`, `@astrojs/rss`, `zod`) are

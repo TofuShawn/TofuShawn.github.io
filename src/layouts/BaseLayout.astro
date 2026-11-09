@@ -74,6 +74,15 @@ const skinBoot = `
   try {
     var id = new URLSearchParams(location.search).get('skin');
     if (!id) id = localStorage.getItem('skin');
+    // The default skin used to be called rhine. A choice stored under the old
+    // name would fall through to the default — the same skin, but the visitor
+    // would lose it the moment the default changed, so rewrite it on sight.
+    if (id === 'rhine') {
+      id = 'press';
+      try {
+        localStorage.setItem('skin', 'press');
+      } catch (e) {}
+    }
     if (id && Object.prototype.hasOwnProperty.call(meta, id)) {
       html.setAttribute('data-skin', id);
       // The head was rendered for the build-time default skin; the browser
@@ -84,12 +93,27 @@ const skinBoot = `
       if (cs) cs.setAttribute('content', meta[id].scheme);
     }
   } catch (e) {}
+  // The ceremony is an opening, not a toll. It plays once per tab: after the
+  // first visit the cover is just a page, and coming back to it should not
+  // replay the whole boot. ?seal=1 asks for it again on purpose; ?skip=1 and
+  // reduced motion still win outright.
   try {
-    var skip = new URLSearchParams(location.search).get('skip') === '1';
-    if (skip || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var params = new URLSearchParams(location.search);
+    var force = params.get('seal') === '1';
+    var skip = params.get('skip') === '1';
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var seen = sessionStorage.getItem('seal-seen') === '1';
+    if (skip || reduce || (!force && seen)) {
       html.classList.add('no-seal');
+    } else {
+      sessionStorage.setItem('seal-seen', '1');
     }
-  } catch (e) {}
+  } catch (e) {
+    // No session storage (private mode, or storage disabled): play it safe and
+    // skip the ceremony rather than lock scrolling behind an overlay that a
+    // blocked script may never dismiss.
+    html.classList.add('no-seal');
+  }
   // A generic "turn the ambient effects off" preference, so the shell never has
   // to know which skin is wearing it. Skins opt in by styling the fx-off class
   // on <html>. The query form exists so a link can pin the state and so
@@ -208,6 +232,13 @@ const skinBoot = `
       // Skin switching. Writes the choice, then flips the attribute — the whole
       // switch is one DOM write, so it is instant and does not reload.
       import { SKINS } from '../skins/registry';
+      import { initSideToc } from '../lib/sidetoc';
+
+      // The section rail is shell furniture, not skin furniture: it lives in
+      // base.css and is wired here rather than in a skin's client.ts, so every
+      // skin gets it — including the script-free one, which still loads this
+      // module for the skin switch and the progress bar.
+      initSideToc();
 
       const known = new Set(SKINS.map((s) => s.id));
       const root = document.documentElement;
